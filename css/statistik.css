@@ -1,0 +1,29 @@
+/* ============================================
+   IFFE — statistik.css
+   ============================================ */
+
+.stat-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.stat-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-amount {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.chart-card {
+  padding: 16px;
+  height: 260px;
+}
+
+.chart-card canvas {
+  max-height: 100%;
+}
