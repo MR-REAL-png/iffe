@@ -1,0 +1,134 @@
+/* ============================================
+   IFFE — Global Styles
+   Variabel warna, font, reset, layout shell
+   ============================================ */
+
+/* Font Title (file upload user) */
+@font-face {
+  font-family: 'IFFETitle';
+  src: url('../assets/fonts/IFFETitle.woff2') format('woff2'),
+       url('../assets/fonts/IFFETitle.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Font Body — Plus Jakarta Sans */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ===== CSS Variables ===== */
+:root {
+  /* Tema Light (default) */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F8FF;
+  --bg-card: #FFFFFF;
+  --text-primary: #1A1D29;
+  --text-secondary: #6B7280;
+  --accent: #3B82F6;
+  --accent-light: #93C5FD;
+  --accent-soft: #EFF6FF;
+  --border-color: #E5E7EB;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+
+  /* Layout */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --nav-height: 64px;
+  --sidebar-width: 240px;
+
+  /* Fonts */
+  --font-title: 'IFFETitle', 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Tema Dark */
+[data-theme="dark"] {
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-card: #1E293B;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --accent: #60A5FA;
+  --accent-light: #3B82F6;
+  --accent-soft: #1E3A5F;
+  --border-color: #334155;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ===== Reset ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; border: none; background: none; cursor: pointer; }
+input, select, textarea { font-family: inherit; outline: none; }
+ul, li { list-style: none; }
+img { max-width: 100%; display: block; }
+
+/* ===== Layout Shell ===== */
+.app-content {
+  padding: 16px;
+  padding-bottom: calc(var(--nav-height) + 24px);
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .app-content {
+    padding-left: calc(var(--sidebar-width) + 24px);
+    padding-bottom: 24px;
+  }
+}
+
+/* ===== Utility ===== */
+.text-secondary { color: var(--text-secondary); }
+
+.page-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  font-weight: 600;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary:active {
+  opacity: 0.85;
+}
