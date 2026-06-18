@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFFE — Target</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/target.css" />
+</head>
+<body>
+  <div class="app-content">
+    <h1 class="page-title">Target Keuangan</h1>
+
+    <div id="targetList" class="target-list">
+      <!-- diisi dinamis oleh target.js -->
+    </div>
+  </div>
+
+  <button id="fabAdd" class="fab" aria-label="Tambah target">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  </button>
+
+  <nav id="bottomNav" class="bottom-nav"></nav>
+
+  <div id="targetModal" class="modal-overlay" hidden>
+    <div class="modal-sheet">
+      <h3 class="modal-title">Tambah Target</h3>
+      <form id="targetForm">
+        <div class="field">
+          <label for="namaTarget">Nama Target</label>
+          <input type="text" id="namaTarget" placeholder="Misal: DP Rumah" required />
+        </div>
+        <div class="field">
+          <label for="nominalTarget">Nominal Target</label>
+          <input type="text" id="nominalTarget" inputmode="numeric" placeholder="0" required />
+        </div>
+        <div class="field">
+          <label for="linkTabungan">Link ke Tabungan (opsional)</label>
+          <select id="linkTabungan">
+            <option value="">Tidak terhubung</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancelTarget" class="btn-secondary">Batal</button>
+          <button type="submit" class="btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/target.js"></script>
+</body>
+</html>
