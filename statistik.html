@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFFE — Statistik</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/statistik.css" />
+</head>
+<body>
+  <div class="app-content">
+    <h1 class="page-title">Statistik</h1>
+
+    <div class="filter-bar">
+      <input type="month" id="filterBulan" />
+    </div>
+
+    <section class="card stat-summary">
+      <div class="stat-summary-item">
+        <span class="text-secondary">Pemasukan</span>
+        <span class="stat-amount amount-in" id="totalPemasukan">Rp 0</span>
+      </div>
+      <div class="stat-summary-item">
+        <span class="text-secondary">Pengeluaran</span>
+        <span class="stat-amount amount-out" id="totalPengeluaran">Rp 0</span>
+      </div>
+    </section>
+
+    <section class="home-section">
+      <h3>Pengeluaran per Anggota</h3>
+      <div class="card chart-card">
+        <canvas id="chartAnggota"></canvas>
+      </div>
+    </section>
+
+    <section class="home-section">
+      <h3>Pengeluaran per Kategori</h3>
+      <div class="card chart-card">
+        <canvas id="chartKategori"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <nav id="bottomNav" class="bottom-nav"></nav>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+  <script type="module" src="js/statistik.js"></script>
+</body>
+</html>
