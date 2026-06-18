@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFFE — Dompet</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dompet.css" />
+</head>
+<body>
+  <div class="app-content">
+    <h1 class="page-title">Dompet</h1>
+
+    <div id="myCards" class="wallet-cards-scroll">
+      <!-- diisi dinamis oleh dompet.js -->
+    </div>
+
+    <section class="home-section">
+      <div class="section-heading">
+        <h3>Dompet Anggota Lain</h3>
+      </div>
+      <div id="otherWallets" class="other-wallets-list">
+        <!-- diisi dinamis oleh dompet.js -->
+      </div>
+    </section>
+  </div>
+
+  <button id="fabTransfer" class="fab" aria-label="Transfer saldo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+    </svg>
+  </button>
+
+  <nav id="bottomNav" class="bottom-nav"></nav>
+
+  <!-- Modal Transfer -->
+  <div id="transferModal" class="modal-overlay" hidden>
+    <div class="modal-sheet">
+      <h3 class="modal-title">Transfer Saldo</h3>
+
+      <form id="transferForm">
+        <div class="field">
+          <label for="dariBank">Dari Kartu (kamu)</label>
+          <select id="dariBank" required></select>
+        </div>
+
+        <div class="field">
+          <label for="keUser">Ke Anggota</label>
+          <select id="keUser" required></select>
+        </div>
+
+        <div class="field">
+          <label for="keBank">Ke Bank</label>
+          <select id="keBank" required></select>
+        </div>
+
+        <div class="field">
+          <label for="transferNominal">Nominal</label>
+          <input type="text" id="transferNominal" inputmode="numeric" placeholder="0" required />
+        </div>
+
+        <div class="field">
+          <label for="transferKeterangan">Keterangan (opsional)</label>
+          <input type="text" id="transferKeterangan" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelTransfer" class="btn-secondary">Batal</button>
+          <button type="submit" class="btn-primary">Transfer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/dompet.js"></script>
+</body>
+</html>
