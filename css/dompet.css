@@ -1,0 +1,83 @@
+/* ============================================
+   IFFE — dompet.css
+   ============================================ */
+
+.wallet-cards-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+}
+
+.wallet-card {
+  flex-shrink: 0;
+  width: 220px;
+  height: 130px;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md);
+}
+
+.wallet-card-top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.wallet-card-initial {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.wallet-card-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.wallet-card-name {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-bottom: 2px;
+}
+
+.wallet-card-balance {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-title);
+}
+
+.other-wallets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.other-wallet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+}
+
+.other-wallet-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.other-wallet-total {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+}
