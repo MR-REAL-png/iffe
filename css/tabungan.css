@@ -1,0 +1,38 @@
+/* ============================================
+   IFFE — tabungan.css
+   ============================================ */
+
+.tabungan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tabungan-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+}
+
+.tabungan-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabungan-nama {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.tabungan-tujuan {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.tabungan-saldo {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+}
