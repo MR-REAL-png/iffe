@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFFE — Piutang & Hutang</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/piutang-hutang.css" />
+</head>
+<body>
+  <div class="app-content">
+    <h1 class="page-title">Piutang & Hutang</h1>
+
+    <div class="segmented" id="jenisTab">
+      <button type="button" data-jenis="piutang" class="active">Piutang</button>
+      <button type="button" data-jenis="hutang">Hutang</button>
+    </div>
+
+    <div id="piutangList" class="piutang-list">
+      <!-- diisi dinamis oleh piutang-hutang.js -->
+    </div>
+  </div>
+
+  <button id="fabAdd" class="fab" aria-label="Tambah piutang/hutang">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  </button>
+
+  <nav id="bottomNav" class="bottom-nav"></nav>
+
+  <div id="piutangModal" class="modal-overlay" hidden>
+    <div class="modal-sheet">
+      <h3 class="modal-title">Catat Piutang / Hutang</h3>
+
+      <div class="segmented" id="modalJenisToggle">
+        <button type="button" data-jenis="piutang" class="active">Piutang</button>
+        <button type="button" data-jenis="hutang">Hutang</button>
+      </div>
+
+      <form id="piutangForm">
+        <div class="field">
+          <label for="namaPihak">Nama Pihak</label>
+          <input type="text" id="namaPihak" placeholder="Nama orang/pihak" required />
+        </div>
+        <div class="field">
+          <label for="nominalPiutang">Nominal</label>
+          <input type="text" id="nominalPiutang" inputmode="numeric" placeholder="0" required />
+        </div>
+        <div class="field">
+          <label for="jatuhTempo">Tanggal Jatuh Tempo (opsional)</label>
+          <input type="date" id="jatuhTempo" />
+        </div>
+        <div class="field">
+          <label for="deskripsiPiutang">Deskripsi (opsional)</label>
+          <textarea id="deskripsiPiutang" rows="2"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancelPiutang" class="btn-secondary">Batal</button>
+          <button type="submit" class="btn-primary">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/piutang-hutang.js"></script>
+</body>
+</html>
