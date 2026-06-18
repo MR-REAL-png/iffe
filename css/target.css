@@ -1,0 +1,52 @@
+/* ============================================
+   IFFE — target.css
+   ============================================ */
+
+.target-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.target-item {
+  padding: 16px;
+}
+
+.target-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.target-nama {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.target-percent {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.progress-track {
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.target-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
