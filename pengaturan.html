@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFFE — Pengaturan</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/pengaturan.css" />
+</head>
+<body>
+  <div class="app-content">
+    <h1 class="page-title">Pengaturan</h1>
+
+    <section class="card settings-section">
+      <h3>Tema</h3>
+      <div class="segmented" id="themeToggle">
+        <button type="button" data-tema="light" class="active">Light</button>
+        <button type="button" data-tema="dark">Dark</button>
+      </div>
+    </section>
+
+    <div id="adminSections" hidden>
+
+      <section class="card settings-section">
+        <div class="section-heading">
+          <h3>Anggota Keluarga</h3>
+          <button type="button" class="add-toggle" data-target="formAnggota">+ Tambah</button>
+        </div>
+        <form id="formAnggota" class="inline-form" hidden>
+          <input type="text" id="namaAnggota" placeholder="Nama" required />
+          <select id="roleAnggota">
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit" class="btn-primary">Simpan</button>
+        </form>
+        <div id="listAnggota" class="settings-list"></div>
+      </section>
+
+      <section class="card settings-section">
+        <div class="section-heading">
+          <h3>Kategori</h3>
+          <button type="button" class="add-toggle" data-target="formKategori">+ Tambah</button>
+        </div>
+        <form id="formKategori" class="inline-form" hidden>
+          <input type="text" id="namaKategori" placeholder="Nama kategori" required />
+          <select id="jenisKategori">
+            <option value="pengeluaran">Pengeluaran</option>
+            <option value="pemasukan">Pemasukan</option>
+          </select>
+          <button type="submit" class="btn-primary">Simpan</button>
+        </form>
+        <div id="listKategori" class="settings-list"></div>
+      </section>
+
+      <section class="card settings-section">
+        <div class="section-heading">
+          <h3>Bank</h3>
+          <button type="button" class="add-toggle" data-target="formBank">+ Tambah</button>
+        </div>
+        <form id="formBank" class="inline-form" hidden>
+          <input type="text" id="namaBank" placeholder="Nama bank" required />
+          <input type="text" id="inisialBank" placeholder="Inisial (mis: BCA)" maxlength="4" required />
+          <input type="color" id="warnaBank" value="#3B82F6" />
+          <button type="submit" class="btn-primary">Simpan</button>
+        </form>
+        <div id="listBank" class="settings-list"></div>
+      </section>
+
+      <section class="card settings-section">
+        <div class="section-heading">
+          <h3>Metode Pembayaran</h3>
+          <button type="button" class="add-toggle" data-target="formMetode">+ Tambah</button>
+        </div>
+        <form id="formMetode" class="inline-form" hidden>
+          <input type="text" id="namaMetode" placeholder="Nama metode" required />
+          <button type="submit" class="btn-primary">Simpan</button>
+        </form>
+        <div id="listMetode" class="settings-list"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <nav id="bottomNav" class="bottom-nav"></nav>
+
+  <script type="module" src="js/pengaturan.js"></script>
+</body>
+</html>
