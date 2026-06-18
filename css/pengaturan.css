@@ -1,0 +1,86 @@
+/* ============================================
+   IFFE — pengaturan.css
+   ============================================ */
+
+.settings-section {
+  margin-bottom: 16px;
+}
+
+.settings-section h3 {
+  font-size: 15px;
+}
+
+.settings-section .section-heading {
+  margin-bottom: 12px;
+}
+
+.add-toggle {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.inline-form input,
+.inline-form select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.settings-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.delete-btn {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
