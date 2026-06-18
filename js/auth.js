@@ -23,7 +23,10 @@ async function init() {
 
   if (error || !data || data.length === 0) {
     errorEl.hidden = false;
-    console.error('Gagal load users:', error?.message);
+    errorEl.textContent = error
+      ? `Error: ${error.message}`
+      : 'Data kosong (cek tabel users di Supabase).';
+    console.error('Gagal load users:', error);
     return;
   }
 
