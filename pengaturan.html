@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id" data-theme="blue-ocean">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,14 +12,26 @@
   <div class="app-content">
     <h1 class="page-title">Pengaturan</h1>
 
+    <!-- Tema (semua user) -->
     <section class="card settings-section">
       <h3>Tema</h3>
-      <div class="segmented" id="themeToggle">
-        <button type="button" data-tema="light" class="active">Light</button>
-        <button type="button" data-tema="dark">Dark</button>
+      <div class="theme-grid">
+        <button class="theme-btn" data-tema="blue-ocean">
+          <div class="theme-preview" style="background: linear-gradient(135deg,#0D2755,#071330)"></div>
+          Blue Ocean
+        </button>
+        <button class="theme-btn" data-tema="galaxy-mono">
+          <div class="theme-preview" style="background: linear-gradient(135deg,#23252F,#12131A)"></div>
+          Galaxy Mono
+        </button>
+        <button class="theme-btn" data-tema="nebula">
+          <div class="theme-preview" style="background: linear-gradient(135deg,#2A0F0B,#120604)"></div>
+          Nebula
+        </button>
       </div>
     </section>
 
+    <!-- Admin sections -->
     <div id="adminSections" hidden>
 
       <section class="card settings-section">
@@ -62,7 +74,7 @@
         <form id="formBank" class="inline-form" hidden>
           <input type="text" id="namaBank" placeholder="Nama bank" required />
           <input type="text" id="inisialBank" placeholder="Inisial (mis: BCA)" maxlength="4" required />
-          <input type="color" id="warnaBank" value="#3B82F6" />
+          <input type="color" id="warnaBank" value="#3DD9FF" />
           <button type="submit" class="btn-primary">Simpan</button>
         </form>
         <div id="listBank" class="settings-list"></div>
@@ -80,6 +92,11 @@
         <div id="listMetode" class="settings-list"></div>
       </section>
 
+    </div>
+
+    <!-- Logout (semua user) -->
+    <div class="logout-section">
+      <button id="logoutBtn" class="btn-danger">Keluar</button>
     </div>
   </div>
 
