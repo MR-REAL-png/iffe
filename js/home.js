@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll } from './supabase.js';
-import { formatRupiah, renderBottomNav, greetingByTime, formatTanggal } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav, greetingByTime, formatTanggal } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 if (user) {
