@@ -68,3 +68,15 @@ export function renderBottomNav(activePage) {
     </a>
   `).join('');
 }
+
+// ===== Apply tema dari session saat halaman load =====
+export function applySessionTheme() {
+  const raw = localStorage.getItem('iffe_session');
+  if (!raw) return;
+  try {
+    const user = JSON.parse(raw);
+    if (user?.tema) {
+      document.documentElement.setAttribute('data-theme', user.tema);
+    }
+  } catch (e) {}
+}
