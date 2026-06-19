@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll, insertRow } from './supabase.js';
-import { formatRupiah, renderBottomNav, showToast } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav, showToast } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 let bankList = [];
@@ -117,6 +118,8 @@ const cancelTransfer = document.getElementById('cancelTransfer');
 const transferNominal = document.getElementById('transferNominal');
 
 fabTransfer.addEventListener('click', () => {
+
+modal.addEventListener('click', (e) => { if (e.target === modal) { modal.hidden = true; form.reset(); } });
   if (bankList.length === 0) {
     showToast('Belum ada bank untuk transfer', 'danger');
     return;
@@ -124,7 +127,9 @@ fabTransfer.addEventListener('click', () => {
   modal.hidden = false;
 });
 
-cancelTransfer.addEventListener('click', () => {
+cancelTransfer.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   modal.hidden = true;
   form.reset();
 });
