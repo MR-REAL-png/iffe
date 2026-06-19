@@ -36,20 +36,18 @@ function renderList() {
   const container = document.getElementById('targetList');
 
   if (targetList.length === 0) {
-    container.innerHTML = '<p class="text-secondary empty-state">Belum ada target.</p>';
+    container.innerHTML = '<p class="empty-state">Belum ada target.</p>';
     return;
   }
 
   const tabunganMap = Object.fromEntries(tabunganList.map((t) => [t.id, t]));
 
-  container.innerHTML = targetList
-    .map((t) => {
-      const tabungan = tabunganMap[t.tabungan_id];
-      const saldoTerkumpul = tabungan ? Number(tabungan.saldo) : 0;
-      const persen =
-        Math.min(100, Math.round((saldoTerkumpul / Number(t.nominal_target)) * 100)) || 0;
+  container.innerHTML = targetList.map((t) => {
+    const tabungan = tabunganMap[t.tabungan_id];
+    const saldoTerkumpul = tabungan ? Number(tabungan.saldo) : 0;
+    const persen = Math.min(100, Math.round((saldoTerkumpul / Number(t.nominal_target)) * 100)) || 0;
 
-      return `
+    return `
       <div class="card target-item">
         <div class="target-header">
           <span class="target-nama">${t.nama}</span>
@@ -62,15 +60,10 @@ function renderList() {
           <span>${formatRupiah(saldoTerkumpul)}</span>
           <span>${formatRupiah(t.nominal_target)}</span>
         </div>
-        ${
-          !tabungan
-            ? '<p class="text-secondary" style="font-size:11px;margin-top:6px;">Belum terhubung ke tabungan</p>'
-            : ''
-        }
+        ${!tabungan ? '<p class="text-secondary" style="font-size:11px;margin-top:6px;">Belum terhubung ke tabungan</p>' : ''}
       </div>
     `;
-    })
-    .join('');
+  }).join('');
 }
 
 function populateForm() {
@@ -87,17 +80,19 @@ const fabAdd = document.getElementById('fabAdd');
 const cancelBtn = document.getElementById('cancelTarget');
 const nominalInput = document.getElementById('nominalTarget');
 
-fabAdd.addEventListener('click', () => {
-ndocument.getElementById('targetModal') && document.getElementById('targetModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
-  modal.hidden = false;
-});
-
-cancelBtn.addEventListener('click', closeModal);
+function openModal() { modal.hidden = false; }
 
 function closeModal() {
   modal.hidden = true;
   form.reset();
 }
+
+fabAdd.addEventListener('click', openModal);
+cancelBtn.addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
 
 nominalInput.addEventListener('input', () => {
   const raw = nominalInput.value.replace(/\D/g, '');
@@ -122,10 +117,7 @@ form.addEventListener('submit', async (e) => {
     tabungan_id: document.getElementById('linkTabungan').value || null,
   });
 
-  if (!result) {
-    showToast('Gagal menyimpan target', 'danger');
-    return;
-  }
+  if (!result) { showToast('Gagal menyimpan target', 'danger'); return; }
 
   showToast('Target tersimpan');
   closeModal();
