@@ -36,14 +36,11 @@ function renderList() {
   const container = document.getElementById('tabunganList');
 
   if (tabunganList.length === 0) {
-    container.innerHTML =
-      '<p class="text-secondary empty-state">Belum ada tabungan. Sisihkan dana lewat tombol +.</p>';
+    container.innerHTML = '<p class="empty-state">Belum ada tabungan. Sisihkan dana lewat tombol +.</p>';
     return;
   }
 
-  container.innerHTML = tabunganList
-    .map(
-      (t) => `
+  container.innerHTML = tabunganList.map((t) => `
     <div class="card tabungan-item">
       <div class="tabungan-info">
         <span class="tabungan-nama">${t.nama}</span>
@@ -51,9 +48,7 @@ function renderList() {
       </div>
       <span class="tabungan-saldo">${formatRupiah(t.saldo)}</span>
     </div>
-  `
-    )
-    .join('');
+  `).join('');
 }
 
 function populateForm() {
@@ -76,22 +71,27 @@ const pilihTabungan = document.getElementById('pilihTabungan');
 const newFields = document.getElementById('newTabunganFields');
 const nominalInput = document.getElementById('nominalTabungan');
 
-fabAdd.addEventListener('click', () => {
-ndocument.getElementById('tabunganModal') && document.getElementById('tabunganModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+function openModal() {
   if (bankList.length === 0) {
     showToast('Belum ada bank, tambahkan dulu di Pengaturan', 'danger');
     return;
   }
   modal.hidden = false;
-});
-
-cancelBtn.addEventListener('click', closeModal);
+}
 
 function closeModal() {
   modal.hidden = true;
   form.reset();
   toggleNewFields();
 }
+
+fabAdd.addEventListener('click', openModal);
+cancelBtn.addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
+
+// Klik area gelap di luar sheet = tutup modal (dipasang sekali saja)
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
 
 pilihTabungan.addEventListener('change', toggleNewFields);
 
@@ -126,32 +126,17 @@ form.addEventListener('submit', async (e) => {
     }
     const tujuan = document.getElementById('tujuanTabungan').value || null;
 
-    const newRow = await insertRow('tabungan', {
-      user_id: user.id,
-      nama,
-      tujuan,
-      saldo: nominal,
-    });
-
-    if (!newRow) {
-      showToast('Gagal membuat tabungan', 'danger');
-      return;
-    }
+    const newRow = await insertRow('tabungan', { user_id: user.id, nama, tujuan, saldo: nominal });
+    if (!newRow) { showToast('Gagal membuat tabungan', 'danger'); return; }
     tabunganId = newRow.id;
     namaForDesc = nama;
   } else {
     const current = tabunganList.find((t) => t.id === tabunganId);
-    const updated = await updateRow('tabungan', tabunganId, {
-      saldo: Number(current.saldo) + nominal,
-    });
-    if (!updated) {
-      showToast('Gagal update tabungan', 'danger');
-      return;
-    }
+    const updated = await updateRow('tabungan', tabunganId, { saldo: Number(current.saldo) + nominal });
+    if (!updated) { showToast('Gagal update tabungan', 'danger'); return; }
     namaForDesc = current.nama;
   }
 
-  // Catat sebagai pengeluaran di bank asal biar saldo dompet ikut update
   await insertRow('transaksi', {
     user_id: user.id,
     tanggal: new Date().toISOString().slice(0, 10),
