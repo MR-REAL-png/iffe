@@ -101,6 +101,12 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
 
+/* Pastikan atribut hidden SELALU menang dari rule display manapun
+   (mencegah modal/form tidak tertutup gara-gara konflik CSS) */
+[hidden] {
+  display: none !important;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--bg-gradient);
