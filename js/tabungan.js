@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll, insertRow, updateRow } from './supabase.js';
-import { formatRupiah, renderBottomNav, showToast } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav, showToast } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 let tabunganList = [];
@@ -76,6 +77,7 @@ const newFields = document.getElementById('newTabunganFields');
 const nominalInput = document.getElementById('nominalTabungan');
 
 fabAdd.addEventListener('click', () => {
+ndocument.getElementById('tabunganModal') && document.getElementById('tabunganModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
   if (bankList.length === 0) {
     showToast('Belum ada bank, tambahkan dulu di Pengaturan', 'danger');
     return;
