@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll, insertRow, updateRow } from './supabase.js';
-import { formatRupiah, renderBottomNav, formatTanggal, showToast } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav, formatTanggal, showToast } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 let piutangList = [];
@@ -95,6 +96,7 @@ const modalJenisToggle = document.getElementById('modalJenisToggle');
 const nominalInput = document.getElementById('nominalPiutang');
 
 fabAdd.addEventListener('click', () => {
+ndocument.getElementById('piutang-hutangModal') && document.getElementById('piutang-hutangModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
   modalJenis = activeJenis;
   modalJenisToggle
     .querySelectorAll('button')
