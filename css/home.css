@@ -6,72 +6,82 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-.home-greeting {
-  font-size: 13px;
-}
-
-.home-username {
-  font-size: 22px;
-}
+.home-greeting { font-size: 13px; color: var(--text-secondary); }
+.home-username { font-size: 24px; font-family: var(--font-heading); }
 
 .home-settings-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: var(--bg-card);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.settings-icon {
-  width: 22px;
-  height: 22px;
-  color: var(--text-secondary);
-}
+.settings-icon { width: 20px; height: 20px; color: var(--text-secondary); }
 
+/* ===== Balance Hero Card ===== */
 .balance-card {
-  background: linear-gradient(135deg, var(--accent), var(--accent-light));
-  color: #fff;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  border: none;
   margin-bottom: 24px;
+  padding: 24px;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Radial glow blob ambient */
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.balance-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30px;
+  left: 20px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  filter: blur(30px);
+  pointer-events: none;
 }
 
 .balance-label {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 13px;
-  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
 }
 
 .balance-amount {
-  font-size: 28px;
-  font-family: var(--font-title);
-  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  color: #000;
+  position: relative;
+  z-index: 1;
 }
-
-.home-section {
-  margin-bottom: 24px;
-}
-
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 12px;
-}
-
-.section-heading h3 {
-  font-size: 16px;
-}
-
-.see-all-link {
-  font-size: 13px;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* Style transaction-item, empty-state, dst sekarang ada di components.css
-   (dipakai bersama di home.html & transaksi.html) */
