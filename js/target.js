@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll, insertRow } from './supabase.js';
-import { formatRupiah, renderBottomNav, showToast } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav, showToast } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 let targetList = [];
@@ -87,6 +88,7 @@ const cancelBtn = document.getElementById('cancelTarget');
 const nominalInput = document.getElementById('nominalTarget');
 
 fabAdd.addEventListener('click', () => {
+ndocument.getElementById('targetModal') && document.getElementById('targetModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
   modal.hidden = false;
 });
 
