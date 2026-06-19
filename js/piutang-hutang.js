@@ -30,20 +30,16 @@ function renderList() {
   const filtered = piutangList.filter((p) => p.jenis === activeJenis);
 
   if (filtered.length === 0) {
-    container.innerHTML = `<p class="text-secondary empty-state">Belum ada ${activeJenis}.</p>`;
+    container.innerHTML = `<p class="empty-state">Belum ada ${activeJenis}.</p>`;
     return;
   }
 
-  container.innerHTML = filtered
-    .map(
-      (p) => `
+  container.innerHTML = filtered.map((p) => `
     <div class="card piutang-item">
       <div class="piutang-info">
         <span class="piutang-nama">${p.nama_pihak}</span>
         <span class="piutang-meta">${
-          p.tanggal_jatuh_tempo
-            ? 'Jatuh tempo ' + formatTanggal(p.tanggal_jatuh_tempo)
-            : p.deskripsi || ''
+          p.tanggal_jatuh_tempo ? 'Jatuh tempo ' + formatTanggal(p.tanggal_jatuh_tempo) : p.deskripsi || ''
         }</span>
       </div>
       <div class="piutang-right">
@@ -53,9 +49,7 @@ function renderList() {
         </button>
       </div>
     </div>
-  `
-    )
-    .join('');
+  `).join('');
 
   container.querySelectorAll('.status-badge').forEach((btn) => {
     btn.addEventListener('click', () => toggleStatus(btn.dataset.id, btn.dataset.status));
@@ -66,28 +60,23 @@ async function toggleStatus(id, currentStatus) {
   const newStatus = currentStatus === 'lunas' ? 'belum' : 'lunas';
   const updated = await updateRow('piutang', id, { status: newStatus });
 
-  if (!updated) {
-    showToast('Gagal update status', 'danger');
-    return;
-  }
+  if (!updated) { showToast('Gagal update status', 'danger'); return; }
 
   piutangList = piutangList.map((p) => (p.id === id ? { ...p, status: newStatus } : p));
   renderList();
 }
 
-// ===== Tab filter Piutang / Hutang =====
+// ===== Tab filter =====
 const jenisTab = document.getElementById('jenisTab');
 jenisTab.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
   activeJenis = btn.dataset.jenis;
-  jenisTab
-    .querySelectorAll('button')
-    .forEach((b) => b.classList.toggle('active', b.dataset.jenis === activeJenis));
+  jenisTab.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.jenis === activeJenis));
   renderList();
 });
 
-// ===== Modal Tambah =====
+// ===== Modal =====
 const modal = document.getElementById('piutangModal');
 const form = document.getElementById('piutangForm');
 const fabAdd = document.getElementById('fabAdd');
@@ -95,29 +84,29 @@ const cancelBtn = document.getElementById('cancelPiutang');
 const modalJenisToggle = document.getElementById('modalJenisToggle');
 const nominalInput = document.getElementById('nominalPiutang');
 
-fabAdd.addEventListener('click', () => {
-ndocument.getElementById('piutang-hutangModal') && document.getElementById('piutang-hutangModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+function openModal() {
   modalJenis = activeJenis;
-  modalJenisToggle
-    .querySelectorAll('button')
-    .forEach((b) => b.classList.toggle('active', b.dataset.jenis === modalJenis));
+  modalJenisToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.jenis === modalJenis));
   modal.hidden = false;
-});
-
-cancelBtn.addEventListener('click', closeModal);
+}
 
 function closeModal() {
   modal.hidden = true;
   form.reset();
 }
 
+fabAdd.addEventListener('click', openModal);
+cancelBtn.addEventListener('click', (e) => { e.preventDefault(); closeModal(); });
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
 modalJenisToggle.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
   modalJenis = btn.dataset.jenis;
-  modalJenisToggle
-    .querySelectorAll('button')
-    .forEach((b) => b.classList.toggle('active', b.dataset.jenis === modalJenis));
+  modalJenisToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.jenis === modalJenis));
 });
 
 nominalInput.addEventListener('input', () => {
@@ -146,10 +135,7 @@ form.addEventListener('submit', async (e) => {
     deskripsi: document.getElementById('deskripsiPiutang').value || null,
   });
 
-  if (!result) {
-    showToast('Gagal menyimpan', 'danger');
-    return;
-  }
+  if (!result) { showToast('Gagal menyimpan', 'danger'); return; }
 
   showToast('Tersimpan');
   closeModal();
