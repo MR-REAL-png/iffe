@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll, insertRow } from './supabase.js';
-import { formatRupiah, renderBottomNav, formatTanggal, showToast } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav, formatTanggal, showToast } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 let kategoriList = [];
@@ -17,7 +18,6 @@ const cancelBtn = document.getElementById('cancelBtn');
 const jenisToggle = document.getElementById('jenisToggle');
 const inputNominal = document.getElementById('inputNominal');
 const inputTanggal = document.getElementById('inputTanggal');
-
 const filterUser = document.getElementById('filterUser');
 const filterKategori = document.getElementById('filterKategori');
 const filterBulan = document.getElementById('filterBulan');
@@ -39,20 +39,16 @@ async function init() {
   ]);
 
   kategoriList = kategori;
-
   populateSelect('inputKategori', kategori, 'Pilih kategori');
   populateSelect('inputBank', bank, 'Pilih bank');
   populateSelect('inputMetode', metode, 'Pilih metode');
-
   populateFilterSelect(filterUser, users, 'Semua Anggota');
   populateFilterSelect(filterKategori, kategori, 'Semua Kategori');
 
   loadTransaksi();
 }
 
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
+function todayStr() { return new Date().toISOString().slice(0, 10); }
 
 function populateSelect(elId, list, placeholder) {
   const el = document.getElementById(elId);
@@ -65,12 +61,19 @@ function populateFilterSelect(el, list, placeholder) {
     list.map((item) => `<option value="${item.id}">${item.nama}</option>`).join('');
 }
 
-// ===== Modal open/close =====
-fabAdd.addEventListener('click', () => {
-  modal.hidden = false;
+// ===== Modal =====
+fabAdd.addEventListener('click', () => { modal.hidden = false; });
+
+// Klik overlay (luar sheet) = tutup modal
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
 });
 
-cancelBtn.addEventListener('click', closeModal);
+cancelBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  closeModal();
+});
 
 function closeModal() {
   modal.hidden = true;
@@ -79,7 +82,7 @@ function closeModal() {
   setJenis('pengeluaran');
 }
 
-// ===== Toggle Pemasukan / Pengeluaran =====
+// ===== Segmented Jenis =====
 jenisToggle.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if (!btn) return;
@@ -93,7 +96,7 @@ function setJenis(jenis) {
   });
 }
 
-// ===== Format nominal saat mengetik (Rp 1.000.000) =====
+// ===== Format nominal =====
 inputNominal.addEventListener('input', () => {
   const raw = inputNominal.value.replace(/\D/g, '');
   inputNominal.value = raw ? Number(raw).toLocaleString('id-ID') : '';
@@ -101,44 +104,25 @@ inputNominal.addEventListener('input', () => {
 
 // ===== Scan Struk AI =====
 const inputStruk = document.getElementById('inputStruk');
-
 inputStruk.addEventListener('change', async () => {
   const file = inputStruk.files[0];
   if (!file) return;
-
   showToast('Membaca struk...');
-
   try {
     const base64 = await fileToBase64(file);
-
     const response = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: base64, mimeType: file.type }),
     });
-
     const data = await response.json();
-
-    if (!data.success) {
-      showToast('Gagal membaca struk, isi manual ya', 'danger');
-      return;
-    }
-
+    if (!data.success) { showToast('Gagal membaca struk, isi manual', 'danger'); return; }
     const { nominal, tanggal, keterangan } = data.result;
-
-    if (nominal) {
-      inputNominal.value = Number(nominal).toLocaleString('id-ID');
-    }
-    if (tanggal) {
-      inputTanggal.value = tanggal;
-    }
-    if (keterangan) {
-      document.getElementById('inputDeskripsi').value = keterangan;
-    }
-
-    showToast('Struk berhasil dibaca, cek lagi datanya sebelum simpan');
+    if (nominal) inputNominal.value = Number(nominal).toLocaleString('id-ID');
+    if (tanggal) inputTanggal.value = tanggal;
+    if (keterangan) document.getElementById('inputDeskripsi').value = keterangan;
+    showToast('Struk dibaca, cek data sebelum simpan');
   } catch (err) {
-    console.error('Scan struk error:', err);
     showToast('Gagal membaca struk', 'danger');
   }
 });
@@ -152,15 +136,11 @@ function fileToBase64(file) {
   });
 }
 
-// ===== Submit form tambah transaksi =====
+// ===== Submit =====
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
   const nominal = Number(inputNominal.value.replace(/\D/g, ''));
-  if (!nominal) {
-    showToast('Nominal belum diisi', 'danger');
-    return;
-  }
+  if (!nominal) { showToast('Nominal belum diisi', 'danger'); return; }
 
   const payload = {
     user_id: user.id,
@@ -174,11 +154,7 @@ form.addEventListener('submit', async (e) => {
   };
 
   const result = await insertRow('transaksi', payload);
-
-  if (!result) {
-    showToast('Gagal menyimpan transaksi', 'danger');
-    return;
-  }
+  if (!result) { showToast('Gagal menyimpan transaksi', 'danger'); return; }
 
   showToast('Transaksi tersimpan');
   closeModal();
@@ -193,30 +169,22 @@ form.addEventListener('submit', async (e) => {
 async function loadTransaksi() {
   const options = { order: { column: 'tanggal', ascending: false } };
   const eq = {};
-
   if (filterUser.value) eq.user_id = filterUser.value;
   if (filterKategori.value) eq.kategori_id = filterKategori.value;
   if (Object.keys(eq).length) options.eq = eq;
 
   let data = await fetchAll('transaksi', options);
-
-  if (filterBulan.value) {
-    data = data.filter((t) => t.tanggal?.startsWith(filterBulan.value));
-  }
-
+  if (filterBulan.value) data = data.filter((t) => t.tanggal?.startsWith(filterBulan.value));
   renderList(data);
 }
 
 function renderList(items) {
   const container = document.getElementById('transactionList');
-
   if (!items || items.length === 0) {
-    container.innerHTML = '<p class="text-secondary empty-state">Belum ada transaksi.</p>';
+    container.innerHTML = '<p class="empty-state">Belum ada transaksi.</p>';
     return;
   }
-
   const kategoriMap = Object.fromEntries(kategoriList.map((k) => [k.id, k.nama]));
-
   container.innerHTML = items.map((t) => `
     <div class="card transaction-item">
       <div class="transaction-info">
