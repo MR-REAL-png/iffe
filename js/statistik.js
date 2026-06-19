@@ -3,8 +3,9 @@
 // ============================================
 
 import { requireSession, fetchAll } from './supabase.js';
-import { formatRupiah, renderBottomNav } from './global.js';
+import { formatRupiah, applySessionTheme, renderBottomNav } from './global.js';
 
+applySessionTheme();
 const user = requireSession();
 
 let chartAnggota;
