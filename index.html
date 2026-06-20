@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="cosmic">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SHIFA">
+<meta name="application-name" content="SHIFA">
+<title>SHIFA</title>
+<link rel="apple-touch-icon" href="./logo.png">
+<link rel="icon" type="image/png" href="./logo.png">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/pin.css">
+</head>
+<body>
+<div id="app">
+
+<!-- BACKGROUND -->
+<div id="cosmicBg"><div class="cb-grad"></div><div class="cb-blob1"></div><div class="cb-blob2"></div><div class="cb-blob3"></div><div id="particles"></div></div>
+<div id="oceanBg"><div class="ocean-glow1"></div><div class="ocean-glow2"></div><div class="ocean-glow3"></div><div class="ocean-wave"></div><div class="ocean-wave2"></div><div id="oceanParticles"></div></div>
+
+<!-- HEADER -->
+<div class="hdr-safe">
+<header class="hdr">
+  <div class="hdr-left">
+    <button class="hdr-menu-btn" onclick="openDrawer()"><span></span><span></span><span></span></button>
+    <div class="brand-ico" id="brandIco"></div>
+    <div class="brand-name">SHIFA</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-members" id="hdrMembers"></div>
+    <div class="hdr-clock">
+      <div class="hdr-clock-time" id="hdrTime">--:--</div>
+      <div class="hdr-clock-date" id="hdrDate">Memuat...</div>
+    </div>
+  </div>
+</header>
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">SHIFA</span>
+    <button class="drawer-close" onclick="closeDrawer()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-profile">
+    <div class="drawer-avatar" id="drawerAvatar"></div>
+    <div>
+      <div class="drawer-username" id="drawerUsername">SHIFA</div>
+      <div class="drawer-subtitle" id="drawerSub">Sisa — hari</div>
+    </div>
+  </div>
+  <!-- Household members mini -->
+  <div class="drawer-members" id="drawerMembers"></div>
+  <div class="drawer-period">
+    <div class="drawer-period-lbl">
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+      Periode Aktif
+    </div>
+    <div class="drawer-period-val" id="drawerPeriodVal">Memuat...</div>
+  </div>
+  <div class="drawer-nav">
+    <div class="drawer-section-lbl">Analisis</div>
+    <div class="drawer-item" id="di-dompet" onclick="goPage('dompet');closeDrawer()">
+      <div class="drawer-item-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3"/></svg></div>
+      <div class="drawer-item-info"><div class="drawer-item-name">Dompet</div><div class="drawer-item-sub">Kartu & saldo rekening</div></div>
+    </div>
+    <div class="drawer-item" id="di-rekap" onclick="goPage('rekap');closeDrawer()">
+      <div class="drawer-item-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/></svg></div>
+      <div class="drawer-item-info"><div class="drawer-item-name">Rekap Total</div><div class="drawer-item-sub">Ringkasan tahunan</div></div>
+    </div>
+    <div class="drawer-item" id="di-metode" onclick="goPage('metode');closeDrawer()">
+      <div class="drawer-item-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg></div>
+      <div class="drawer-item-info"><div class="drawer-item-name">Metode Bayar</div><div class="drawer-item-sub">Analisis pembayaran</div></div>
+    </div>
+    <div class="drawer-item" id="di-kalender" onclick="goPage('kalender');closeDrawer()">
+      <div class="drawer-item-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg></div>
+      <div class="drawer-item-info"><div class="drawer-item-name">Kalender</div><div class="drawer-item-sub">Pengeluaran harian</div></div>
+    </div>
+    <div class="drawer-item" id="di-notif" onclick="goPage('notif');closeDrawer()">
+      <div class="drawer-item-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg></div>
+      <div class="drawer-item-info"><div class="drawer-item-name">Notifikasi</div><div class="drawer-item-sub">Alert & peringatan</div></div>
+      <span class="drawer-badge" id="notifBadge" style="display:none">!</span>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <div class="drawer-theme-row">
+      <span class="drawer-theme-lbl" id="drawerThemeLbl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z"/></svg>
+        Tema: Cosmic
+      </span>
+      <button class="sett-toggle" id="drawerThemeToggle" onclick="toggleTheme()"></button>
+    </div>
+    <!-- Kode undangan household -->
+    <div class="drawer-invite-row" id="drawerInviteRow" style="display:none">
+      <span class="drawer-invite-lbl">Kode undangan:</span>
+      <span class="drawer-invite-code" id="drawerInviteCode">——</span>
+    </div>
+    <button class="drawer-logout-btn" onclick="pinLogout()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/></svg>
+      Ganti Pengguna
+    </button>
+  </div>
+</div>
+
+<main class="main">
+
+<!-- DASHBOARD -->
+<div id="pg-dashboard" class="page on">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:6px">
+    <div><div class="pg-title">Dashboard</div><div class="pg-sub">Keuangan Bersama</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="dashPeriodLabel" style="font-family:var(--ffd);font-size:1rem;font-weight:700;color:#fff"></div>
+      <button class="refresh-btn" onclick="doRefresh()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button>
+    </div>
+  </div>
+  <div class="period-badge">
+    <div class="period-badge-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg></div>
+    <div class="period-badge-info"><div class="period-badge-lbl">Periode Aktif</div><div class="period-badge-val" id="dashPeriodVal">Memuat...</div></div>
+    <div class="period-badge-days" id="dashPeriodDays">—</div>
+  </div>
+  <div class="hero-kas tap-card" onclick="openKasDetail()" style="cursor:pointer">
+    <div class="hk-lbl">Arus Kas — <span id="hk-periode-lbl">Memuat...</span></div>
+    <div class="hk-val" id="d-kas">—</div>
+    <div class="hk-period"><span class="hk-period-dot"></span><span id="hk-period-text">—</span></div>
+    <div class="hk-pills">
+      <div class="hk-pill g"><span id="d-masuk">—</span></div>
+      <div class="hk-pill r"><span id="d-keluar">—</span></div>
+    </div>
+  </div>
+  <!-- Stat cards -->
+  <div class="stat-row3 stat-row4">
+    <div class="stat3 tap-card" onclick="openAvgDetail()">
+      <div class="stat3-glow" style="background:radial-gradient(circle,rgba(168,85,247,0.4),transparent)"></div>
+      <div class="stat3-ico"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg></div>
+      <div class="stat3-val" id="d-avg" style="color:#c084fc">—</div><div class="stat3-lbl">Rata²/Hari</div>
+    </div>
+    <div class="stat3">
+      <div class="stat3-glow" style="background:radial-gradient(circle,rgba(96,165,250,0.4),transparent)"></div>
+      <div class="stat3-ico"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg></div>
+      <div class="stat3-val" id="d-active-days" style="color:#60a5fa">—</div><div class="stat3-lbl">Hari Aktif</div>
+    </div>
+    <div class="stat3">
+      <div class="stat3-glow" style="background:radial-gradient(circle,rgba(52,211,153,0.4),transparent)"></div>
+      <div class="stat3-ico"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg></div>
+      <div class="stat3-val" id="d-total-days-val" style="color:#34d399">—</div><div class="stat3-lbl">Total Hari</div>
+    </div>
+    <div class="stat3 tap-card" onclick="openAvgDetail()">
+      <div class="stat3-glow" style="background:radial-gradient(circle,rgba(251,191,36,0.4),transparent)"></div>
+      <div class="stat3-ico"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div>
+      <div class="stat3-val" id="d-avg-budget" style="color:#fbbf24">—</div><div class="stat3-lbl">Rata² Budget</div>
+    </div>
+  </div>
+  <!-- Komposisi -->
+  <div id="kompSection">
+    <div class="sec-lbl">Komposisi Pengeluaran</div>
+    <div class="chart-card"><canvas id="chartKat" height="200"></canvas></div>
+  </div>
+  <!-- Budget Monitor -->
+  <div class="sec-lbl" id="bmonSecLbl" style="display:none">Budget Monitor</div>
+  <div id="budgetMonitor" style="display:none">
+    <div id="budgetList"></div>
+  </div>
+  <!-- Pengeluaran harian -->
+  <div class="sec-lbl">Pengeluaran Harian</div>
+  <div class="chart-card"><canvas id="chartHarian" height="140"></canvas></div>
+</div>
+
+<!-- DATA -->
+<div id="pg-data" class="page">
+  <div class="pg-hd">
+    <div><div class="pg-title">Transaksi</div><div class="pg-sub">Riwayat keuangan bersama</div></div>
+    <button class="refresh-btn" onclick="loadData()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button>
+  </div>
+  <!-- Filter siapa -->
+  <div class="filter-who" id="filterWho">
+    <button class="fw-btn on" data-who="all" onclick="filterByWho('all')">Semua</button>
+    <button class="fw-btn" data-who="" id="fw-btn-1" onclick="filterByWho(this.dataset.who)">—</button>
+    <button class="fw-btn" data-who="" id="fw-btn-2" onclick="filterByWho(this.dataset.who)">—</button>
+  </div>
+  <div id="dataFilter" style="margin-bottom:10px">
+    <select id="filterBulan" class="sel-sm" onchange="loadData()">
+      <option value="">Semua Bulan</option>
+    </select>
+    <select id="filterJenis" class="sel-sm" onchange="loadData()">
+      <option value="">Semua Jenis</option>
+      <option value="Pemasukan">Pemasukan</option>
+      <option value="Pengeluaran">Pengeluaran</option>
+    </select>
+  </div>
+  <div id="dataList"></div>
+</div>
+
+<!-- DOMPET -->
+<div id="pg-dompet" class="page">
+  <div class="pg-hd">
+    <div><div class="pg-title">Dompet</div><div class="pg-sub">Kartu & rekening bersama</div></div>
+    <button class="refresh-btn" onclick="loadDompet()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button>
+  </div>
+  <div id="dompetContent"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
+</div>
+
+<!-- REKAP -->
+<div id="pg-rekap" class="page">
+  <div class="pg-hd">
+    <div><div class="pg-title">Rekap Total</div><div class="pg-sub">Ringkasan tahunan</div></div>
+    <button class="refresh-btn" onclick="loadRekap()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button>
+  </div>
+  <div id="rekapContent"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
+</div>
+
+<!-- METODE -->
+<div id="pg-metode" class="page">
+  <div class="pg-hd">
+    <div><div class="pg-title">Metode Bayar</div><div class="pg-sub">Analisis pembayaran</div></div>
+    <button class="refresh-btn" onclick="loadMetode()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button>
+  </div>
+  <div id="metodeContent"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
+</div>
+
+<!-- KALENDER -->
+<div id="pg-kalender" class="page">
+  <div class="pg-hd">
+    <div><div class="pg-title">Kalender</div><div class="pg-sub">Pengeluaran harian</div></div>
+    <button class="refresh-btn" onclick="renderKalender()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button>
+  </div>
+  <div class="kal-nav">
+    <button class="kal-nav-btn" onclick="changeKalMonth(-1)">‹</button>
+    <div class="kal-nav-lbl" id="kalNavLbl">—</div>
+    <button class="kal-nav-btn" onclick="changeKalMonth(1)">›</button>
+  </div>
+  <div id="kalGrid"></div>
+  <div class="sec-lbl" style="margin-top:16px">Sisa Hari Periode</div>
+  <div class="sisa-row">
+    <div class="sisa-card"><div class="sisa-val" id="sisaTotal">—</div><div class="sisa-lbl">Total</div></div>
+    <div class="sisa-card"><div class="sisa-val" id="sisaWeekday">—</div><div class="sisa-lbl">Weekday</div></div>
+    <div class="sisa-card"><div class="sisa-val" id="sisaWeekend">—</div><div class="sisa-lbl">Weekend</div></div>
+  </div>
+  <div class="sec-lbl">Pengeluaran Harian</div>
+  <div class="chart-card"><canvas id="chartKal" height="160"></canvas></div>
+</div>
+
+<!-- NOTIF -->
+<div id="pg-notif" class="page">
+  <div class="pg-hd"><div><div class="pg-title">Notifikasi</div><div class="pg-sub">Alert & Peringatan</div></div><button class="refresh-btn" onclick="loadNotif()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button></div>
+  <div id="notifList"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
+</div>
+
+<!-- PENGATURAN -->
+<div id="pg-settings" class="page">
+  <div class="pg-hd"><div><div class="pg-title">Pengaturan</div><div class="pg-sub">Konfigurasi App</div></div></div>
+  <div class="sec-lbl">Profil</div>
+  <div class="sett-group">
+    <div class="sett-profile">
+      <div class="sett-avatar" id="settAvatar"></div>
+      <div class="sett-username" id="settUsername">SHIFA</div>
+      <div id="settUserLogin" style="font-size:0.68rem;color:var(--ac);margin-top:2px;font-weight:600"></div>
+    </div>
+    <!-- Household info -->
+    <div class="sett-item" onclick="showHouseholdInfo()">
+      <div class="sett-ico" style="background:rgba(56,189,248,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg></div>
+      <div class="sett-info"><div class="sett-lbl">Info Keluarga</div><div class="sett-sub">Anggota & kode undangan</div></div>
+      <div class="sett-arr">›</div>
+    </div>
+  </div>
+  <div class="sec-lbl">Target & Anggaran</div>
+  <div class="sett-group">
+    <div class="sett-item" onclick="openSettModal('anggaran')"><div class="sett-ico" style="background:rgba(251,191,36,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6m18 0v3M3 6v3"/></svg></div><div class="sett-info"><div class="sett-lbl">Anggaran per Kategori</div><div class="sett-sub">Atur batas pengeluaran bulanan</div></div><div class="sett-arr">›</div></div>
+    <div class="sett-item" onclick="openSettModal('kategori')"><div class="sett-ico" style="background:rgba(96,165,250,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3ZM6 6h.008v.008H6V6Z"/></svg></div><div class="sett-info"><div class="sett-lbl">Kelola Kategori</div><div class="sett-sub">Lihat daftar kategori</div></div><div class="sett-arr">›</div></div>
+    <div class="sett-item" onclick="openSettModal('rekening')"><div class="sett-ico" style="background:rgba(168,85,247,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg></div><div class="sett-info"><div class="sett-lbl">Kelola Rekening</div><div class="sett-sub">Lihat daftar rekening</div></div><div class="sett-arr">›</div></div>
+    <div class="sett-item" onclick="openSettModal('periode')"><div class="sett-ico" style="background:rgba(52,211,153,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg></div><div class="sett-info"><div class="sett-lbl">Setting Periode</div><div class="sett-sub">Atur tanggal periode manual</div></div><div class="sett-arr">›</div></div>
+  </div>
+  <div class="sec-lbl">Tampilan & Notifikasi</div>
+  <div class="sett-group">
+    <div class="sett-item"><div class="sett-ico" style="background:rgba(168,85,247,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z"/></svg></div><div class="sett-info"><div class="sett-lbl">Tema</div><div class="sett-sub" id="themeLabel">Cosmic</div></div><button class="sett-toggle" id="themeToggle" onclick="toggleTheme()"></button></div>
+    <div class="sett-item"><div class="sett-ico" style="background:rgba(248,113,113,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg></div><div class="sett-info"><div class="sett-lbl">Alert Budget</div><div class="sett-sub">Notif saat budget melebihi batas</div></div><button class="sett-toggle on" id="notifToggle" onclick="toggleNotif()"></button></div>
+    <div class="sett-item" onclick="openSettModal('alertpct')"><div class="sett-ico" style="background:rgba(251,191,36,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg></div><div class="sett-info"><div class="sett-lbl">Batas Peringatan</div><div class="sett-sub" id="alertPctLabel">80% dari anggaran</div></div><div class="sett-arr">›</div></div>
+  </div>
+  <div class="sec-lbl">Akun</div>
+  <div class="sett-group">
+    <div class="sett-item" onclick="openSettModal('katrata')"><div class="sett-ico" style="background:rgba(251,191,36,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg></div><div class="sett-info"><div class="sett-lbl">Kategori Rata-rata</div><div class="sett-sub" id="katRataLabel">Pilih kategori yang dihitung</div></div><div class="sett-arr">›</div></div>
+    <div class="sett-item" onclick="openSettModal('fixedcat')"><div class="sett-ico" style="background:rgba(52,211,153,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></div><div class="sett-info"><div class="sett-lbl">Pengeluaran Tetap</div><div class="sett-sub">Kategori yang tidak dihitung di rata²</div></div><div class="sett-arr">›</div></div>
+    <div class="sett-item" onclick="pinLogout()"><div class="sett-ico" style="background:rgba(248,113,113,0.2)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/></svg></div><div class="sett-info"><div class="sett-lbl" style="color:var(--red)">Ganti Pengguna</div><div class="sett-sub">Keluar dari sesi ini</div></div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="bnav-btn on" id="nb-dashboard" onclick="goPage('dashboard')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="bnav-btn" id="nb-data" onclick="goPage('data')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"/></svg>
+    <span>Data</span>
+  </button>
+  <!-- FAB tambah transaksi -->
+  <div class="bnav-fab-wrap">
+    <button class="bnav-fab" onclick="openInputModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </button>
+  </div>
+  <button class="bnav-btn" id="nb-tabungan" onclick="goPage('tabungan')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z"/></svg>
+    <span>Tabungan</span>
+  </button>
+  <button class="bnav-btn" id="nb-settings" onclick="goPage('settings')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+    <span>Sett</span>
+  </button>
+</nav>
+
+<!-- INPUT MODAL -->
+<div class="ov" id="ovInput" onclick="closeOv(event,'ovInput')">
+  <div class="modal modal-input">
+    <div class="modal-hd">
+      <h3>Catat Transaksi</h3>
+      <button class="modal-x" onclick="closeOv(null,'ovInput')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-bd">
+      <!-- Label dicatat oleh -->
+      <div class="input-rec-by" id="inputRecBy"></div>
+      <div class="inp-row">
+        <label class="inp-lbl">Tanggal</label>
+        <input type="date" id="inTgl" class="inp" onchange="syncBulan('in')">
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Jenis</label>
+        <select id="inJenis" class="inp" onchange="fillKat('inJenis','inKat');renderQuickKat()">
+          <option value="">— Pilih Jenis —</option>
+          <option>Pemasukan</option>
+          <option>Pengeluaran</option>
+        </select>
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Kategori</label>
+        <select id="inKat" class="inp"><option value="">— Pilih Jenis dulu —</option></select>
+      </div>
+      <!-- Quick kategori -->
+      <div class="quick-kat" id="quickKat"></div>
+      <div class="inp-row">
+        <label class="inp-lbl">Nominal</label>
+        <input type="text" id="inNom" class="inp" inputmode="numeric" placeholder="0" oninput="fmtNom(this)">
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Metode</label>
+        <select id="inMetode" class="inp">
+          <option value="">— Pilih —</option>
+          <option>Cash</option>
+          <option>Transfer</option>
+          <option>QRIS</option>
+        </select>
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Rekening</label>
+        <select id="inBank" class="inp"></select>
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Keterangan</label>
+        <input type="text" id="inKet" class="inp" placeholder="Opsional...">
+      </div>
+      <!-- AI Scan -->
+      <div class="ai-row">
+        <button class="btn-ai" id="btnAiScan" onclick="triggerAiScan()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+          Scan Struk
+        </button>
+        <input type="file" id="aiImgInput" accept="image/*" style="display:none" onchange="handleAiScanImg(event)">
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cx" onclick="closeOv(null,'ovInput')">Batal</button>
+      <button class="btn-ok" onclick="submitInput()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="ov" id="ovEdit" onclick="closeOv(event,'ovEdit')">
+  <div class="modal modal-input">
+    <div class="modal-hd"><h3>Edit Transaksi</h3><button class="modal-x" onclick="closeOv(null,'ovEdit')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="eId">
+      <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="eTgl" class="inp" onchange="syncBulan('e')"></div>
+      <div class="inp-row"><label class="inp-lbl">Jenis</label><select id="eJenis" class="inp" onchange="fillKat('eJenis','eKat')"><option value="">— Pilih —</option><option>Pemasukan</option><option>Pengeluaran</option></select></div>
+      <div class="inp-row"><label class="inp-lbl">Kategori</label><select id="eKat" class="inp"></select></div>
+      <div class="inp-row"><label class="inp-lbl">Nominal</label><input type="text" id="eNom" class="inp" inputmode="numeric" placeholder="0" oninput="fmtNom(this)"></div>
+      <div class="inp-row"><label class="inp-lbl">Metode</label><select id="eMetode" class="inp"><option value="">— Pilih —</option><option>Cash</option><option>Transfer</option><option>QRIS</option></select></div>
+      <div class="inp-row"><label class="inp-lbl">Rekening</label><select id="eBank" class="inp"></select></div>
+      <div class="inp-row"><label class="inp-lbl">Keterangan</label><input type="text" id="eKet" class="inp" placeholder="Opsional..."></div>
+    </div>
+    <div class="modal-ft"><button class="btn-cx" onclick="closeOv(null,'ovEdit')">Batal</button><button class="btn-ok" onclick="submitEdit()">Simpan</button></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="ov" id="ovConfirm" onclick="closeOv(event,'ovConfirm')">
+  <div class="modal"><div class="modal-hd"><h3 id="cfmTitle">Konfirmasi</h3><button class="modal-x" onclick="closeOv(null,'ovConfirm')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button></div><div class="modal-bd"><p id="cfmMsg" style="font-size:0.84rem;color:var(--tx2);line-height:1.5;margin:4px 0"></p></div><div class="modal-ft"><button class="btn-cx" onclick="closeOv(null,'ovConfirm')">Batal</button><button class="btn-del" id="cfmOk">Hapus</button></div></div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="ov" id="ovSett" onclick="closeOv(event,'ovSett')">
+  <div class="modal"><div class="modal-hd"><h3 id="settModalTitle">Pengaturan</h3><button class="modal-x" onclick="closeOv(null,'ovSett')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button></div><div class="modal-bd" id="settModalBody"></div><div class="modal-ft"><button class="btn-cx" onclick="closeOv(null,'ovSett')">Batal</button><button class="btn-ok" onclick="saveSettModal()">Simpan</button></div></div>
+</div>
+
+<!-- BOTTOM SHEET -->
+<div class="bs-ov" id="bsOverlay" onclick="closeBs()">
+  <div class="bs-sheet" onclick="event.stopPropagation()">
+    <div class="bs-handle"></div>
+    <div class="bs-hd"><div class="bs-title" id="bsTitle">Detail</div><button class="modal-x" onclick="closeBs()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button></div>
+    <div class="bs-body" id="bsBody"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
+  </div>
+</div>
+
+<!-- AI SCAN OVERLAY -->
+<div class="ai-scan-ov" id="aiScanOv">
+  <div class="ai-scan-box">
+    <div class="ai-scan-img-wrap" id="aiScanImgWrap">
+      <img id="aiScanPreview" src="" alt="preview">
+      <div class="ai-scan-line" id="aiScanLine"></div>
+      <div class="ai-scan-corners"><span class="asc tl"></span><span class="asc tr"></span><span class="asc bl"></span><span class="asc br"></span></div>
+    </div>
+    <div class="ai-scan-status" id="aiScanStatus">
+      <div class="ai-scan-dots"><span></span><span></span><span></span></div>
+      <div class="ai-scan-lbl" id="aiScanLbl">Menganalisis gambar...</div>
+    </div>
+    <button class="ai-scan-cancel" id="aiScanCancel" onclick="cancelAiScan()" style="display:none">Batal</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PIN / LOGIN OVERLAY -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-stars" id="pinStars"></div>
+  <div class="pin-blob pin-blob-1"></div>
+  <div class="pin-blob pin-blob-2"></div>
+  <div class="pin-wrap" id="pinWrap">
+    <!-- Diisi dinamis oleh auth.js -->
+    <div class="ldrow"><div class="spin"></div></div>
+  </div>
+</div>
+
+<!-- TABUNGAN PAGE (placeholder) -->
+<div id="pg-tabungan" class="page">
+  <div class="pg-hd"><div><div class="pg-title">Tabungan</div><div class="pg-sub">Target & simpanan bersama</div></div></div>
+  <div id="tabContent"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/dompet.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/modals.js"></script>
+</div>
+</body>
+</html>
