@@ -313,3 +313,166 @@
 .section-heading h3 { font-size: 15px; font-weight: 700; }
 
 .see-all-link { font-size: 13px; color: var(--accent); font-weight: 600; }
+
+/* ============================================
+   ATM Card Carousel (Dompet)
+   Gradient & motif dihasilkan otomatis dari warna bank
+   ============================================ */
+.atm-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 24px 4px;
+  margin: 0 -16px;
+}
+.atm-carousel::-webkit-scrollbar { display: none; }
+.atm-carousel::before,
+.atm-carousel::after { content: ''; flex: 0 0 4px; }
+
+.atm-card {
+  flex: 0 0 calc(100% - 64px);
+  scroll-snap-align: center;
+  height: 175px;
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+  transition: transform 0.2s ease;
+}
+.atm-card.active { transform: scale(1.01); }
+
+.atm-motif { position: absolute; pointer-events: none; opacity: 0.55; }
+
+.atm-chip {
+  position: absolute; top: 18px; left: 18px;
+  width: 34px; height: 25px; border-radius: 5px;
+  background: linear-gradient(135deg, #e8e8e8, #b0b0b0);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+.atm-chip::before { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(0,0,0,0.12); }
+.atm-chip::after { content:''; position:absolute; top:0; bottom:0; left:50%; width:1px; background:rgba(0,0,0,0.1); }
+
+.atm-initial {
+  position: absolute; top: 18px; right: 18px;
+  font-size: 0.7rem; font-weight: 700;
+  color: rgba(255,255,255,0.6); letter-spacing: 0.12em;
+}
+
+.atm-balance { position: absolute; bottom: 18px; left: 18px; }
+.atm-balance-lbl {
+  font-size: 0.55rem; color: rgba(255,255,255,0.78);
+  text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px;
+}
+.atm-balance-val {
+  font-size: 1.25rem; font-weight: 800; color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3); font-family: var(--font-mono);
+}
+
+.atm-bank-name {
+  position: absolute; bottom: 18px; right: 18px;
+  font-size: 1rem; font-weight: 800; color: rgba(255,255,255,0.95);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  max-width: 45%; text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.atm-dots { display: flex; justify-content: center; gap: 6px; margin: 8px 0 20px; }
+.atm-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border-color); transition: all 0.3s ease;
+}
+.atm-dots span.active { width: 18px; border-radius: 3px; background: var(--accent); }
+
+/* ============================================
+   AI Scan Struk — Overlay Animasi
+   ============================================ */
+.ai-scan-ov {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+.ai-scan-box {
+  width: min(320px, 88vw);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+
+.ai-scan-img-wrap {
+  position: relative; width: 100%; aspect-ratio: 4/3;
+  border-radius: var(--radius-sm); overflow: hidden;
+  background: rgba(0,0,0,0.4); border: 1px solid var(--card-border);
+}
+.ai-scan-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.ai-scan-line {
+  position: absolute; left: 0; right: 0; height: 2px; top: 0;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), var(--accent), transparent);
+  box-shadow: 0 0 12px 3px var(--glow-accent);
+  animation: scanLine 1.8s ease-in-out infinite;
+}
+@keyframes scanLine {
+  0% { top: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.ai-scan-corners { position: absolute; inset: 0; pointer-events: none; }
+.asc { position: absolute; width: 18px; height: 18px; border-color: var(--accent); border-style: solid; opacity: 0.9; }
+.asc.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+.asc.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+.asc.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+.asc.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+
+.ai-scan-status { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ai-scan-dots { display: flex; gap: 6px; }
+.ai-scan-dots span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); animation: aiDotBounce 1.2s ease-in-out infinite;
+}
+.ai-scan-dots span:nth-child(2) { animation-delay: 0.2s; background: var(--accent-2); }
+.ai-scan-dots span:nth-child(3) { animation-delay: 0.4s; background: var(--accent); }
+@keyframes aiDotBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-5px); opacity: 1; }
+}
+
+.ai-scan-lbl { font-size: 0.82rem; color: var(--text-secondary); text-align: center; font-weight: 500; }
+
+.ai-scan-cancel {
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border-color);
+  color: var(--text-secondary); font-size: 0.76rem;
+  padding: 8px 20px; border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Timeline Transaction List (Transaksi)
+   ============================================ */
+.date-group { margin-bottom: 18px; padding-left: 24px; position: relative; }
+.date-group::before {
+  content: ''; position: absolute; left: 5px; top: 10px; bottom: -6px; width: 2px;
+  background: var(--border-color);
+}
+.date-group:last-child::before { display: none; }
+
+.dg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; position: relative; }
+.dg-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; position: absolute; left: -24px; }
+.dg-dot.spd { background: var(--danger); box-shadow: 0 0 8px rgba(255,122,133,0.5); }
+.dg-dot.inc { background: var(--success); box-shadow: 0 0 8px rgba(43,191,163,0.5); }
+.dg-dot.mix { background: linear-gradient(135deg, var(--success) 50%, var(--danger) 50%); }
+.dg-date { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); flex: 1; }
+.dg-total { font-size: 0.7rem; font-weight: 800; font-family: var(--font-mono); }
+.dg-cards { display: flex; flex-direction: column; gap: 8px; }
+
+.transaction-item.inc { border-left: 3px solid var(--success); }
+.transaction-item.spd { border-left: 3px solid var(--danger); }
