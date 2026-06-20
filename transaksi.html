@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id" data-theme="blue-ocean">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -86,6 +86,25 @@
           <button type="submit" class="btn-primary">Simpan</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- AI Scan Struk Overlay -->
+  <div id="aiScanOverlay" class="ai-scan-ov" hidden>
+    <div class="ai-scan-box">
+      <div class="ai-scan-img-wrap">
+        <img id="aiScanImg" src="" alt="struk" />
+        <div class="ai-scan-line"></div>
+        <div class="ai-scan-corners">
+          <span class="asc tl"></span><span class="asc tr"></span>
+          <span class="asc bl"></span><span class="asc br"></span>
+        </div>
+      </div>
+      <div class="ai-scan-status">
+        <div class="ai-scan-dots"><span></span><span></span><span></span></div>
+        <div class="ai-scan-lbl" id="aiScanLbl">Membaca struk...</div>
+      </div>
+      <button type="button" id="aiScanCancel" class="ai-scan-cancel">Batal</button>
     </div>
   </div>
 
