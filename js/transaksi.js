@@ -64,7 +64,6 @@ function populateFilterSelect(el, list, placeholder) {
 // ===== Modal =====
 fabAdd.addEventListener('click', () => { modal.hidden = false; });
 
-// Klik overlay (luar sheet) = tutup modal
 modal.addEventListener('click', (e) => {
   if (e.target === modal) closeModal();
 });
@@ -102,29 +101,61 @@ inputNominal.addEventListener('input', () => {
   inputNominal.value = raw ? Number(raw).toLocaleString('id-ID') : '';
 });
 
-// ===== Scan Struk AI =====
+// ===== Scan Struk AI dengan overlay animasi =====
 const inputStruk = document.getElementById('inputStruk');
+const aiScanOverlay = document.getElementById('aiScanOverlay');
+const aiScanImg = document.getElementById('aiScanImg');
+const aiScanLbl = document.getElementById('aiScanLbl');
+const aiScanCancel = document.getElementById('aiScanCancel');
+let aiScanAbort = false;
+
 inputStruk.addEventListener('change', async () => {
   const file = inputStruk.files[0];
   if (!file) return;
-  showToast('Membaca struk...');
+
+  aiScanAbort = false;
+  aiScanImg.src = URL.createObjectURL(file);
+  aiScanLbl.textContent = 'Membaca struk...';
+  aiScanOverlay.hidden = false;
+
   try {
     const base64 = await fileToBase64(file);
+    if (aiScanAbort) return;
+
     const response = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: base64, mimeType: file.type }),
     });
     const data = await response.json();
-    if (!data.success) { showToast('Gagal membaca struk, isi manual', 'danger'); return; }
+    if (aiScanAbort) return;
+
+    if (!data.success) {
+      aiScanLbl.textContent = 'Gagal membaca struk';
+      setTimeout(() => { aiScanOverlay.hidden = true; }, 900);
+      showToast('Gagal membaca struk, isi manual', 'danger');
+      return;
+    }
+
     const { nominal, tanggal, keterangan } = data.result;
     if (nominal) inputNominal.value = Number(nominal).toLocaleString('id-ID');
     if (tanggal) inputTanggal.value = tanggal;
     if (keterangan) document.getElementById('inputDeskripsi').value = keterangan;
-    showToast('Struk dibaca, cek data sebelum simpan');
+
+    aiScanLbl.textContent = 'Berhasil dibaca!';
+    setTimeout(() => { aiScanOverlay.hidden = true; }, 700);
   } catch (err) {
-    showToast('Gagal membaca struk', 'danger');
+    if (!aiScanAbort) {
+      aiScanLbl.textContent = 'Gagal membaca struk';
+      setTimeout(() => { aiScanOverlay.hidden = true; }, 900);
+      showToast('Gagal membaca struk', 'danger');
+    }
   }
+});
+
+aiScanCancel.addEventListener('click', () => {
+  aiScanAbort = true;
+  aiScanOverlay.hidden = true;
 });
 
 function fileToBase64(file) {
@@ -178,22 +209,57 @@ async function loadTransaksi() {
   renderList(data);
 }
 
+// ===== Render list gaya timeline: dikelompokkan per tanggal =====
 function renderList(items) {
   const container = document.getElementById('transactionList');
+
   if (!items || items.length === 0) {
     container.innerHTML = '<p class="empty-state">Belum ada transaksi.</p>';
     return;
   }
+
   const kategoriMap = Object.fromEntries(kategoriList.map((k) => [k.id, k.nama]));
-  container.innerHTML = items.map((t) => `
-    <div class="card transaction-item">
-      <div class="transaction-info">
-        <span class="transaction-category">${kategoriMap[t.kategori_id] || 'Tanpa kategori'}</span>
-        <span class="transaction-meta">${formatTanggal(t.tanggal)}${t.deskripsi ? ' · ' + t.deskripsi : ''}</span>
+
+  const groups = {};
+  items.forEach((t) => {
+    if (!groups[t.tanggal]) groups[t.tanggal] = [];
+    groups[t.tanggal].push(t);
+  });
+
+  const dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  container.innerHTML = dates.map((tgl) => {
+    const dayItems = groups[tgl];
+    const hasIn = dayItems.some((t) => t.jenis === 'pemasukan');
+    const hasOut = dayItems.some((t) => t.jenis === 'pengeluaran');
+    const dotClass = hasIn && hasOut ? 'mix' : hasIn ? 'inc' : 'spd';
+
+    const netTotal = dayItems.reduce(
+      (s, t) => s + (t.jenis === 'pemasukan' ? Number(t.nominal) : -Number(t.nominal)),
+      0
+    );
+
+    const cardsHTML = dayItems.map((t) => `
+      <div class="card transaction-item ${t.jenis === 'pemasukan' ? 'inc' : 'spd'}">
+        <div class="transaction-info">
+          <span class="transaction-category">${kategoriMap[t.kategori_id] || 'Tanpa kategori'}</span>
+          ${t.deskripsi ? `<span class="transaction-meta">${t.deskripsi}</span>` : ''}
+        </div>
+        <span class="transaction-amount ${t.jenis === 'pemasukan' ? 'amount-in' : 'amount-out'}">
+          ${t.jenis === 'pemasukan' ? '+' : '-'} ${formatRupiah(t.nominal)}
+        </span>
       </div>
-      <span class="transaction-amount ${t.jenis === 'pemasukan' ? 'amount-in' : 'amount-out'}">
-        ${t.jenis === 'pemasukan' ? '+' : '-'} ${formatRupiah(t.nominal)}
-      </span>
-    </div>
-  `).join('');
+    `).join('');
+
+    return `
+      <div class="date-group">
+        <div class="dg-header">
+          <span class="dg-dot ${dotClass}"></span>
+          <span class="dg-date">${formatTanggal(tgl)}</span>
+          <span class="dg-total ${netTotal >= 0 ? 'amount-in' : 'amount-out'}">${netTotal >= 0 ? '+' : ''}${formatRupiah(netTotal)}</span>
+        </div>
+        <div class="dg-cards">${cardsHTML}</div>
+      </div>
+    `;
+  }).join('');
 }
