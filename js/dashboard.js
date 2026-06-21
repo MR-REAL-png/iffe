@@ -7,7 +7,10 @@ function goPage(p){
   const nb=document.getElementById('nb-'+p);if(nb)nb.classList.add('on');
   const di=document.getElementById('di-'+p);if(di)di.classList.add('active');
   window.scrollTo(0,0);
-  if(p==='data'){
+  if(p==='settings'){
+    loadSettings();
+    updateSettAvatar();
+  }
     const el=document.getElementById('dataList');
     if(el&&!allRows.length)el.innerHTML='<div class="skel skel-card"></div>'.repeat(5);
     initFilterWho();
