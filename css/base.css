@@ -489,6 +489,7 @@ img { max-width: 100%; }
   display: flex; flex-direction: column;
   animation: bsIn .3s var(--ease);
   padding-bottom: max(16px, env(safe-area-inset-bottom));
+  min-height: 50vh;
 }
 @keyframes bsIn { from{transform:translateY(100%)} to{transform:translateY(0)} }
 .bs-handle {
@@ -501,7 +502,7 @@ img { max-width: 100%; }
   flex-shrink: 0;
 }
 .bs-title { font-size: 0.92rem; font-weight: 700; color: var(--tx); }
-.bs-body { flex: 1; overflow-y: auto; padding: 14px 18px; }
+.bs-body { flex: 1; overflow-y: auto; padding: 14px 18px; min-height: 200px; }
 .bs-body::-webkit-scrollbar { display: none; }
 
 /* ── MODAL / OVERLAY ── */
