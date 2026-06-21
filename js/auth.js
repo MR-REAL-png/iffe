@@ -110,23 +110,66 @@ function showSetupScreen() {
   pinMode = 'setup';
   pinBuffer = '';
   const wrap = document.getElementById('pinWrap');
+  const hasMembers = getHouseholdMembers().length > 0;
   wrap.innerHTML = `
     <div class="pin-logo" id="pinLogo"></div>
     <div class="pin-app-name">${APP_NAME}</div>
     <div class="pin-subtitle">Mulai perjalanan finansial bersama 🌿</div>
     <div class="pin-datetime" id="pinDatetime"></div>
     <div class="pin-setup-btns">
-      <button class="pin-setup-btn pin-setup-primary" onclick="showRegisterScreen()">
+      <button class="pin-setup-btn pin-setup-primary" onclick="showLoginByNameScreen()">
+        🔑 Sudah punya akun? Masuk
+      </button>
+      <button class="pin-setup-btn pin-setup-secondary" onclick="showRegisterScreen()">
         Buat Keluarga Baru
       </button>
       <button class="pin-setup-btn pin-setup-secondary" onclick="showJoinScreen()">
         Gabung Keluarga (Punya Kode)
       </button>
     </div>
-    <button class="pin-switch" onclick="showUserPicker(getHouseholdMembers())" ${getHouseholdMembers().length===0?'style="display:none"':''}>← Kembali</button>
+    <button class="pin-switch" onclick="showUserPicker(getHouseholdMembers())" ${!hasMembers?'style="display:none"':''}>← Kembali</button>
   `;
   initLogo();
   updatePinDatetime();
+}
+
+// ═══ SCREEN: LOGIN BY NAME (device baru / browser baru) ═══
+function showLoginByNameScreen() {
+  pinMode = 'login-by-name';
+  pinBuffer = '';
+  const wrap = document.getElementById('pinWrap');
+  wrap.innerHTML = `
+    <div class="pin-logo" id="pinLogo"></div>
+    <div class="pin-subtitle">Masuk dengan nama kamu</div>
+    <div class="pin-datetime" id="pinDatetime"></div>
+    <div class="pin-name-wrap">
+      <input class="pin-name-input" id="pinNameInput" type="text" placeholder="Nama kamu..." maxlength="20" autocomplete="off">
+    </div>
+    <div class="pin-dots" id="pinDots">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="pin-sublabel">Masukkan PIN kamu</div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-keypad">
+      <button class="pk" onclick="pinKey('1')">1</button>
+      <button class="pk" onclick="pinKey('2')">2</button>
+      <button class="pk" onclick="pinKey('3')">3</button>
+      <button class="pk" onclick="pinKey('4')">4</button>
+      <button class="pk" onclick="pinKey('5')">5</button>
+      <button class="pk" onclick="pinKey('6')">6</button>
+      <button class="pk" onclick="pinKey('7')">7</button>
+      <button class="pk" onclick="pinKey('8')">8</button>
+      <button class="pk" onclick="pinKey('9')">9</button>
+      <button class="pk pk-empty"></button>
+      <button class="pk" onclick="pinKey('0')">0</button>
+      <button class="pk pk-del" onclick="pinDel()">⌫</button>
+    </div>
+    <button class="pin-switch" onclick="showSetupScreen()">← Kembali</button>
+  `;
+  initLogo();
+  updatePinDatetime();
+  renderPinDots();
+  setTimeout(() => document.getElementById('pinNameInput')?.focus(), 100);
 }
 
 // ═══ SCREEN: REGISTER ═══
