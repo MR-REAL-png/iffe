@@ -729,6 +729,28 @@ function clearLog() {
 
 // ═══ UTILS ═══
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+<!-- VERCEL DEPLOY BUTTON -->
+<div style="position:fixed;bottom:20px;right:20px;z-index:9999">
+  <button onclick="triggerDeploy()" style="background:linear-gradient(135deg,#38bdf8,#f472b6);color:#fff;border:none;padding:12px 20px;border-radius:50px;font-size:0.85rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(56,189,248,0.4)">
+    🚀 Deploy ke Vercel
+  </button>
+</div>
+<script>
+async function triggerDeploy(){
+  const btn = event.target;
+  btn.textContent = '⏳ Deploying...';
+  btn.disabled = true;
+  try {
+    await fetch('https://api.vercel.com/v1/integrations/deploy/prj_Puw9SyBQcalhxySEt8axTrJBz2gO/v8zP4OcQY8', {method:'POST'});
+    btn.textContent = '✅ Deploy triggered!';
+    btn.style.background = 'linear-gradient(135deg,#34d399,#059669)';
+  } catch(e) {
+    btn.textContent = '❌ Gagal';
+    btn.style.background = '#f87171';
+  }
+  setTimeout(()=>{btn.textContent='🚀 Deploy ke Vercel';btn.disabled=false;btn.style.background='linear-gradient(135deg,#38bdf8,#f472b6)'},3000);
+}
+</script>
 </script>
 </body>
 </html>
