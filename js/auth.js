@@ -294,7 +294,7 @@ async function pinSubmit() {
       });
       const json = await res.json();
       if (json.success) {
-        setSession({ username: json.username, household_id: json.household_id, color: json.color });
+        setSession({ username: json.username, household_id: json.household_id, color: json.color || USER_COLORS.default1 });
         // Refresh members dari server
         await refreshMembers(json.household_id);
         hidePinOverlay();
@@ -321,7 +321,11 @@ async function pinSubmit() {
       });
       const json = await res.json();
       if (json.success) {
-        setSession({ username: json.username, household_id: json.household_id, color: json.color });
+        // Ambil warna dari members list
+        const members = getHouseholdMembers();
+        const member = members.find(m => m.username === json.username);
+        const color = member?.color || json.color || USER_COLORS.default1;
+        setSession({ username: json.username, household_id: json.household_id, color });
         await refreshMembers(json.household_id);
         hidePinOverlay();
         updateProfileUI();
