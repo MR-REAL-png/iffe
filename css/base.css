@@ -310,7 +310,7 @@ img { max-width: 100%; }
 .drawer-footer {
   padding: 12px 16px; border-top: 1px solid var(--bdr);
   flex-shrink: 0;
-  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 70px));
   background: var(--bg2);
 }
 .drawer-theme-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -490,7 +490,7 @@ img { max-width: 100%; }
   border-radius: 24px 24px 0 0;
   display: flex; flex-direction: column;
   animation: bsIn .3s var(--ease);
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 70px));
   min-height: 50vh;
 }
 @keyframes bsIn { from{transform:translateY(100%)} to{transform:translateY(0)} }
