@@ -11,6 +11,7 @@ function goPage(p){
     loadSettings();
     updateSettAvatar();
   }
+  else if(p==='data'){
     const el=document.getElementById('dataList');
     if(el&&!allRows.length)el.innerHTML='<div class="skel skel-card"></div>'.repeat(5);
     initFilterWho();
