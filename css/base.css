@@ -514,8 +514,9 @@ img { max-width: 100%; }
   background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
   display: none; align-items: center; justify-content: center;
   padding: 20px 16px;
+  pointer-events: none;
 }
-.ov.open { display: flex; }
+.ov.open { display: flex; pointer-events: all; }
 .modal {
   width: 100%; max-width: 480px; max-height: 82vh;
   background: var(--bg2); border: 1px solid var(--bdr2);
