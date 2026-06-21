@@ -218,13 +218,13 @@ img { max-width: 100%; }
 /* ── DRAWER ── */
 .drawer-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.65);
-  z-index: 400; opacity: 0; pointer-events: none;
+  z-index: 99998; opacity: 0; pointer-events: none;
   transition: opacity .3s; backdrop-filter: blur(4px);
 }
 .drawer-overlay.open { opacity: 1; pointer-events: all; }
 .drawer {
   position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
-  z-index: 500;
+  z-index: 99999;
   background: rgba(5,10,22,0.98);
   border-right: 1px solid rgba(56,189,248,0.15);
   transform: translateX(-100%);
@@ -308,10 +308,10 @@ img { max-width: 100%; }
   padding: 2px 6px; border-radius: 50px; flex-shrink: 0;
 }
 .drawer-footer {
-  padding: 12px 16px; border-top: 1px solid var(--bdr);
+  padding: 12px 16px 20px; border-top: 1px solid var(--bdr);
   flex-shrink: 0;
-  padding-bottom: max(24px, env(safe-area-inset-bottom));
   background: var(--bg2);
+  margin-bottom: 0;
 }
 .drawer-theme-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .drawer-theme-lbl { font-size: 0.78rem; color: var(--tx2); font-weight: 600; }
