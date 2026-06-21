@@ -1,7 +1,7 @@
 # KAS BERSAMA — Backend API
   
 ## Setup Vercel Environment Variable
-
+   
 Di Vercel Dashboard → Project → Settings → Environment Variables, tambahkan:
 
 | Key | Value |
