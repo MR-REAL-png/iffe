@@ -519,6 +519,7 @@ img { max-width: 100%; }
   border-radius: 24px 24px 0 0;
   display: flex; flex-direction: column;
   animation: bsIn .3s var(--ease);
+  min-height: 50vh;
 }
 .modal-input { max-height: 88vh; }
 .modal-hd {
@@ -875,6 +876,7 @@ select.inp { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.
   border: 1px solid rgba(56,189,248,0.2);
   border-radius: 16px; padding: 18px; text-align: center; margin-bottom: 14px;
 }
+#pg-tabungan { padding-top: 4px; }
 .ts-val { font-family: var(--ffd); font-size: 1.6rem; font-weight: 700; color: var(--grn); }
 .ts-lbl { font-size: 0.72rem; color: var(--tx3); margin-top: 4px; }
 
