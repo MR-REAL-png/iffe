@@ -194,18 +194,16 @@ function openTransferModal(){
   openOv('ovSett');
 }
 
-// saveSettModal di modals.js akan handle type='transfer'
-// Tambahkan handler transfer di sini
-const _origSaveSettModal=window.saveSettModal;
-window.saveSettModal=function(){
-  if(settModalType==='transfer'){
-    submitTransfer();return;
-  }
-  if(settModalType==='edit-transfer'){
-    submitEditTransfer();return;
-  }
-  if(_origSaveSettModal)_origSaveSettModal();
-};
+// saveSettModal handler untuk transfer - diinisialisasi setelah semua script load
+function initDompetModalHandler(){
+  const _orig=window.saveSettModal;
+  window.saveSettModal=function(){
+    if(settModalType==='transfer'){submitTransfer();return;}
+    if(settModalType==='edit-transfer'){submitEditTransfer();return;}
+    if(_orig)_orig();
+  };
+}
+document.addEventListener('DOMContentLoaded',()=>setTimeout(initDompetModalHandler,100));
 
 async function submitTransfer(){
   const dari=document.getElementById('trDari')?.value;
