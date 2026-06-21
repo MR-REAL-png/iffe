@@ -11,13 +11,14 @@ function initSettingsPage(){
 // ═══ SETT AVATAR UPDATE ═══
 function updateSettAvatar(){
   const session=getSession();if(!session)return;
+  const{username,color}=session;
   const av=document.getElementById('settAvatar');
   if(av){
-    av.style.cssText=`width:64px;height:64px;border-radius:20px;background:${session.color}20;border:2px solid ${session.color};display:flex;align-items:center;justify-content:center;margin:0 auto 8px`;
-    av.innerHTML=`<span style="color:${session.color};font-size:1.8rem;font-weight:800">${session.username.charAt(0).toUpperCase()}</span>`;
+    av.style.cssText=`width:64px;height:64px;border-radius:20px;background:${color}20;border:2px solid ${color};display:flex;align-items:center;justify-content:center;margin:0 auto 8px`;
+    av.innerHTML=`<span style="color:${color};font-size:1.8rem;font-weight:800">${username.charAt(0).toUpperCase()}</span>`;
   }
   const unEl=document.getElementById('settUsername');
-  if(unEl)unEl.textContent=session.username;
+  if(unEl)unEl.textContent=username;
   const ulEl=document.getElementById('settUserLogin');
-  if(ulEl){ulEl.textContent=APP_NAME;ulEl.style.color=session.color;}
+  if(ulEl){ulEl.textContent=APP_NAME;ulEl.style.color=color;}
 }
