@@ -212,6 +212,7 @@ function renderChartHarian(rows){
 // ═══ BUDGET / KOMPOSISI ═══
 function renderBudget(byCat){
   const el=document.getElementById('budgetList');
+  if(!el)return;
   const now=new Date();
   const bKey=getBudgetMonthKey(now.getFullYear(),now.getMonth());
   const budgets=getBudgetsForMonth(bKey);
