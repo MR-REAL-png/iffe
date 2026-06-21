@@ -543,7 +543,11 @@ async function loadTabungan(){
     const json=await res.json();
     const list=json.data||[];
     if(!list.length){
-      el.innerHTML=`<div class="empty-state"><div class="empty-ico">🏦</div><div class="empty-title">Belum ada tabungan</div><div class="empty-sub">Tambah target tabungan bersama</div></div><div style="padding:0 0 16px"><button class="btn-ok" style="width:100%" onclick="openAddTabungan()">+ Tambah Tabungan</button></div>`;
+      el.innerHTML=`
+        <div class="pg-hd"><div><div class="pg-title">Tabungan</div><div class="pg-sub">Target & simpanan bersama</div></div></div>
+        <div class="empty-state"><div class="empty-ico">🏦</div><div class="empty-title">Belum ada tabungan</div><div class="empty-sub">Tambah target tabungan bersama</div></div>
+        <button class="btn-ok" style="width:100%;margin-top:8px" onclick="openAddTabungan()">+ Tambah Tabungan</button>
+      `;
       return;
     }
     const total=list.reduce((s,t)=>s+Number(t.target),0);
