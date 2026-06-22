@@ -404,31 +404,70 @@ async function loadRekap(){
   el.innerHTML='<div class="ldrow"><div class="spin"></div>Memuat...</div>';
   try{
     if(!allRows.length)allRows=await fetchAllData();
-    const byYear=groupBy(allRows,'tanggal');
     const years=[...new Set(allRows.map(r=>r.tanggal?.slice(0,4)).filter(Boolean))].sort().reverse();
     if(!years.length){el.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data</p></div>`;return}
-    el.innerHTML=years.map(y=>{
+
+    let html='';
+    years.forEach(y=>{
       const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
-      const masuk=yRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
-      const keluar=yRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
-      const kas=masuk-keluar;
+      const totalMasuk=yRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
+      const totalKeluar=yRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
+      const kasTotal=totalMasuk-totalKeluar;
+
       const byBulan=MOS.map((m,i)=>{
         const mRows=yRows.filter(r=>r.bulan===m);
         const mk=mRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
         const kk=mRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
         return{bulan:m,masuk:mk,keluar:kk,kas:mk-kk,count:mRows.length};
       }).filter(m=>m.count>0);
-      return`<div class="rekap-year">
-        <div class="rekap-year-hd"><span class="rekap-year-lbl">${y}</span><span class="rekap-kas ${kas>=0?'g':'r'}">${kas>=0?'+':'−'}${rpShort(Math.abs(kas))}</span></div>
-        <div class="rekap-pills"><span class="rek-pill g">↓ Masuk ${rpShort(masuk)}</span><span class="rek-pill r">↑ Keluar ${rpShort(keluar)}</span></div>
-        ${byBulan.map(m=>`<div class="rekap-row">
-          <span class="rekap-bulan">${m.bulan}</span>
-          <span class="rekap-nom g" title="Pemasukan">↓ ${rpShort(m.masuk)}</span>
-          <span class="rekap-nom r" title="Pengeluaran">↑ ${rpShort(m.keluar)}</span>
-          <span class="rekap-nom ${m.kas>=0?'g':'r'}">${m.kas>=0?'+':'−'}${rpShort(Math.abs(m.kas))}</span>
-        </div>`).join('')}
-      </div>`;
-    }).join('');
+
+      html+=`
+        <div style="margin-bottom:20px">
+          <!-- Header tahun -->
+          <div style="font-family:var(--ffd);font-size:1.1rem;font-weight:700;color:var(--tx);margin-bottom:10px">${y}</div>
+
+          <!-- Total Pemasukan & Pengeluaran -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div style="background:var(--grn-bg);border:1px solid rgba(52,211,153,0.2);border-radius:14px;padding:12px;text-align:center">
+              <div style="font-size:0.55rem;font-weight:800;color:var(--grn);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Total Pemasukan</div>
+              <div style="font-family:var(--ffd);font-size:1rem;font-weight:700;color:var(--grn)">${rp(totalMasuk)}</div>
+            </div>
+            <div style="background:var(--red-bg);border:1px solid rgba(248,113,113,0.2);border-radius:14px;padding:12px;text-align:center">
+              <div style="font-size:0.55rem;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Total Pengeluaran</div>
+              <div style="font-family:var(--ffd);font-size:1rem;font-weight:700;color:var(--red)">${rp(totalKeluar)}</div>
+            </div>
+          </div>
+
+          <!-- Arus Kas Tahunan -->
+          <div style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(244,114,182,0.1));border:1px solid rgba(56,189,248,0.2);border-radius:14px;padding:14px;text-align:center;margin-bottom:12px">
+            <div style="font-size:0.55rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Arus Kas Tahunan</div>
+            <div style="font-family:var(--ffd);font-size:1.6rem;font-weight:700;color:${kasTotal>=0?'var(--grn)':'var(--red)'}">${kasTotal<0?'−':''}${rp(Math.abs(kasTotal))}</div>
+          </div>
+
+          <!-- Per Bulan -->
+          <div style="font-size:0.6rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Per Bulan</div>
+          ${byBulan.map(m=>`
+            <div style="background:var(--glass);border:1px solid var(--bdr2);border-radius:14px;padding:12px;margin-bottom:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-weight:700;font-size:0.9rem;color:var(--tx)">${m.bulan} ${y}</span>
+                <span style="font-family:var(--ffd);font-size:0.9rem;font-weight:800;color:${m.kas>=0?'var(--grn)':'var(--red)'}">${m.kas>=0?'+':'−'}${rpShort(Math.abs(m.kas))}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="background:var(--grn-bg);border-radius:10px;padding:8px;text-align:center">
+                  <div style="font-size:0.55rem;font-weight:700;color:var(--grn);text-transform:uppercase;margin-bottom:3px">Pemasukan</div>
+                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--grn)">${rpShort(m.masuk)}</div>
+                </div>
+                <div style="background:var(--red-bg);border-radius:10px;padding:8px;text-align:center">
+                  <div style="font-size:0.55rem;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:3px">Pengeluaran</div>
+                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--red)">${rpShort(m.keluar)}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    });
+    el.innerHTML=html;
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal rekap: '+e.message,'err')}
 }
 
@@ -446,7 +485,28 @@ async function loadMetode(){
     const byMetode=groupBy(rows,'metode');
     const total=rows.reduce((s,r)=>s+r.nominal,0);
     const items=Object.entries(byMetode).map(([m,v])=>({metode:m||'Lainnya',nominal:v.reduce((s,r)=>s+r.nominal,0),count:v.length})).sort((a,b)=>b.nominal-a.nominal);
-    el.innerHTML=`<div class="chart-card" style="margin-bottom:12px"><canvas id="chartMetode" height="200"></canvas></div>`+
+    const metodeIcons={
+      'Cash':'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"/></svg>',
+      'Transfer':'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg>',
+      'QRIS':'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z"/><path d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z"/></svg>',
+    };
+
+    // Summary 3 kolom di atas chart
+    const mainMetodes=['Cash','Transfer','QRIS'];
+    const summaryHtml=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">${
+      mainMetodes.map(m=>{
+        const found=items.find(x=>x.metode===m);
+        const nom=found?found.nominal:0;
+        const col=m==='Cash'?'#34d399':m==='Transfer'?'#60a5fa':'#c084fc';
+        return`<div style="background:var(--glass);border:1px solid ${col}30;border-radius:14px;padding:12px 8px;text-align:center">
+          <div style="color:${col};margin-bottom:6px">${metodeIcons[m]||''}</div>
+          <div style="font-size:0.55rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">${m}</div>
+          <div style="font-family:var(--ffd);font-size:1rem;font-weight:700;color:${col}">${rpShort(nom)}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+
+    el.innerHTML=summaryHtml+`<div class="chart-card" style="margin-bottom:12px"><canvas id="chartMetode" height="200"></canvas></div>`+
       items.map((m,i)=>{
         const pct=Math.round(m.nominal/total*100);
         return`<div class="bud-item"><div class="bud-top"><span class="bud-name">${m.metode}</span><span class="bud-pct">${pct}%</span></div><div class="bud-bar"><div class="bud-fill bud-ok" style="width:0%" data-w="${pct}"></div></div><div class="bud-amts"><span>${rp(m.nominal)}</span><span>${m.count} transaksi</span></div></div>`;
