@@ -345,6 +345,8 @@ function loadSettings(){
     const unEl=document.getElementById('settUsername');if(unEl)unEl.textContent=session.username;
     const ulEl=document.getElementById('settUserLogin');if(ulEl){ulEl.textContent='SHIFA';ulEl.style.color=session.color;}
   }
+  // Selalu update avatar dari session aktif
+  updateSettAvatar();
 }
 
 // ═══ LOAD THEME ═══
