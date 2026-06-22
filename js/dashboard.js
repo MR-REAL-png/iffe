@@ -92,11 +92,7 @@ async function loadDashboard(){
     // Render member activity di dashboard
     renderMemberActivity(rows);
 
-    const _bKey=getBudgetMonthKey(new Date(startDate).getFullYear(),new Date(startDate).getMonth());
-    const _budgets=getBudgetsForMonth(_bKey);
-    const _hasBudget=Object.values(_budgets).some(v=>Number(v)>0);
-    const _kompSec=document.getElementById('kompSection');
-    if(_kompSec)_kompSec.style.display=_hasBudget?'none':'';
+    // Komposisi pengeluaran selalu ditampilkan (tidak lagi disembunyikan saat ada budget)
 
     // Render chart dengan delay supaya DOM siap
     setTimeout(()=>{
@@ -138,14 +134,14 @@ function renderChartKat(byCat){
   const total=byCat.reduce((s,k)=>s+k.nominal,0);
   const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
   const bdrCol=isOcean?'rgba(10,74,140,0.6)':'rgba(15,12,41,0.6)';
-  const legendColor=isOcean?'#B8DEFF':'#E2D9FF';
+  const legendColor=isOcean?'#0c2a3d':'#E2D9FF';
   const plugin={id:'rdg',afterDraw(chart){
     const{ctx:c,chartArea:ca}=chart;if(!ca)return;
     const cx=(ca.left+ca.right)/2,cy=(ca.top+ca.bottom)/2;
     c.save();c.textAlign='center';c.textBaseline='middle';
-    c.fillStyle=isOcean?'rgba(184,222,255,0.6)':'rgba(226,217,255,0.6)';
+    c.fillStyle=isOcean?'rgba(12,42,61,0.55)':'rgba(226,217,255,0.6)';
     c.font=`500 11px 'DM Sans',sans-serif`;c.fillText('Total',cx,cy-14);
-    c.fillStyle='rgba(255,255,255,0.95)';
+    c.fillStyle=isOcean?'rgba(12,42,61,0.9)':'rgba(255,255,255,0.95)';
     c.font=`bold 20px 'Playfair Display',serif`;
     c.fillText((total/1e6).toFixed(1)+'jt',cx,cy+10);
     c.restore();
@@ -185,7 +181,7 @@ function renderChartHarian(rows){
   if(!sorted.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data harian</p></div>`;return}
   wrap.innerHTML='<canvas id="chartHarian"></canvas>';
   const ctx=document.getElementById('chartHarian').getContext('2d');
-  const tc='rgba(255,255,255,0.45)';
+  const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
   const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
   const values=sorted.map(d=>byDay[d]);
   const maxVal=Math.max(...values);
@@ -219,9 +215,7 @@ function renderBudget(byCat){
   const now=new Date();
   const bKey=getBudgetMonthKey(now.getFullYear(),now.getMonth());
   const budgets=getBudgetsForMonth(bKey);
-  const hasBudget=Object.values(budgets).some(v=>Number(v)>0);
-  const kompSec=document.getElementById('kompSection');
-  if(kompSec)kompSec.style.display=hasBudget?'none':'';
+  // Komposisi pengeluaran selalu ditampilkan (tidak lagi disembunyikan saat ada budget)
   if(!byCat.length){el.innerHTML=`<div class="empty"><div class="ei">${IC.ok}</div><p>Belum ada pengeluaran</p></div>`;renderBudgetMonitor([]);return}
   const total=byCat.reduce((s,k)=>s+k.nominal,0);
   let tampil=byCat;
@@ -254,7 +248,11 @@ function renderBudgetMonitor(byCat){
     const over=pct>100;
     return{k,budget,pct,cls,barW,over};
   });
-  if(!allItems.length){el.style.display='none';secLbl.style.display='none';return}
+  if(!allItems.length){
+    secLbl.style.display='';el.style.display='flex';
+    el.innerHTML=`<div class="empty" style="padding:16px 0"><div class="ei">${IC.tag}</div><p>Belum ada budget diatur untuk kategori ini</p></div>`;
+    return;
+  }
   let items=bmonRingkas&&allItems.length>5?allItems.slice(0,5):allItems;
   secLbl.style.display='';el.style.display='flex';
   el.innerHTML=items.map(({k,budget,pct,cls,barW,over},i)=>`
@@ -516,10 +514,11 @@ async function loadMetode(){
     const ctx=document.getElementById('chartMetode')?.getContext('2d');
     if(ctx){
       if(chartMetode){try{chartMetode.destroy()}catch(e){}}
+      const isOceanM=document.documentElement.getAttribute('data-theme')==='ocean';
       chartMetode=new Chart(ctx,{
         type:'doughnut',
-        data:{labels:items.map(m=>m.metode),datasets:[{data:items.map(m=>m.nominal),backgroundColor:CHART_COLORS.slice(0,items.length),borderWidth:1.5,borderColor:'rgba(15,12,41,0.6)',hoverOffset:6}]},
-        options:{responsive:true,cutout:'50%',plugins:{legend:{display:true,position:'bottom',labels:{color:'rgba(255,255,255,0.7)',font:{size:11},padding:12}},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)}`}}}}
+        data:{labels:items.map(m=>m.metode),datasets:[{data:items.map(m=>m.nominal),backgroundColor:CHART_COLORS.slice(0,items.length),borderWidth:1.5,borderColor:isOceanM?'rgba(2,132,199,0.3)':'rgba(15,12,41,0.6)',hoverOffset:6}]},
+        options:{responsive:true,cutout:'50%',plugins:{legend:{display:true,position:'bottom',labels:{color:isOceanM?'#0c2a3d':'rgba(255,255,255,0.7)',font:{size:11},padding:12}},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)}`}}}}
       });
     }
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal metode: '+e.message,'err')}
@@ -578,7 +577,7 @@ function renderChartKal(rows){
   if(!sorted.length){wrap.innerHTML='<canvas id="chartKal"></canvas>';return}
   wrap.innerHTML='<canvas id="chartKal"></canvas>';
   const ctx=document.getElementById('chartKal').getContext('2d');
-  const tc='rgba(255,255,255,0.4)';
+  const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.5)':'rgba(255,255,255,0.4)';
   chartKal=new Chart(ctx,{
     type:'bar',
     data:{labels:sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`}),datasets:[{data:sorted.map(d=>byDay[d]),backgroundColor:'rgba(56,189,248,0.5)',borderColor:'#38bdf8',borderWidth:1,borderRadius:4}]},
