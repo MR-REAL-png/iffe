@@ -98,9 +98,12 @@ async function loadDashboard(){
     const _kompSec=document.getElementById('kompSection');
     if(_kompSec)_kompSec.style.display=_hasBudget?'none':'';
 
-    renderChartKat(byKatArr);
+    // Render chart dengan delay supaya DOM siap
+    setTimeout(()=>{
+      renderChartKat(byKatArr);
+      renderChartHarian(rows);
+    },100);
     renderBudget(byKatArr);
-    renderChartHarian(rows);
     updatePeriodUI();
     renderMemberAvatars();
     if(notifEnabled)checkBudgetAlerts(byKatArr);
@@ -417,8 +420,13 @@ async function loadRekap(){
       }).filter(m=>m.count>0);
       return`<div class="rekap-year">
         <div class="rekap-year-hd"><span class="rekap-year-lbl">${y}</span><span class="rekap-kas ${kas>=0?'g':'r'}">${kas>=0?'+':'−'}${rpShort(Math.abs(kas))}</span></div>
-        <div class="rekap-pills"><span class="rek-pill g">↓ ${rpShort(masuk)}</span><span class="rek-pill r">↑ ${rpShort(keluar)}</span></div>
-        ${byBulan.map(m=>`<div class="rekap-row"><span class="rekap-bulan">${m.bulan}</span><span class="rekap-nom g">+${rpShort(m.masuk)}</span><span class="rekap-nom r">−${rpShort(m.keluar)}</span><span class="rekap-nom ${m.kas>=0?'g':'r'}">${m.kas>=0?'+':'−'}${rpShort(Math.abs(m.kas))}</span></div>`).join('')}
+        <div class="rekap-pills"><span class="rek-pill g">↓ Masuk ${rpShort(masuk)}</span><span class="rek-pill r">↑ Keluar ${rpShort(keluar)}</span></div>
+        ${byBulan.map(m=>`<div class="rekap-row">
+          <span class="rekap-bulan">${m.bulan}</span>
+          <span class="rekap-nom g" title="Pemasukan">↓ ${rpShort(m.masuk)}</span>
+          <span class="rekap-nom r" title="Pengeluaran">↑ ${rpShort(m.keluar)}</span>
+          <span class="rekap-nom ${m.kas>=0?'g':'r'}">${m.kas>=0?'+':'−'}${rpShort(Math.abs(m.kas))}</span>
+        </div>`).join('')}
       </div>`;
     }).join('');
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal rekap: '+e.message,'err')}
