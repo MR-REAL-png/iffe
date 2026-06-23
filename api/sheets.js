@@ -322,6 +322,54 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // ═══════════════════════════════════════
+    // TRANSFERS — GET
+    // ═══════════════════════════════════════
+    if (action === 'get-transfers' && req.method === 'GET') {
+      const { household_id } = req.query;
+      if (!household_id) return res.json({ success: false, error: 'household_id wajib' });
+      const result = await sb(`/transfers?household_id=eq.${household_id}&order=tanggal.desc`);
+      return res.json({ success: true, data: result.data || [] });
+    }
+
+    // ═══════════════════════════════════════
+    // TRANSFERS — APPEND
+    // ═══════════════════════════════════════
+    if (action === 'append-transfer' && req.method === 'POST') {
+      const { household_id, dari, ke, nominal, catatan, tanggal } = req.body;
+      if (!household_id || !dari || !ke) return res.json({ success: false, error: 'Data tidak lengkap' });
+      const result = await sb('/transfers', 'POST', {
+        household_id, dari, ke,
+        nominal: Number(nominal) || 0,
+        catatan: catatan || '',
+        tanggal: tanggal || new Date().toISOString().slice(0,10)
+      });
+      if (!result.ok) return res.json({ success: false, error: 'Gagal simpan transfer' });
+      return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // TRANSFERS — UPDATE
+    // ═══════════════════════════════════════
+    if (action === 'update-transfer' && req.method === 'PUT') {
+      const { id, household_id, ...fields } = req.body;
+      if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
+      const result = await sb(`/transfers?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
+      if (!result.ok) return res.json({ success: false, error: 'Gagal update transfer' });
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // TRANSFERS — DELETE
+    // ═══════════════════════════════════════
+    if (action === 'delete-transfer' && req.method === 'DELETE') {
+      const { id, household_id } = req.query;
+      if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
+      const result = await sb(`/transfers?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
+      if (!result.ok) return res.json({ success: false, error: 'Gagal hapus transfer' });
+      return res.json({ success: true });
+    }
+
     return res.status(400).json({ success: false, error: `Action tidak dikenal: ${action}` });
 
   } catch (e) {
