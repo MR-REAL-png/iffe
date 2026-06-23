@@ -280,6 +280,33 @@ export default async function handler(req, res) {
     }
 
     // ═══════════════════════════════════════
+    // TABUNGAN HISTORY — APPEND
+    // ═══════════════════════════════════════
+    if (action === 'append-tabungan-history' && req.method === 'POST') {
+      const { household_id, tabungan_id, nominal, sumber, tanggal } = req.body;
+      const result = await sb('/tabungan_history', 'POST', {
+        household_id, tabungan_id,
+        nominal: Number(nominal) || 0,
+        sumber: sumber || null,
+        tanggal
+      });
+      if (!result.ok) return res.json({ success: false, error: 'Gagal simpan riwayat tabungan' });
+      return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // TABUNGAN HISTORY — GET
+    // ═══════════════════════════════════════
+    if (action === 'get-tabungan-history' && req.method === 'GET') {
+      const { household_id, tabungan_id } = req.query;
+      if (!household_id) return res.json({ success: false, error: 'household_id wajib' });
+      let url = `/tabungan_history?household_id=eq.${household_id}&order=created_at.desc`;
+      if (tabungan_id) url += `&tabungan_id=eq.${tabungan_id}`;
+      const result = await sb(url);
+      return res.json({ success: true, data: result.data || [] });
+    }
+
+    // ═══════════════════════════════════════
     // PIUTANG — GET
     // ═══════════════════════════════════════
     if (action === 'get-piutang' && req.method === 'GET') {
