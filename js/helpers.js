@@ -227,11 +227,31 @@ async function fetchDBOptions(){
 }
 
 // ═══ FILL BANK & KATEGORI ═══
-function fillBank(id,val){
+function fillBank(id,val,excludeCash){
   const sel=document.getElementById(id);if(!sel)return;
   const banks=dbOpts.banks||[];
+  const opts=excludeCash?banks:['Cash',...banks];
   sel.innerHTML='<option value="">— Pilih Rekening —</option>'+
-    ['Cash',...banks].map(b=>`<option value="${b}"${b===val?' selected':''}>${b}</option>`).join('');
+    opts.map(b=>`<option value="${b}"${b===val?' selected':''}>${b}</option>`).join('');
+}
+
+// ═══ SYNC METODE → REKENING ═══
+// Cash: rekening otomatis terisi "Cash" & terkunci
+// Transfer/QRIS: opsi "Cash" disembunyikan dari pilihan rekening
+function syncMetodeBank(metodeId,bankId){
+  const metode=document.getElementById(metodeId)?.value;
+  const bankSel=document.getElementById(bankId);if(!bankSel)return;
+  if(metode==='Cash'){
+    fillBank(bankId,'Cash');
+    bankSel.disabled=true;
+  }else if(metode==='Transfer'||metode==='QRIS'){
+    const cur=bankSel.value==='Cash'?'':bankSel.value;
+    fillBank(bankId,cur,true);
+    bankSel.disabled=false;
+  }else{
+    fillBank(bankId,'');
+    bankSel.disabled=false;
+  }
 }
 
 function fillKat(jenisId,katId){
