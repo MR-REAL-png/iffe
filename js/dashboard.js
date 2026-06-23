@@ -47,8 +47,13 @@ async function loadDashboard(){
   document.getElementById('d-kas').textContent='...';
   document.getElementById('d-masuk').textContent='...';
   document.getElementById('d-keluar').textContent='...';
-  const _bmon=document.getElementById('budgetMonitor');if(_bmon)_bmon.style.display='none';
-  const _bmonLbl=document.getElementById('bmonSecLbl');if(_bmonLbl)_bmonLbl.style.display='none';
+  const _bmon=document.getElementById('budgetMonitor');
+  const _bmonLbl=document.getElementById('bmonSecLbl');
+  if(_bmonLbl)_bmonLbl.style.display='';
+  if(_bmon){
+    _bmon.style.display='flex';
+    if(!_bmon.innerHTML.trim())_bmon.innerHTML='<div class="ldrow"><div class="spin"></div>Memuat...</div>';
+  }
   try{
     if(!allRows.length)allRows=await fetchAllData();
     const{startDate,endDate}=getActivePeriodResolved();
