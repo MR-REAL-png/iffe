@@ -651,6 +651,7 @@ async function loadTabungan(){
           <div class="bmon-amts"><span>${rp(t.terkumpul)}</span><span>dari ${rp(t.target)}</span></div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <button class="btn-sm-sec" onclick="openTopupTabungan(${t.id},'${t.nama}',${t.terkumpul},${t.target})">+ Topup</button>
+            <button class="btn-sm-sec" onclick="openRiwayatTabungan(${t.id},'${t.nama}')">Riwayat</button>
             <button class="btn-sm-del" onclick="deleteTabungan(${t.id})">Hapus</button>
           </div>
         </div>`;
@@ -681,14 +682,19 @@ async function submitAddTabungan(){
   if(!nama||!target){toast('Lengkapi data tabungan','err');return}
   try{
     const hid=getHouseholdId();
-    await fetch(`${API_URL}/api/sheets?action=append-tabungan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,nama,target,terkumpul})});
-    if(sumber&&terkumpul>0){
-      await sheetsAppend({
-        tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
-        kategori:'Tabungan',nominal:terkumpul,pembayaran:sumber,
-        detail:`Tabungan: ${nama}`,metode:'Transfer',jenis:'Pengeluaran'
-      });
-      allRows=[];
+    const res=await fetch(`${API_URL}/api/sheets?action=append-tabungan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,nama,target,terkumpul})});
+    const json=await res.json().catch(()=>({success:false}));
+    const tabId=json.data?.id;
+    if(terkumpul>0){
+      if(tabId)await fetch(`${API_URL}/api/sheets?action=append-tabungan-history`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,tabungan_id:tabId,nominal:terkumpul,sumber:sumber||null,tanggal:getLocalDate()})});
+      if(sumber){
+        await sheetsAppend({
+          tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
+          kategori:'Tabungan',nominal:terkumpul,pembayaran:sumber,
+          detail:`Tabungan: ${nama}`,metode:'Transfer',jenis:'Pengeluaran'
+        });
+        allRows=[];
+      }
     }
     closeBs();toast('Tabungan ditambahkan ✓','ok');loadTabungan();
     if(sumber&&terkumpul>0)loadDashboard();
@@ -713,6 +719,7 @@ async function submitTopup(id,current,nama){
   try{
     const hid=getHouseholdId();
     await fetch(`${API_URL}/api/sheets?action=update-tabungan`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,household_id:hid,terkumpul:current+tambah})});
+    await fetch(`${API_URL}/api/sheets?action=append-tabungan-history`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,tabungan_id:id,nominal:tambah,sumber:sumber||null,tanggal:getLocalDate()})});
     if(sumber){
       await sheetsAppend({
         tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
@@ -724,6 +731,26 @@ async function submitTopup(id,current,nama){
     closeBs();toast('Topup berhasil ✓','ok');loadTabungan();
     if(sumber)loadDashboard();
   }catch(e){toast('Gagal topup: '+e.message,'err')}
+}
+
+function openRiwayatTabungan(id,nama){
+  openBs(`Riwayat: ${nama}`,`<div id="riwayatTabBody"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>`);
+  (async()=>{
+    try{
+      const hid=getHouseholdId();
+      const res=await fetch(`${API_URL}/api/sheets?action=get-tabungan-history&household_id=${hid}&tabungan_id=${id}`);
+      const json=await res.json();
+      const list=json.data||[];
+      const body=document.getElementById('riwayatTabBody');if(!body)return;
+      if(!list.length){body.innerHTML=`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem">Belum ada riwayat topup</div>`;return}
+      body.innerHTML=list.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr2)">
+        <div><div style="font-size:0.82rem;font-weight:600">${h.tanggal||''}</div><div style="font-size:0.68rem;color:var(--tx3)">${h.sumber?'dari '+h.sumber:'Manual (tanpa rekening)'}</div></div>
+        <div style="font-weight:700;color:var(--grn)">+${rp(h.nominal)}</div>
+      </div>`).join('');
+    }catch(e){
+      const body=document.getElementById('riwayatTabBody');if(body)body.innerHTML=`<div style="text-align:center;color:var(--red);padding:16px;font-size:0.8rem">Gagal memuat riwayat</div>`;
+    }
+  })();
 }
 
 async function deleteTabungan(id){
