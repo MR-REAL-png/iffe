@@ -65,7 +65,7 @@ async function loadDashboard(){
     const kas=masuk-keluar;
     const days=[...new Set(rows.map(r=>r.tanggal))].length;
     const tdim=new Date(parseInt(t),MOS.indexOf(b)+1,0).getDate();
-    const FIXED_CATS=JSON.parse(localStorage.getItem('mm_fixed_cats')||'["Tabungan","Kos","Tf Rumah","Listrik Rumah","Internet","Listrik"]');
+    const FIXED_CATS=JSON.parse(localStorage.getItem('mm_fixed_cats')||'["Tabungan","Piutang","Kos","Tf Rumah","Listrik Rumah","Internet","Listrik"]');
     const fleks=rows.filter(r=>r.jenis==='Pengeluaran'&&!FIXED_CATS.some(fc=>r.kategori.toLowerCase().includes(fc.toLowerCase())));
     const totalFleks=fleks.reduce((s,r)=>s+r.nominal,0);
     const totalDaysPeriode=Math.round((ed-sd)/(1000*60*60*24));
@@ -509,10 +509,15 @@ async function loadMetode(){
       }).join('')
     }</div>`;
 
-    el.innerHTML=summaryHtml+`<div class="chart-card" style="margin-bottom:12px"><canvas id="chartMetode" height="200"></canvas></div>`+
+    el.innerHTML=summaryHtml+`<div style="background:linear-gradient(135deg,#a78bfa1a,#f472b614,#60a5fa1a);border:1px solid rgba(167,139,250,0.25);border-radius:16px;padding:14px;margin-bottom:14px"><canvas id="chartMetode" height="200"></canvas></div>`+
       items.map((m,i)=>{
         const pct=Math.round(m.nominal/total*100);
-        return`<div class="bud-item"><div class="bud-top"><span class="bud-name">${m.metode}</span><span class="bud-pct">${pct}%</span></div><div class="bud-bar"><div class="bud-fill bud-ok" style="width:0%" data-w="${pct}"></div></div><div class="bud-amts"><span>${rp(m.nominal)}</span><span>${m.count} transaksi</span></div></div>`;
+        const col=m.metode==='Transfer'?'#a78bfa':m.metode==='QRIS'?'#f472b6':'#60a5fa';
+        return`<div style="background:linear-gradient(135deg,${col}1a,${col}0d);border:1px solid ${col}30;border-radius:14px;padding:10px 12px;margin-bottom:8px">
+          <div class="bud-top"><span class="bud-name">${m.metode}</span><span class="bud-pct" style="color:${col}">${pct}%</span></div>
+          <div class="bud-bar"><div class="bud-fill bud-ok" style="width:0%" data-w="${pct}"></div></div>
+          <div class="bud-amts"><span>${rp(m.nominal)}</span><span>${m.count} transaksi</span></div>
+        </div>`;
       }).join('');
     setTimeout(()=>{el.querySelectorAll('.bud-fill').forEach(e=>e.style.width=e.dataset.w+'%')},100);
     // Render pie chart metode
@@ -660,37 +665,65 @@ function openAddTabungan(){
     <div class="inp-row"><label class="inp-lbl">Nama Tabungan</label><input type="text" id="tabNama" class="inp" placeholder="Liburan, Rumah, dll..."></div>
     <div class="inp-row"><label class="inp-lbl">Target</label><input type="text" id="tabTarget" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
     <div class="inp-row"><label class="inp-lbl">Sudah terkumpul</label><input type="text" id="tabAwal" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
+    <div class="inp-row"><label class="inp-lbl">Sumber Dana (opsional)</label><select id="tabSumber" class="inp"></select>
+      <p style="font-size:0.68rem;color:var(--tx3);margin-top:4px">Kalau dipilih, saldo terkumpul awal akan otomatis tercatat sebagai pengeluaran kategori "Tabungan" dari rekening ini.</p>
+    </div>
     <button class="btn-ok" style="width:100%;margin-top:8px" onclick="submitAddTabungan()">Simpan</button>
   `);
+  fillBank('tabSumber','');
 }
 
 async function submitAddTabungan(){
   const nama=document.getElementById('tabNama')?.value.trim();
   const target=getNomVal('tabTarget');
   const terkumpul=getNomVal('tabAwal');
+  const sumber=document.getElementById('tabSumber')?.value;
   if(!nama||!target){toast('Lengkapi data tabungan','err');return}
   try{
     const hid=getHouseholdId();
     await fetch(`${API_URL}/api/sheets?action=append-tabungan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,nama,target,terkumpul})});
+    if(sumber&&terkumpul>0){
+      await sheetsAppend({
+        tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
+        kategori:'Tabungan',nominal:terkumpul,pembayaran:sumber,
+        detail:`Tabungan: ${nama}`,metode:'Transfer',jenis:'Pengeluaran'
+      });
+      allRows=[];
+    }
     closeBs();toast('Tabungan ditambahkan ✓','ok');loadTabungan();
-  }catch(e){toast('Gagal simpan','err')}
+    if(sumber&&terkumpul>0)loadDashboard();
+  }catch(e){toast('Gagal simpan: '+e.message,'err')}
 }
 
 function openTopupTabungan(id,nama,terkumpul,target){
   openBs(`Topup: ${nama}`,`
     <div style="text-align:center;margin-bottom:12px"><div style="font-size:0.8rem;color:var(--tx3)">Terkumpul saat ini</div><div style="font-size:1.2rem;font-weight:700;color:var(--grn)">${rp(terkumpul)}</div><div style="font-size:0.75rem;color:var(--tx3)">dari ${rp(target)}</div></div>
     <div class="inp-row"><label class="inp-lbl">Jumlah Topup</label><input type="text" id="topupNom" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
-    <button class="btn-ok" style="width:100%;margin-top:8px" onclick="submitTopup(${id},${terkumpul})">Topup</button>
+    <div class="inp-row"><label class="inp-lbl">Sumber Dana (opsional)</label><select id="topupSumber" class="inp"></select>
+      <p style="font-size:0.68rem;color:var(--tx3);margin-top:4px">Kalau dipilih, jumlah topup otomatis tercatat sebagai pengeluaran kategori "Tabungan" dari rekening ini.</p>
+    </div>
+    <button class="btn-ok" style="width:100%;margin-top:8px" onclick="submitTopup(${id},${terkumpul},'${nama}')">Topup</button>
   `);
+  fillBank('topupSumber','');
 }
 
-async function submitTopup(id,current){
+async function submitTopup(id,current,nama){
   const tambah=getNomVal('topupNom');if(!tambah){toast('Isi jumlah topup','err');return}
+  const sumber=document.getElementById('topupSumber')?.value;
   try{
     const hid=getHouseholdId();
     await fetch(`${API_URL}/api/sheets?action=update-tabungan`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,household_id:hid,terkumpul:current+tambah})});
+    if(sumber){
+      await sheetsAppend({
+        tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
+        kategori:'Tabungan',nominal:tambah,pembayaran:sumber,
+        detail:`Topup tabungan: ${nama||''}`,metode:'Transfer',jenis:'Pengeluaran'
+      });
+      allRows=[];
+    }
     closeBs();toast('Topup berhasil ✓','ok');loadTabungan();
-  }catch(e){toast('Gagal topup','err')}
+    if(sumber)loadDashboard();
+  }catch(e){toast('Gagal topup: '+e.message,'err')}
 }
 
 async function deleteTabungan(id){
