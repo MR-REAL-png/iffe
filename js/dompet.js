@@ -301,7 +301,7 @@ async function openPiutangList(){
         <div style="font-size:0.75rem;color:var(--tx3)">Total belum lunas: <b style="color:var(--ac)">${rp(total)}</b></div>
         <button class="btn-ok" style="padding:8px 14px;font-size:0.75rem" onclick="openAddPiutang()">+ Tambah</button>
       </div>
-      ${!list.length?'<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem">Tidak ada piutang aktif 🎉</div>':''}
+      ${!list.length?`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem"><div style="margin-bottom:4px">${IC.ok}</div>Tidak ada piutang aktif</div>`:''}
       ${list.map(p=>`<div class="bmon-item" style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div><div style="font-weight:600;font-size:0.88rem">${p.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${p.tanggal||''}${p.catatan?' · '+p.catatan:''}</div></div>
@@ -313,7 +313,13 @@ async function openPiutangList(){
         </div>
       </div>`).join('')}
       ${lunas.length?`<div style="font-size:0.72rem;color:var(--tx3);margin-top:12px;margin-bottom:6px">Sudah lunas (${lunas.length})</div>
-      ${lunas.map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr2);opacity:0.5"><span style="font-size:0.82rem">${p.nama}</span><span style="color:var(--grn);font-size:0.82rem">${rp(p.nominal)}</span></div>`).join('')}`:''}
+      ${lunas.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdr2)">
+        <span style="font-size:0.82rem;opacity:0.5">${p.nama}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--grn);font-size:0.82rem;opacity:0.5">${rp(p.nominal)}</span>
+          <button onclick="hapusPiutang(${p.id})" style="background:none;border:none;color:var(--red);cursor:pointer;padding:4px;display:flex;align-items:center" title="Hapus"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg></button>
+        </div>
+      </div>`).join('')}`:''}
     `;
     document.getElementById('bsBody').innerHTML=html;
   }catch(e){document.getElementById('bsBody').innerHTML=`<div class="empty">${IC.warn}<p>Gagal memuat piutang</p></div>`;}
