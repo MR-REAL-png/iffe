@@ -495,8 +495,8 @@ async function loadMetode(){
       mainMetodes.map(m=>{
         const found=items.find(x=>x.metode===m);
         const nom=found?found.nominal:0;
-        const col=m==='Cash'?'#34d399':m==='Transfer'?'#60a5fa':'#c084fc';
-        return`<div style="background:var(--glass);border:1px solid ${col}30;border-radius:14px;padding:12px 8px;text-align:center">
+        const col=m==='Transfer'?'#a78bfa':m==='QRIS'?'#f472b6':'#60a5fa';
+        return`<div style="background:linear-gradient(135deg,${col}1a,${col}0d);border:1px solid ${col}30;border-radius:14px;padding:12px 8px;text-align:center">
           <div style="color:${col};margin-bottom:6px">${metodeIcons[m]||''}</div>
           <div style="font-size:0.55rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">${m}</div>
           <div style="font-family:var(--ffd);font-size:1rem;font-weight:700;color:${col}">${rpShort(nom)}</div>
@@ -515,9 +515,10 @@ async function loadMetode(){
     if(ctx){
       if(chartMetode){try{chartMetode.destroy()}catch(e){}}
       const isOceanM=document.documentElement.getAttribute('data-theme')==='ocean';
+      const metodeColMap=m=>m==='Transfer'?'#a78bfa':m==='QRIS'?'#f472b6':'#60a5fa';
       chartMetode=new Chart(ctx,{
         type:'doughnut',
-        data:{labels:items.map(m=>m.metode),datasets:[{data:items.map(m=>m.nominal),backgroundColor:CHART_COLORS.slice(0,items.length),borderWidth:1.5,borderColor:isOceanM?'rgba(2,132,199,0.3)':'rgba(15,12,41,0.6)',hoverOffset:6}]},
+        data:{labels:items.map(m=>m.metode),datasets:[{data:items.map(m=>m.nominal),backgroundColor:items.map(m=>metodeColMap(m.metode)),borderWidth:1.5,borderColor:isOceanM?'rgba(2,132,199,0.3)':'rgba(15,12,41,0.6)',hoverOffset:6}]},
         options:{responsive:true,cutout:'50%',plugins:{legend:{display:true,position:'bottom',labels:{color:isOceanM?'#0c2a3d':'rgba(255,255,255,0.7)',font:{size:11},padding:12}},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)}`}}}}
       });
     }
