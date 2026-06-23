@@ -213,6 +213,7 @@ async function submitTransfer(){
   const tgl =document.getElementById('trTanggal')?.value;
   if(!dari||!ke||!nom){toast('Lengkapi data transfer','err');return}
   if(dari===ke){toast('Rekening sama!','err');return}
+  if(!lockBusy('transfer'))return;
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-transfer`,{
@@ -226,6 +227,7 @@ async function submitTransfer(){
     }
     closeOv(null,'ovSett');toast('Transfer disimpan ✓','ok');loadDompet();
   }catch(e){toast('Gagal transfer: '+e.message,'err')}
+  finally{unlockBusy('transfer')}
 }
 
 function openEditTransfer(encodedT){
@@ -257,6 +259,7 @@ async function submitEditTransfer(){
   const nom =getNomVal('etNominal');
   const cat =document.getElementById('etCatatan')?.value.trim();
   const tgl =document.getElementById('etTanggal')?.value;
+  if(!lockBusy('editTransfer'))return;
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=update-transfer`,{
@@ -270,6 +273,7 @@ async function submitEditTransfer(){
     }
     closeOv(null,'ovSett');toast('Transfer diperbarui ✓','ok');loadDompet();
   }catch(e){toast('Gagal update transfer: '+e.message,'err')}
+  finally{unlockBusy('editTransfer')}
 }
 
 async function deleteTransfer(id){
@@ -347,6 +351,7 @@ async function submitAddPiutang(){
   const cat =document.getElementById('piutCat')?.value.trim();
   const sumber=document.getElementById('piutSumber')?.value;
   if(!nama||!nom){toast('Lengkapi data piutang','err');return}
+  if(!lockBusy('addPiutang'))return;
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-piutang`,{
@@ -365,6 +370,7 @@ async function submitAddPiutang(){
     }
     toast('Piutang ditambahkan ✓','ok');openPiutangList();
   }catch(e){toast('Gagal simpan piutang: '+e.message,'err')}
+  finally{unlockBusy('addPiutang')}
 }
 
 function tandaiLunas(id,nominal,nama){
@@ -383,6 +389,7 @@ function tandaiLunas(id,nominal,nama){
 
 async function submitTandaiLunas(id,nominal,nama){
   const tujuan=document.getElementById('lunasTujuan')?.value||'Cash';
+  if(!lockBusy('tandaiLunas'))return;
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=update-piutang`,{
@@ -399,6 +406,7 @@ async function submitTandaiLunas(id,nominal,nama){
     allRows=[];
     toast('Piutang lunas ✓','ok');openPiutangList();loadDashboard();
   }catch(e){toast('Gagal update: '+e.message,'err')}
+  finally{unlockBusy('tandaiLunas')}
 }
 
 async function hapusPiutang(id){
