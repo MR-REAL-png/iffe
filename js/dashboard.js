@@ -680,6 +680,7 @@ async function submitAddTabungan(){
   const terkumpul=getNomVal('tabAwal');
   const sumber=document.getElementById('tabSumber')?.value;
   if(!nama||!target){toast('Lengkapi data tabungan','err');return}
+  if(!lockBusy('addTabungan'))return;
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-tabungan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,nama,target,terkumpul})});
@@ -699,6 +700,7 @@ async function submitAddTabungan(){
     closeBs();toast('Tabungan ditambahkan ✓','ok');loadTabungan();
     if(sumber&&terkumpul>0)loadDashboard();
   }catch(e){toast('Gagal simpan: '+e.message,'err')}
+  finally{unlockBusy('addTabungan')}
 }
 
 function openTopupTabungan(id,nama,terkumpul,target){
@@ -716,6 +718,7 @@ function openTopupTabungan(id,nama,terkumpul,target){
 async function submitTopup(id,current,nama){
   const tambah=getNomVal('topupNom');if(!tambah){toast('Isi jumlah topup','err');return}
   const sumber=document.getElementById('topupSumber')?.value;
+  if(!lockBusy('topupTab'))return;
   try{
     const hid=getHouseholdId();
     await fetch(`${API_URL}/api/sheets?action=update-tabungan`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,household_id:hid,terkumpul:current+tambah})});
@@ -731,6 +734,7 @@ async function submitTopup(id,current,nama){
     closeBs();toast('Topup berhasil ✓','ok');loadTabungan();
     if(sumber)loadDashboard();
   }catch(e){toast('Gagal topup: '+e.message,'err')}
+  finally{unlockBusy('topupTab')}
 }
 
 function openRiwayatTabungan(id,nama){
