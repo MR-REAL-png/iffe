@@ -114,6 +114,15 @@ function closeOv(e,id){
 function openOv(id){document.getElementById(id)?.classList.add('open')}
 
 // ═══ BOTTOM SHEET ═══
+// ═══ ANTI DOUBLE-SUBMIT LOCK ═══
+// Mencegah fungsi yang sama jalan dobel kalau tombol di-tap 2x cepat
+const _busyActions=new Set();
+function lockBusy(key){
+  if(_busyActions.has(key))return false;
+  _busyActions.add(key);return true;
+}
+function unlockBusy(key){_busyActions.delete(key);}
+
 function openBs(title,html){
   document.getElementById('bsTitle').textContent=title;
   document.getElementById('bsBody').innerHTML=html;
