@@ -181,7 +181,7 @@ function openSettModal(type){
   }
   else if(type==='katrata'){
     title.textContent='Kategori Rata-rata Harian';
-    const fixedCats=JSON.parse(localStorage.getItem('mm_fixed_cats')||'["Tabungan","Kos","Tf Rumah","Listrik Rumah","Internet","Listrik"]');
+    const fixedCats=JSON.parse(localStorage.getItem('mm_fixed_cats')||'["Tabungan","Piutang","Kos","Tf Rumah","Listrik Rumah","Internet","Listrik"]');
     const allKats=[...new Set(allRows.map(r=>r.kategori).filter(Boolean))].sort();
     body.innerHTML=`
       <p style="font-size:0.78rem;color:var(--tx2);margin-bottom:12px">Kategori yang dicentang akan <b>dikecualikan</b> dari perhitungan rata-rata harian (pengeluaran tetap).</p>
