@@ -320,7 +320,7 @@ async function showHouseholdInfo(){
       <div style="font-size:1.8rem;font-weight:800;color:var(--ac);letter-spacing:0.3em">${inviteCode}</div>
       <div style="font-size:0.7rem;color:var(--tx3);margin-top:6px">Bagikan kode ini ke pasangan</div>
     </div>
-    `:'<div style="text-align:center;font-size:0.8rem;color:var(--tx3);padding:8px">Keluarga sudah lengkap 💑</div>'}
+    `:`<div style="text-align:center;font-size:0.8rem;color:var(--tx3);padding:8px"><div style="margin-bottom:4px;color:var(--ac)">${IC.heart}</div>Keluarga sudah lengkap</div>`}
   `);
 }
 
