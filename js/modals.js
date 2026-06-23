@@ -55,6 +55,8 @@ function openEdit(id){
   document.getElementById('eNom').value=Number(r.nominal).toLocaleString('id-ID');
   document.getElementById('eMetode').value=r.metode||'';
   fillBank('eBank',r.pembayaran||'');
+  syncMetodeBank('eMetode','eBank');
+  document.getElementById('eBank').value=r.pembayaran||'';
   document.getElementById('eKet').value=r.detail||'';
   closeBs();
   openOv('ovEdit');
