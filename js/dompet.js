@@ -215,10 +215,15 @@ async function submitTransfer(){
   if(dari===ke){toast('Rekening sama!','err');return}
   try{
     const hid=getHouseholdId();
-    await fetch(`${API_URL}/api/sheets?action=append-transfer`,{
+    const res=await fetch(`${API_URL}/api/sheets?action=append-transfer`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({household_id:hid,dari,ke,nominal:nom,catatan:cat,tanggal:tgl})
     });
+    const json=await res.json().catch(()=>({success:false,error:'Response tidak valid'}));
+    if(!res.ok||!json.success){
+      toast('Gagal transfer: '+(json.error||`HTTP ${res.status}`),'err');
+      return;
+    }
     closeOv(null,'ovSett');toast('Transfer disimpan ✓','ok');loadDompet();
   }catch(e){toast('Gagal transfer: '+e.message,'err')}
 }
@@ -254,19 +259,29 @@ async function submitEditTransfer(){
   const tgl =document.getElementById('etTanggal')?.value;
   try{
     const hid=getHouseholdId();
-    await fetch(`${API_URL}/api/sheets?action=update-transfer`,{
+    const res=await fetch(`${API_URL}/api/sheets?action=update-transfer`,{
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({id:t.id,household_id:hid,dari,ke,nominal:nom,catatan:cat,tanggal:tgl})
     });
+    const json=await res.json().catch(()=>({success:false,error:'Response tidak valid'}));
+    if(!res.ok||!json.success){
+      toast('Gagal update transfer: '+(json.error||`HTTP ${res.status}`),'err');
+      return;
+    }
     closeOv(null,'ovSett');toast('Transfer diperbarui ✓','ok');loadDompet();
-  }catch(e){toast('Gagal update transfer','err')}
+  }catch(e){toast('Gagal update transfer: '+e.message,'err')}
 }
 
 async function deleteTransfer(id){
   if(!confirm('Hapus transfer ini?'))return;
   try{
     const hid=getHouseholdId();
-    await fetch(`${API_URL}/api/sheets?action=delete-transfer&id=${id}&household_id=${hid}`,{method:'DELETE'});
+    const res=await fetch(`${API_URL}/api/sheets?action=delete-transfer&id=${id}&household_id=${hid}`,{method:'DELETE'});
+    const json=await res.json().catch(()=>({success:false,error:'Response tidak valid'}));
+    if(!res.ok||!json.success){
+      toast('Gagal hapus transfer: '+(json.error||`HTTP ${res.status}`),'err');
+      return;
+    }
     closeOv(null,'ovSett');toast('Transfer dihapus','ok');loadDompet();
   }catch(e){toast('Gagal hapus','err')}
 }
