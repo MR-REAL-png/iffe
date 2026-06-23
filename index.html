@@ -358,7 +358,7 @@
       </div>
       <div class="inp-row">
         <label class="inp-lbl">Metode</label>
-        <select id="inMetode" class="inp">
+        <select id="inMetode" class="inp" onchange="syncMetodeBank('inMetode','inBank')">
           <option value="">— Pilih —</option>
           <option>Cash</option>
           <option>Transfer</option>
@@ -402,7 +402,7 @@
       <div class="inp-row"><label class="inp-lbl">Jenis</label><select id="eJenis" class="inp" onchange="fillKat('eJenis','eKat')"><option value="">— Pilih —</option><option>Pemasukan</option><option>Pengeluaran</option></select></div>
       <div class="inp-row"><label class="inp-lbl">Kategori</label><select id="eKat" class="inp"></select></div>
       <div class="inp-row"><label class="inp-lbl">Nominal</label><input type="text" id="eNom" class="inp" inputmode="numeric" placeholder="0" oninput="fmtNom(this)"></div>
-      <div class="inp-row"><label class="inp-lbl">Metode</label><select id="eMetode" class="inp"><option value="">— Pilih —</option><option>Cash</option><option>Transfer</option><option>QRIS</option></select></div>
+      <div class="inp-row"><label class="inp-lbl">Metode</label><select id="eMetode" class="inp" onchange="syncMetodeBank('eMetode','eBank')"><option value="">— Pilih —</option><option>Cash</option><option>Transfer</option><option>QRIS</option></select></div>
       <div class="inp-row"><label class="inp-lbl">Rekening</label><select id="eBank" class="inp"></select></div>
       <div class="inp-row"><label class="inp-lbl">Keterangan</label><input type="text" id="eKet" class="inp" placeholder="Opsional..."></div>
     </div>
