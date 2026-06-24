@@ -33,7 +33,6 @@ async function submitInput(){
     allRows=[];
     await fetchDBOptions();
     await loadDashboard();
-    // Kalau di halaman data, refresh
     if(document.getElementById('pg-data')?.classList.contains('on'))loadData();
   }catch(e){
     toast('Gagal simpan: '+e.message,'err');
@@ -116,6 +115,209 @@ async function doDelete(id){
   }catch(e){
     toast('Gagal hapus: '+e.message,'err');
   }
+}
+
+// ═══════════════════════════════════════════════════
+// AI SCAN STRUK — GEMINI (3 KEY ROTATE + COUNTDOWN)
+// ═══════════════════════════════════════════════════
+
+let _scanCountdownInterval = null;
+
+// Dipanggil setiap modal input dibuka — cek & lanjut countdown jika masih aktif
+function initAiScanUI() {
+  const remaining = getScanCooldownRemaining();
+  if (remaining > 0) {
+    startScanCountdownUI(remaining, getScanCooldownMsg());
+  } else {
+    resetScanBtn();
+  }
+}
+
+function resetScanBtn() {
+  const btn = document.getElementById('btnAiScan');
+  const info = document.getElementById('aiScanCooldownInfo');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>Scan Struk`;
+  }
+  if (info) info.style.display = 'none';
+  if (_scanCountdownInterval) { clearInterval(_scanCountdownInterval); _scanCountdownInterval = null; }
+}
+
+function startScanCountdownUI(seconds, msg) {
+  const btn = document.getElementById('btnAiScan');
+  const info = document.getElementById('aiScanCooldownInfo');
+  if (!btn) return;
+
+  btn.disabled = true;
+  if (info) { info.style.display = 'block'; info.textContent = msg; }
+
+  if (_scanCountdownInterval) clearInterval(_scanCountdownInterval);
+
+  const tick = () => {
+    const rem = getScanCooldownRemaining();
+    if (rem <= 0) {
+      clearScanCooldown();
+      resetScanBtn();
+      return;
+    }
+    const m = Math.floor(rem / 60);
+    const s = rem % 60;
+    const label = m > 0 ? `${m}m ${s}s` : `${s}s`;
+    btn.innerHTML = `⏳ Tunggu ${label}`;
+  };
+
+  tick(); // langsung update sekali
+  _scanCountdownInterval = setInterval(tick, 1000);
+}
+
+function triggerAiScan() {
+  // Cek cooldown dulu
+  if (getScanCooldownRemaining() > 0) return;
+  document.getElementById('aiImgInput')?.click();
+}
+
+async function handleAiScanImg(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  // Reset input supaya onchange bisa trigger lagi nanti
+  event.target.value = '';
+
+  // Cek cooldown lagi
+  if (getScanCooldownRemaining() > 0) {
+    startScanCountdownUI(getScanCooldownRemaining(), getScanCooldownMsg());
+    return;
+  }
+
+  // Tampilkan overlay scan
+  const ov = document.getElementById('aiScanOv');
+  const preview = document.getElementById('aiScanPreview');
+  const lbl = document.getElementById('aiScanLbl');
+  const cancelBtn = document.getElementById('aiScanCancel');
+  if (ov) ov.style.display = 'flex';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+
+  // Load preview
+  const reader = new FileReader();
+  const base64 = await new Promise(res => {
+    reader.onload = e => res(e.target.result.split(',')[1]);
+    reader.readAsDataURL(file);
+  });
+
+  if (preview) {
+    preview.src = URL.createObjectURL(file);
+  }
+
+  aiScanAbort = false;
+  if (cancelBtn) cancelBtn.style.display = 'block';
+  if (lbl) lbl.textContent = 'Menganalisis gambar...';
+
+  try {
+    const res = await fetch(`${API_URL}/api/parse-receipt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64, mimeType: file.type || 'image/jpeg' })
+    });
+    const json = await res.json().catch(() => ({}));
+    if (aiScanAbort) return;
+    if (ov) ov.style.display = 'none';
+
+    if (!res.ok || !json.success) {
+      const status = json.status || res.status || 0;
+      let cooldownSec = 15, errMsg = '';
+      if (status === 429) {
+        cooldownSec = json.retryAfter || 60;
+        errMsg = `⚠️ Semua API key kena limit. Tunggu ${cooldownSec >= 60 ? Math.ceil(cooldownSec / 60) + 'm' : cooldownSec + 's'}`;
+      } else if (status === 503 || status === 500) {
+        cooldownSec = 30;
+        errMsg = `⚠️ Server Gemini error (${status}). Tunggu 30s`;
+      } else if (status === 400) {
+        cooldownSec = 10;
+        errMsg = `⚠️ Gambar tidak terbaca. Coba foto ulang`;
+      } else {
+        cooldownSec = 15;
+        errMsg = `⚠️ Gagal: ${json.error || 'Unknown error'}`;
+      }
+      setScanCooldown(cooldownSec, errMsg);
+      startScanCountdownUI(cooldownSec, errMsg);
+      toast(errMsg, 'err');
+      return;
+    }
+
+    applyAIResult(json.data);
+    toast('Struk berhasil dibaca ✓', 'ok');
+  } catch (e) {
+    if (aiScanAbort) return;
+    if (ov) ov.style.display = 'none';
+    const errMsg = `⚠️ Gagal koneksi: ${e.message || 'Unknown error'}`;
+    setScanCooldown(15, errMsg);
+    startScanCountdownUI(15, errMsg);
+    toast(errMsg, 'err');
+  }
+}
+
+function applyAIResult(data) {
+  if (!data) return;
+  // Tanggal
+  if (data.tanggal) {
+    const tglEl = document.getElementById('inTgl');
+    if (tglEl) { tglEl.value = data.tanggal; syncBulan('in'); }
+  }
+  // Jenis
+  if (data.jenis) {
+    const jenisEl = document.getElementById('inJenis');
+    if (jenisEl) {
+      jenisEl.value = data.jenis;
+      fillKat('inJenis', 'inKat');
+      renderQuickKat();
+    }
+  }
+  // Kategori (setelah fillKat)
+  if (data.kategori) {
+    setTimeout(() => {
+      const katEl = document.getElementById('inKat');
+      if (katEl) {
+        // Cari opsi yang cocok (case-insensitive)
+        const opts = [...katEl.options];
+        const match = opts.find(o => o.value.toLowerCase() === data.kategori.toLowerCase());
+        if (match) katEl.value = match.value;
+        else {
+          // Tambah opsi baru
+          const opt = document.createElement('option');
+          opt.value = data.kategori;
+          opt.textContent = data.kategori;
+          katEl.appendChild(opt);
+          katEl.value = data.kategori;
+        }
+      }
+    }, 100);
+  }
+  // Nominal
+  if (data.nominal) {
+    const nomEl = document.getElementById('inNom');
+    if (nomEl) {
+      nomEl.value = Number(data.nominal).toLocaleString('id-ID');
+    }
+  }
+  // Metode
+  if (data.metode) {
+    const metEl = document.getElementById('inMetode');
+    if (metEl) {
+      metEl.value = data.metode;
+      syncMetodeBank('inMetode', 'inBank');
+    }
+  }
+  // Keterangan
+  if (data.keterangan) {
+    const ketEl = document.getElementById('inKet');
+    if (ketEl) ketEl.value = data.keterangan;
+  }
+}
+
+function cancelAiScan() {
+  aiScanAbort = true;
+  const ov = document.getElementById('aiScanOv');
+  if (ov) ov.style.display = 'none';
 }
 
 // ═══ SETTINGS MODAL ═══
@@ -336,7 +538,6 @@ function loadSettings(){
   const katLbl=document.getElementById('katRataLabel');
   if(katLbl)katLbl.textContent=fixedCats.length?`${fixedCats.length} kategori dikecualikan`:'Pilih kategori yang dihitung';
 
-  // Update settAvatar dengan session info
   const session=getSession();
   if(session){
     const av=document.getElementById('settAvatar');
@@ -345,9 +546,8 @@ function loadSettings(){
       av.innerHTML=`<span style="color:${session.color};font-size:1.8rem;font-weight:800">${session.username.charAt(0).toUpperCase()}</span>`;
     }
     const unEl=document.getElementById('settUsername');if(unEl)unEl.textContent=session.username;
-    const ulEl=document.getElementById('settUserLogin');if(ulEl){ulEl.textContent='SHIFA';ulEl.style.color=session.color;}
+    const ulEl=document.getElementById('settUserLogin');if(ulEl){ulEl.textContent='SHIF';ulEl.style.color=session.color;}
   }
-  // Selalu update avatar dari session aktif
   updateSettAvatar();
 }
 
@@ -386,20 +586,78 @@ function onJenisChange(prefix){
 }
 
 function onMetodeChange(prefix){
-  // Tampilkan/sembunyikan field bank tergantung metode
   const met=document.getElementById(prefix+'Metode')?.value;
   const bankRow=document.getElementById(prefix+'Bank')?.closest('.inp-row');
   if(bankRow)bankRow.style.display=met==='Cash'?'none':'';
 }
 
-// Pastikan event listener onchange di select terhubung
+// ═══ INIT ═══
 document.addEventListener('DOMContentLoaded',()=>{
   loadTheme();
   loadSettings();
   renderDrawerMembers();
-  // Sync member filter buttons
   initFilterWho();
-  // Tambah event listener filter data
-  document.getElementById('filterBulan')?.addEventListener('change',filterData);
-  document.getElementById('filterJenis')?.addEventListener('change',filterData);
+  document.getElementById('filterBulan')?.addEventListener('change',loadData);
+  document.getElementById('filterJenis')?.addEventListener('change',loadData);
+  // Filter search di halaman data
+  document.getElementById('dataSearch')?.addEventListener('input',renderFilteredData);
 });
+
+// Hook: setiap input modal dibuka, init AI scan UI
+function openInputModal(){
+  // Set tanggal hari ini
+  const tgl=document.getElementById('inTgl');
+  if(tgl&&!tgl.value)tgl.value=new Date().toISOString().slice(0,10);
+  syncBulan('in');
+  fillKat('inJenis','inKat');
+  renderQuickKat();
+  fillBank('inBank','');
+  // Label recorded by
+  const recBy=document.getElementById('inputRecBy');
+  const session=getSession();
+  if(recBy&&session){
+    recBy.innerHTML=`<span style="color:${session.color}">${IC.users} Dicatat oleh: <b>${session.username}</b></span>`;
+  }
+  openOv('ovInput');
+  // Init AI scan countdown (lanjut jika modal dibuka lagi saat countdown masih jalan)
+  initAiScanUI();
+}
+
+// ═══════════════════════════════════════════
+// FILTER PENCARIAN HALAMAN DATA
+// ═══════════════════════════════════════════
+
+// Cache rows terfilter untuk search
+let _filteredForSearch = [];
+
+// Dipanggil dari loadData di dashboard.js setelah renderCards
+// Kita override renderCards supaya juga update _filteredForSearch
+const _origRenderCards = typeof renderCards === 'function' ? renderCards : null;
+
+function renderFilteredData() {
+  const q = (document.getElementById('dataSearch')?.value || '').toLowerCase().trim();
+  if (!q) {
+    renderCards(_filteredForSearch.length ? _filteredForSearch : getFilteredRows());
+    return;
+  }
+  const rows = (_filteredForSearch.length ? _filteredForSearch : getFilteredRows()).filter(r => {
+    return (
+      (r.kategori||'').toLowerCase().includes(q) ||
+      (r.detail||'').toLowerCase().includes(q) ||
+      (r.pembayaran||'').toLowerCase().includes(q) ||
+      (r.jenis||'').toLowerCase().includes(q) ||
+      String(r.nominal).includes(q) ||
+      (r.tanggal||'').includes(q) ||
+      (r.bulan||'').toLowerCase().includes(q) ||
+      (r.recorded_by||'').toLowerCase().includes(q)
+    );
+  });
+  renderCards(rows);
+}
+
+// Expose supaya dashboard.js bisa set _filteredForSearch setelah filter bulan/jenis
+function setFilteredForSearch(rows) {
+  _filteredForSearch = rows;
+  // Re-render dengan search query saat ini
+  renderFilteredData();
+}
