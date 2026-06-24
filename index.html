@@ -6,9 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SHIFA">
-<meta name="application-name" content="SHIFA">
-<title>SHIFA</title>
+<meta name="apple-mobile-web-app-title" content="SHIF">
+<meta name="application-name" content="SHIF">
+<title>SHIF</title>
 <link rel="apple-touch-icon" href="./logo.png">
 <link rel="icon" type="image/png" href="./logo.png">
 <link rel="manifest" href="manifest.json">
@@ -30,11 +30,11 @@
 <header class="hdr">
   <div class="hdr-left">
     <button class="hdr-menu-btn" onclick="openDrawer()"><span></span><span></span><span></span></button>
-    <div class="brand-ico" id="brandIco"></div>
-    <div class="brand-name">SHIFA</div>
+    <div class="brand-ico" id="brandIco" style="width:34px;height:34px;border-radius:10px"></div>
+    <div class="brand-name">SHIF</div>
   </div>
   <div class="hdr-right">
-    <div class="hdr-members" id="hdrMembers"></div>
+    
     <div class="hdr-clock">
       <div class="hdr-clock-time" id="hdrTime">--:--</div>
       <div class="hdr-clock-date" id="hdrDate">Memuat...</div>
@@ -47,7 +47,7 @@
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header">
-    <span class="drawer-title">SHIFA</span>
+    <span class="drawer-title">SHIF</span>
     <button class="drawer-close" onclick="closeDrawer()">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg>
     </button>
@@ -55,7 +55,7 @@
   <div class="drawer-profile">
     <div class="drawer-avatar" id="drawerAvatar"></div>
     <div>
-      <div class="drawer-username" id="drawerUsername">SHIFA</div>
+      <div class="drawer-username" id="drawerUsername">SHIF</div>
       <div class="drawer-subtitle" id="drawerSub">Sisa — hari</div>
     </div>
   </div>
@@ -197,6 +197,11 @@
       <option value="Pengeluaran">Pengeluaran</option>
     </select>
   </div>
+  <!-- Search filter -->
+  <div style="margin-bottom:10px;position:relative">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none"><path d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+    <input type="text" id="dataSearch" class="inp" placeholder="Cari kategori, keterangan, nominal..." style="padding-left:32px;font-size:0.8rem" oninput="renderFilteredData()">
+  </div>
   <div id="dataList"></div>
 </div>
 
@@ -262,7 +267,7 @@
   <div class="sett-group">
     <div class="sett-profile">
       <div class="sett-avatar" id="settAvatar"></div>
-      <div class="sett-username" id="settUsername">SHIFA</div>
+      <div class="sett-username" id="settUsername">SHIF</div>
       <div id="settUserLogin" style="font-size:0.68rem;color:var(--ac);margin-top:2px;font-weight:600"></div>
     </div>
     <!-- Household info -->
@@ -380,6 +385,7 @@
           Scan Struk
         </button>
         <input type="file" id="aiImgInput" accept="image/*" style="display:none" onchange="handleAiScanImg(event)">
+        <div id="aiScanCooldownInfo" style="display:none;font-size:0.68rem;color:var(--red);margin-top:4px;font-weight:600;padding:4px 8px;background:rgba(248,113,113,0.1);border-radius:6px;border:1px solid rgba(248,113,113,0.2)"></div>
       </div>
     </div>
     <div class="modal-ft">
