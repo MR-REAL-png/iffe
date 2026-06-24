@@ -705,7 +705,9 @@ async function resizeAndCompress(file) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       try {
-        const MAX = 1024;
+        // Turunkan resolusi lebih agresif — target ~600px, quality 0.7
+        // Vercel free tier timeout 10s, base64 harus kecil
+        const MAX = 600;
         let w = img.naturalWidth || img.width;
         let h = img.naturalHeight || img.height;
         if (w > MAX || h > MAX) {
@@ -718,8 +720,8 @@ async function resizeAndCompress(file) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        // Output selalu JPEG, strip header "data:image/jpeg;base64,"
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        // Output selalu JPEG, quality 0.7 — cukup untuk Gemini baca teks
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
         resolve(dataUrl.split(',')[1]);
       } catch(e) {
         URL.revokeObjectURL(url);
