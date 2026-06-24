@@ -22,7 +22,7 @@ Kembalikan HANYA JSON dengan format berikut (tidak ada teks lain, tidak ada mark
 Jika tidak ada informasi, isi dengan string kosong atau 0 untuk nominal.`;
 
 // Wajib: Vercel perlu config ini supaya req.body ter-parse & limit cukup untuk base64 gambar
-export const config = {
+const config = {
   api: {
     bodyParser: {
       sizeLimit: '10mb',
@@ -30,7 +30,7 @@ export const config = {
   },
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -118,3 +118,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: e.message || 'Internal error' });
   }
 }
+
+
+module.exports = handler;
+module.exports.config = config;
