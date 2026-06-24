@@ -4,13 +4,13 @@ const BANK_THEMES={
   'Cash':      {grad:'linear-gradient(135deg,#059669,#34d399)',motif:'cash',     logo:null},
   'BCA':       {grad:'linear-gradient(135deg,#1e40af,#3b82f6)',motif:'lines',    logo:'bca.png'},
   'Seabank':   {grad:'linear-gradient(135deg,#ea580c,#f97316)',motif:'triangles',logo:'seabank.png'},
-  'Dana':      {grad:'linear-gradient(135deg,#2563eb,#7c3aed)',motif:'circles',  logo:'dana.png'},
+  'Dana':      {grad:'linear-gradient(135deg,#38bdf8,#bae6fd)',motif:'circles',  logo:'dana.png'},
   'Shopeepay': {grad:'linear-gradient(135deg,#dc2626,#f97316)',motif:'dots',     logo:'shopeepay.png'},
   'GoPay':     {grad:'linear-gradient(135deg,#047857,#10b981)',motif:'waves',    logo:'gopay.png'},
   'OVO':       {grad:'linear-gradient(135deg,#6d28d9,#8b5cf6)',motif:'circles',  logo:'ovo.png'},
   'Mandiri':   {grad:'linear-gradient(135deg,#b45309,#f59e0b)',motif:'lines',    logo:'mandiri.png'},
   'BNI':       {grad:'linear-gradient(135deg,#1d4ed8,#3b82f6)',motif:'dots',     logo:'bni.png'},
-  'BRI':       {grad:'linear-gradient(135deg,#991b1b,#dc2626)',motif:'waves',    logo:'bri.png'},
+  'BRI':       {grad:'linear-gradient(135deg,#1e3a8a,#1d4ed8)',motif:'wavesthick',logo:'bri.png'},
   'default':   {grad:'linear-gradient(135deg,#0ea5e9,#f472b6)',motif:'dots',     logo:null},
 };
 
@@ -25,6 +25,7 @@ function getBankMotifSVG(motif){
   if(motif==='lines')return`<svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.15" viewBox="0 0 300 160">${Array.from({length:12},(_,i)=>`<line x1="0" y1="${i*15}" x2="300" y2="${i*15}" stroke="white" stroke-width="1"/>`).join('')}</svg>`;
   if(motif==='circles')return`<svg style="position:absolute;right:-20px;bottom:-20px;width:55%;opacity:0.2" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="white" stroke-width="2"/><circle cx="60" cy="60" r="35" fill="none" stroke="white" stroke-width="2"/><circle cx="60" cy="60" r="20" fill="none" stroke="white" stroke-width="2"/></svg>`;
   if(motif==='triangles')return`<svg style="position:absolute;right:0;top:0;width:50%;opacity:0.15" viewBox="0 0 150 150"><polygon points="75,10 140,130 10,130" fill="none" stroke="white" stroke-width="2"/><polygon points="75,40 120,120 30,120" fill="none" stroke="white" stroke-width="2"/></svg>`;
+  if(motif==='wavesthick')return`<svg style="position:absolute;bottom:0;left:0;width:100%;opacity:0.25" viewBox="0 0 300 100" preserveAspectRatio="none"><path d="M0,60 Q75,20 150,60 T300,60 T450,60" fill="none" stroke="white" stroke-width="5"/><path d="M0,75 Q75,35 150,75 T300,75 T450,75" fill="none" stroke="white" stroke-width="4"/><path d="M0,45 Q75,5 150,45 T300,45 T450,45" fill="none" stroke="white" stroke-width="3"/></svg>`;
   if(motif==='cash')return`<svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.1" viewBox="0 0 300 160">${Array.from({length:8},(_,i)=>`<line x1="${i*40}" y1="0" x2="${i*40}" y2="160" stroke="white" stroke-width="1"/>`).join('')}${Array.from({length:6},(_,i)=>`<line x1="0" y1="${i*30}" x2="300" y2="${i*30}" stroke="white" stroke-width="1"/>`).join('')}</svg>`;
   return`<svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.15" viewBox="0 0 300 160">${Array.from({length:40},(_,i)=>`<circle cx="${(i%8)*40+20}" cy="${Math.floor(i/8)*35+20}" r="3" fill="white"/>`).join('')}</svg>`;
 }
