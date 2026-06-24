@@ -21,6 +21,15 @@ Kembalikan HANYA JSON dengan format berikut (tidak ada teks lain, tidak ada mark
 
 Jika tidak ada informasi, isi dengan string kosong atau 0 untuk nominal.`;
 
+// Wajib: Vercel perlu config ini supaya req.body ter-parse & limit cukup untuk base64 gambar
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,9 +38,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { imageBase64, mimeType = 'image/jpeg', keyIndex = 0 } = req.body || {};
+  // Fallback manual parse jika body masih string
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+  if (!body || typeof body !== 'object') body = {};
 
-  if (!imageBase64) return res.status(400).json({ error: 'imageBase64 wajib diisi' });
+  const { imageBase64, mimeType = 'image/jpeg', keyIndex = 0 } = body;
+
+  if (!imageBase64) return res.status(400).json({ error: 'imageBase64 wajib diisi — body tidak terbaca atau kosong' });
 
   const keys = [
     process.env.GEMINI_KEY_1,
