@@ -49,6 +49,10 @@ export default async function handler(req, res) {
 
   if (!imageBase64) return res.status(400).json({ error: 'imageBase64 wajib diisi — body tidak terbaca atau kosong' });
 
+  // Log ukuran untuk debug
+  const sizeKB = Math.round(imageBase64.length * 0.75 / 1024);
+  console.log(`[gemini] keyIndex=${keyIndex} mimeType=${mimeType} size≈${sizeKB}KB`);
+
   const keys = [
     process.env.GEMINI_KEY_1,
     process.env.GEMINI_KEY_2,
