@@ -742,15 +742,22 @@ function openRiwayatTabungan(id,nama){
   (async()=>{
     try{
       const hid=getHouseholdId();
-      const res=await fetch(`${API_URL}/api/sheets?action=get-tabungan-history&household_id=${hid}&tabungan_id=${id}`);
+      // Selalu fetch fresh — supaya sync dengan edit/hapus transaksi terbaru
+      const res=await fetch(`${API_URL}/api/sheets?action=get-tabungan-history&household_id=${hid}&tabungan_id=${id}&_t=${Date.now()}`);
       const json=await res.json();
       const list=json.data||[];
       const body=document.getElementById('riwayatTabBody');if(!body)return;
       if(!list.length){body.innerHTML=`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem">Belum ada riwayat topup</div>`;return}
-      body.innerHTML=list.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr2)">
-        <div><div style="font-size:0.82rem;font-weight:600">${h.tanggal||''}</div><div style="font-size:0.68rem;color:var(--tx3)">${h.sumber?'dari '+h.sumber:'Manual (tanpa rekening)'}</div></div>
-        <div style="font-weight:700;color:var(--grn)">+${rp(h.nominal)}</div>
-      </div>`).join('');
+      const total=list.reduce((s,h)=>s+Number(h.nominal||0),0);
+      body.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px;border-bottom:1px solid var(--bdr2);margin-bottom:8px">
+          <span style="font-size:0.72rem;color:var(--tx3)">${list.length} topup</span>
+          <span style="font-size:0.82rem;font-weight:700;color:var(--grn)">Total: +${rp(total)}</span>
+        </div>
+        ${list.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr2)">
+          <div><div style="font-size:0.82rem;font-weight:600">${h.tanggal||''}</div><div style="font-size:0.68rem;color:var(--tx3)">${h.sumber?'dari '+h.sumber:'Manual (tanpa rekening)'}</div></div>
+          <div style="font-weight:700;color:var(--grn)">+${rp(h.nominal)}</div>
+        </div>`).join('')}`;
     }catch(e){
       const body=document.getElementById('riwayatTabBody');if(body)body.innerHTML=`<div style="text-align:center;color:var(--red);padding:16px;font-size:0.8rem">Gagal memuat riwayat</div>`;
     }
