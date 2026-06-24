@@ -1,11 +1,12 @@
 window.onerror=function(msg,src,line){console.error('ERR:'+msg+'\n'+src.split('/').pop()+':'+line);return false};
 
 // ═══ API & APP CONFIG ═══
-const APP_NAME = 'SHIFA';
+const APP_NAME = 'SHIF';
 const API_URL  = 'https://iffe-puce.vercel.app';
 const LOGO_URL = 'https://raw.githubusercontent.com/MR-REAL-png/iffe/main/logo.png';
+const BANK_LOGO_BASE = 'https://raw.githubusercontent.com/MR-REAL-png/iffe/main/images/banks/';
 
-// ═══ SUPABASE (untuk realtime jika dibutuhkan) ═══
+// ═══ SUPABASE ═══
 const SUPABASE_URL      = 'https://sqknfsorqtityalgherc.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxa25mc29ycXRpdHlhbGdoZXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTgyMDQsImV4cCI6MjA5NzI3NDIwNH0.hE9VCHIc53v5RPCd4eXaEEoYnxJqszA-ph7IaIZDgjo';
 
@@ -19,8 +20,8 @@ const MONTH_COLORS  = ['#818cf8','#c084fc','#f472b6','#60a5fa','#34d399','#fb923
 
 // ═══ USER WARNA DEFAULT ═══
 const USER_COLORS = {
-  default1: '#38bdf8', // Sheril — biru ocean
-  default2: '#f472b6', // Ifaa   — pink
+  default1: '#38bdf8',
+  default2: '#f472b6',
 };
 
 // ═══ GLOBAL STATE ═══
@@ -42,6 +43,26 @@ let aiScanAbort=false;
 let aiScanCooldown=0;
 let aiScanCooldownTimer=null;
 
+// ═══ AI SCAN COUNTDOWN STATE (persisten via localStorage) ═══
+// key: 'shif_scan_cooldown_until' → timestamp ms kapan cooldown selesai
+// key: 'shif_scan_cooldown_msg'   → pesan error yang ditampilkan
+function getScanCooldownRemaining(){
+  const until=Number(localStorage.getItem('shif_scan_cooldown_until')||0);
+  return Math.max(0,Math.ceil((until-Date.now())/1000));
+}
+function setScanCooldown(seconds,msg){
+  const until=Date.now()+(seconds*1000);
+  localStorage.setItem('shif_scan_cooldown_until',String(until));
+  localStorage.setItem('shif_scan_cooldown_msg',msg||'Coba lagi nanti');
+}
+function clearScanCooldown(){
+  localStorage.removeItem('shif_scan_cooldown_until');
+  localStorage.removeItem('shif_scan_cooldown_msg');
+}
+function getScanCooldownMsg(){
+  return localStorage.getItem('shif_scan_cooldown_msg')||'Coba lagi nanti';
+}
+
 // ═══ SESSION HELPERS ═══
 function getSession() {
   try { return JSON.parse(localStorage.getItem('shifa_session') || 'null'); }
@@ -61,7 +82,7 @@ function getHouseholdMembers() {
   catch { return []; }
 }
 
-// ═══ REALTIME SYNC (polling setiap 10 detik) ═══
+// ═══ REALTIME SYNC ═══
 function initRealtimeSync() {
   const hid = getHouseholdId();
   if (!hid) return;
