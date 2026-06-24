@@ -1,7 +1,7 @@
 // ═══ BANK THEMES ═══
 const BANK_THEMES={
   'Jago':      {grad:'linear-gradient(135deg,#d97706,#fbbf24)',motif:'waves',    logo:'jago.png'},
-  'Cash':      {grad:'linear-gradient(135deg,#059669,#34d399)',motif:'cash',     logo:null},
+  'Cash':      {grad:'linear-gradient(135deg,#059669,#34d399)',motif:'cash',     logo:'cash.png'},
   'BCA':       {grad:'linear-gradient(135deg,#1e40af,#3b82f6)',motif:'lines',    logo:'bca.png'},
   'Seabank':   {grad:'linear-gradient(135deg,#ea580c,#f97316)',motif:'triangles',logo:'seabank.png'},
   'Dana':      {grad:'linear-gradient(135deg,#1e3a8a,#1e40af)',motif:'grid',     logo:'dana.png'},
