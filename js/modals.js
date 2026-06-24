@@ -180,80 +180,106 @@ function triggerAiScan() {
 async function handleAiScanImg(event) {
   const file = event.target.files?.[0];
   if (!file) return;
-  // Reset input supaya onchange bisa trigger lagi nanti
   event.target.value = '';
 
-  // Cek cooldown lagi
   if (getScanCooldownRemaining() > 0) {
     startScanCountdownUI(getScanCooldownRemaining(), getScanCooldownMsg());
     return;
   }
 
-  // Tampilkan overlay scan
-  const ov = document.getElementById('aiScanOv');
-  const preview = document.getElementById('aiScanPreview');
-  const lbl = document.getElementById('aiScanLbl');
-  const cancelBtn = document.getElementById('aiScanCancel');
+  const ov       = document.getElementById('aiScanOv');
+  const preview  = document.getElementById('aiScanPreview');
+  const lbl      = document.getElementById('aiScanLbl');
+  const cancelBtn= document.getElementById('aiScanCancel');
+
   if (ov) ov.style.display = 'flex';
   if (cancelBtn) cancelBtn.style.display = 'none';
 
-  // Load preview
-  const reader = new FileReader();
+  // Baca base64
   const base64 = await new Promise(res => {
+    const reader = new FileReader();
     reader.onload = e => res(e.target.result.split(',')[1]);
     reader.readAsDataURL(file);
   });
 
-  if (preview) {
-    preview.src = URL.createObjectURL(file);
-  }
+  if (preview) preview.src = URL.createObjectURL(file);
 
   aiScanAbort = false;
   if (cancelBtn) cancelBtn.style.display = 'block';
-  if (lbl) lbl.textContent = 'Menganalisis gambar...';
 
-  try {
-    const res = await fetch(`${API_URL}/api/parse-receipt`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ base64, mimeType: file.type || 'image/jpeg' })
-    });
-    const json = await res.json().catch(() => ({}));
-    if (aiScanAbort) return;
-    if (ov) ov.style.display = 'none';
+  // Jumlah key di server — coba dari index 0 sampai 2
+  const TOTAL_KEYS = 3;
+  let lastErr = null;
 
-    if (!res.ok || !json.success) {
-      const status = json.status || res.status || 0;
-      let cooldownSec = 15, errMsg = '';
-      if (status === 429) {
-        cooldownSec = json.retryAfter || 60;
-        errMsg = `⚠️ Semua API key kena limit. Tunggu ${cooldownSec >= 60 ? Math.ceil(cooldownSec / 60) + 'm' : cooldownSec + 's'}`;
-      } else if (status === 503 || status === 500) {
-        cooldownSec = 30;
-        errMsg = `⚠️ Server Gemini error (${status}). Tunggu 30s`;
-      } else if (status === 400) {
-        cooldownSec = 10;
-        errMsg = `⚠️ Gambar tidak terbaca. Coba foto ulang`;
-      } else {
-        cooldownSec = 15;
-        errMsg = `⚠️ Gagal: ${json.error || 'Unknown error'}`;
-      }
-      setScanCooldown(cooldownSec, errMsg);
-      startScanCountdownUI(cooldownSec, errMsg);
-      toast(errMsg, 'err');
+  for (let ki = 0; ki < TOTAL_KEYS; ki++) {
+    if (aiScanAbort) break;
+    if (lbl) lbl.textContent = `Menganalisis... (API ${ki + 1}/${TOTAL_KEYS})`;
+
+    try {
+      const result = await callGeminiViaVercel(ki, base64, file.type || 'image/jpeg');
+      if (aiScanAbort) break;
+      if (ov) ov.style.display = 'none';
+      applyAIResult(result);
+      toast('Struk berhasil dibaca ✓', 'ok');
       return;
+    } catch (e) {
+      lastErr = e;
+      const status = e.status || 0;
+      if (status === 429) {
+        // Key ini kena rate limit → coba key berikutnya
+        toast(`API ${ki + 1} rate limit, coba key berikutnya...`, '');
+        continue;
+      }
+      // Error lain (400, 500, network) → coba key berikutnya juga
+      console.warn(`Gemini key ${ki + 1} gagal:`, e.message);
     }
-
-    applyAIResult(json.data);
-    toast('Struk berhasil dibaca ✓', 'ok');
-  } catch (e) {
-    if (aiScanAbort) return;
-    if (ov) ov.style.display = 'none';
-    const errMsg = `⚠️ Gagal koneksi: ${e.message || 'Unknown error'}`;
-    setScanCooldown(15, errMsg);
-    startScanCountdownUI(15, errMsg);
-    toast(errMsg, 'err');
   }
+
+  // Semua key gagal
+  if (ov) ov.style.display = 'none';
+  if (aiScanAbort) return;
+
+  const status = lastErr?.status || 0;
+  let cooldownSec, errMsg;
+
+  if (status === 429) {
+    cooldownSec = lastErr?.retryAfter || 60;
+    errMsg = `⚠️ Semua API key kena limit. Tunggu ${cooldownSec >= 60 ? Math.ceil(cooldownSec/60)+'m' : cooldownSec+'s'}`;
+  } else if (status === 503 || status === 500) {
+    cooldownSec = 30;
+    errMsg = `⚠️ Server Gemini error (${status}). Tunggu 30 detik`;
+  } else if (status === 400) {
+    cooldownSec = 10;
+    errMsg = `⚠️ Gambar tidak terbaca. Coba foto ulang`;
+  } else {
+    cooldownSec = 15;
+    errMsg = `⚠️ Gagal: ${lastErr?.message || 'Unknown error'}`;
+  }
+
+  setScanCooldown(cooldownSec, errMsg);
+  startScanCountdownUI(cooldownSec, errMsg);
+  toast(errMsg, 'err');
+}
+
+// Panggil endpoint Vercel — key aman di server
+async function callGeminiViaVercel(keyIndex, base64Data, mimeType) {
+  const res = await fetch(`${API_URL}/api/gemini`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageBase64: base64Data, mimeType, keyIndex })
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const err = new Error(json.error || `HTTP ${res.status}`);
+    err.status = json.status || res.status;
+    err.retryAfter = json.retryAfter || 60;
+    throw err;
+  }
+
+  if (!json.success || !json.data) throw new Error('Respons server tidak valid');
+  return json.data;
 }
 
 function applyAIResult(data) {
