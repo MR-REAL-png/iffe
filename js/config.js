@@ -6,6 +6,13 @@ const API_URL  = 'https://iffe-puce.vercel.app';
 const LOGO_URL = 'https://raw.githubusercontent.com/MR-REAL-png/iffe/main/logo.png';
 const BANK_LOGO_BASE = 'https://raw.githubusercontent.com/MR-REAL-png/iffe/main/images/banks/';
 
+// ═══ GEMINI — key disimpan aman di Vercel Environment Variables ═══
+// Di Vercel Dashboard → Settings → Environment Variables:
+//   GEMINI_KEY_1 = AIza...
+//   GEMINI_KEY_2 = AIza...
+//   GEMINI_KEY_3 = AIza...
+// Frontend hanya memanggil /api/gemini (tidak perlu tahu key)
+
 // ═══ SUPABASE ═══
 const SUPABASE_URL      = 'https://sqknfsorqtityalgherc.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxa25mc29ycXRpdHlhbGdoZXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTgyMDQsImV4cCI6MjA5NzI3NDIwNH0.hE9VCHIc53v5RPCd4eXaEEoYnxJqszA-ph7IaIZDgjo';
