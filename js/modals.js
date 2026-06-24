@@ -195,12 +195,20 @@ async function handleAiScanImg(event) {
   if (ov) ov.style.display = 'flex';
   if (cancelBtn) cancelBtn.style.display = 'none';
 
-  // Baca base64
-  const base64 = await new Promise(res => {
-    const reader = new FileReader();
-    reader.onload = e => res(e.target.result.split(',')[1]);
-    reader.readAsDataURL(file);
-  });
+  // Compress & resize sebelum kirim (handle HEIC/foto besar dari iPhone)
+  if (lbl) lbl.textContent = 'Memproses gambar...';
+  let base64, mimeOut = 'image/jpeg';
+  try {
+    base64 = await resizeAndCompress(file);
+  } catch {
+    // Fallback ke FileReader biasa jika canvas gagal
+    base64 = await new Promise(res => {
+      const reader = new FileReader();
+      reader.onload = e => res(e.target.result.split(',')[1]);
+      reader.readAsDataURL(file);
+    });
+    mimeOut = file.type || 'image/jpeg';
+  }
 
   if (preview) preview.src = URL.createObjectURL(file);
 
@@ -216,7 +224,7 @@ async function handleAiScanImg(event) {
     if (lbl) lbl.textContent = `Menganalisis... (API ${ki + 1}/${TOTAL_KEYS})`;
 
     try {
-      const result = await callGeminiViaVercel(ki, base64, file.type || 'image/jpeg');
+      const result = await callGeminiViaVercel(ki, base64, mimeOut);
       if (aiScanAbort) break;
       if (ov) ov.style.display = 'none';
       applyAIResult(result);
@@ -686,4 +694,42 @@ function setFilteredForSearch(rows) {
   _filteredForSearch = rows;
   // Re-render dengan search query saat ini
   renderFilteredData();
+}
+
+// ═══ RESIZE & COMPRESS GAMBAR (sebelum kirim ke Gemini) ═══
+// Resize max 1024px, compress jadi JPEG 0.85
+// Otomatis handle HEIC dari iPhone karena canvas output selalu JPEG
+async function resizeAndCompress(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        const MAX = 1024;
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        // Output selalu JPEG, strip header "data:image/jpeg;base64,"
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(dataUrl.split(',')[1]);
+      } catch(e) {
+        URL.revokeObjectURL(url);
+        reject(e);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Gagal load gambar'));
+    };
+    img.src = url;
+  });
 }
