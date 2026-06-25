@@ -333,100 +333,64 @@
 <div class="ov" id="ovInput" onclick="closeOv(event,'ovInput')">
   <div class="modal modal-input">
     <div class="modal-hd">
-      <h3>
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-        Input Transaksi
-      </h3>
+      <h3>Catat Transaksi</h3>
       <button class="modal-x" onclick="closeOv(null,'ovInput')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-bd">
+      <!-- Label dicatat oleh -->
       <div class="input-rec-by" id="inputRecBy"></div>
-      <!-- Tanggal & Bulan — 2 kolom -->
-      <div class="inp-row-2">
-        <div class="inp-row">
-          <label class="inp-lbl">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
-            Tanggal
-          </label>
-          <input type="date" id="inTgl" class="inp" onchange="syncBulan('in')">
-        </div>
-        <div class="inp-row">
-          <label class="inp-lbl">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
-            Bulan
-          </label>
-          <input type="text" id="inBulan" class="inp" readonly style="color:var(--tx3)">
-        </div>
-      </div>
-      <!-- Jenis -->
       <div class="inp-row">
-        <label class="inp-lbl">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"/></svg>
-          Jenis
-        </label>
+        <label class="inp-lbl">Tanggal</label>
+        <input type="date" id="inTgl" class="inp" onchange="syncBulan('in')">
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Jenis</label>
         <select id="inJenis" class="inp" onchange="fillKat('inJenis','inKat');renderQuickKat()">
           <option value="">— Pilih Jenis —</option>
           <option>Pemasukan</option>
           <option>Pengeluaran</option>
         </select>
       </div>
-      <!-- Kategori -->
       <div class="inp-row">
-        <label class="inp-lbl">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/><path d="M6 6h.008v.008H6V6Z"/></svg>
-          Kategori
-        </label>
+        <label class="inp-lbl">Kategori</label>
         <select id="inKat" class="inp"><option value="">— Pilih Jenis dulu —</option></select>
       </div>
-      <!-- Nominal (RP) -->
+      <!-- Quick kategori -->
+      <div class="quick-kat" id="quickKat"></div>
       <div class="inp-row">
-        <label class="inp-lbl">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"/></svg>
-          Nominal (RP)
-        </label>
-        <input type="text" id="inNom" class="inp" inputmode="numeric" placeholder="50.000" oninput="fmtNom(this)">
+        <label class="inp-lbl">Nominal</label>
+        <input type="text" id="inNom" class="inp" inputmode="numeric" placeholder="0" oninput="fmtNom(this)">
       </div>
-      <!-- Metode & Bank — 2 kolom -->
-      <div class="inp-row-2">
-        <div class="inp-row">
-          <label class="inp-lbl">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>
-            Metode
-          </label>
-          <select id="inMetode" class="inp" onchange="syncMetodeBank('inMetode','inBank')">
-            <option value="">— Pilih —</option>
-            <option>Cash</option>
-            <option>Transfer</option>
-            <option>QRIS</option>
-          </select>
-        </div>
-        <div class="inp-row">
-          <label class="inp-lbl">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg>
-            Bank
-          </label>
-          <select id="inBank" class="inp"></select>
-        </div>
-      </div>
-      <!-- Keterangan -->
       <div class="inp-row">
-        <label class="inp-lbl">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
-          Keterangan
-        </label>
-        <input type="text" id="inKet" class="inp" placeholder="opsional...">
+        <label class="inp-lbl">Metode</label>
+        <select id="inMetode" class="inp" onchange="syncMetodeBank('inMetode','inBank')">
+          <option value="">— Pilih —</option>
+          <option>Cash</option>
+          <option>Transfer</option>
+          <option>QRIS</option>
+        </select>
       </div>
-      <input type="file" id="aiImgInput" accept="image/*" style="display:none" onchange="handleAiScanImg(event)">
-      <div id="aiScanCooldownInfo" style="display:none;font-size:0.68rem;color:var(--red);margin-top:4px;font-weight:600;padding:4px 8px;background:rgba(248,113,113,0.1);border-radius:6px;border:1px solid rgba(248,113,113,0.2)"></div>
+      <div class="inp-row">
+        <label class="inp-lbl">Rekening</label>
+        <select id="inBank" class="inp"></select>
+      </div>
+      <div class="inp-row">
+        <label class="inp-lbl">Keterangan</label>
+        <input type="text" id="inKet" class="inp" placeholder="Opsional...">
+      </div>
+      <!-- AI Scan -->
+      <div class="ai-row">
+        <button class="btn-ai" id="btnAiScan" onclick="triggerAiScan()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+          Scan Struk
+        </button>
+        <input type="file" id="aiImgInput" accept="image/*" style="display:none" onchange="handleAiScanImg(event)">
+        <div id="aiScanCooldownInfo" style="display:none;font-size:0.68rem;color:var(--red);margin-top:4px;font-weight:600;padding:4px 8px;background:rgba(248,113,113,0.1);border-radius:6px;border:1px solid rgba(248,113,113,0.2)"></div>
+      </div>
     </div>
-    <!-- Footer: Scan AI | Batal | Simpan -->
-    <div class="modal-ft-3">
-      <button class="btn-scan" id="btnAiScan" onclick="triggerAiScan()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"/></svg>
-        Scan AI
-      </button>
-      <button class="btn-cx" style="flex:1" onclick="closeOv(null,'ovInput')">Batal</button>
-      <button class="btn-ok" style="flex:1.5" onclick="submitInput()">
+    <div class="modal-ft">
+      <button class="btn-cx" onclick="closeOv(null,'ovInput')">Batal</button>
+      <button class="btn-ok" onclick="submitInput()">
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
         Simpan
       </button>
@@ -437,7 +401,7 @@
 <!-- EDIT MODAL -->
 <div class="ov" id="ovEdit" onclick="closeOv(event,'ovEdit')">
   <div class="modal modal-input">
-    <div class="modal-hd"><h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>Edit Transaksi</h3><button class="modal-x" onclick="closeOv(null,'ovEdit')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button></div>
+    <div class="modal-hd"><h3>Edit Transaksi</h3><button class="modal-x" onclick="closeOv(null,'ovEdit')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6l12 12"/></svg></button></div>
     <div class="modal-bd">
       <input type="hidden" id="eId">
       <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="eTgl" class="inp" onchange="syncBulan('e')"></div>
