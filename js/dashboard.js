@@ -566,8 +566,8 @@ function renderKalender(){
     const nom=byDay[tgl]||0;
     const isToday=today.getDate()===d&&today.getMonth()===kalMonth&&today.getFullYear()===kalYear;
     const intensity=nom>0?Math.max(0.15,nom/maxVal):0;
-    const bg=nom>0?`rgba(244,114,182,${intensity*0.6})`:'transparent';
-    const cl=isToday?'kal-cell today':'kal-cell';
+    const bg=nom>0?`rgba(56,189,248,${intensity*0.5})`:'transparent';
+    const cl=(isToday?'kal-cell today':'kal-cell')+(nom>0?' has-tx':'');
     cells+=`<div class="${cl}" style="background:${bg}" onclick="showKalDetail('${tgl}')">
       <div class="kal-day">${d}</div>
       ${nom>0?`<div class="kal-nom">${rpShort(nom)}</div>`:''}
