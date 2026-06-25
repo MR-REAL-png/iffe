@@ -283,15 +283,78 @@ export default async function handler(req, res) {
     // TABUNGAN HISTORY — APPEND
     // ═══════════════════════════════════════
     if (action === 'append-tabungan-history' && req.method === 'POST') {
-      const { household_id, tabungan_id, nominal, sumber, tanggal } = req.body;
+      const { household_id, tabungan_id, nominal, sumber, tanggal, transaksi_id } = req.body;
       const result = await sb('/tabungan_history', 'POST', {
         household_id, tabungan_id,
         nominal: Number(nominal) || 0,
         sumber: sumber || null,
-        tanggal
+        tanggal,
+        transaksi_id: transaksi_id || null
       });
       if (!result.ok) return res.json({ success: false, error: 'Gagal simpan riwayat tabungan' });
       return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // TABUNGAN HISTORY — UPDATE nominal by transaksi_id
+    // ═══════════════════════════════════════
+    if (action === 'update-tabungan-history-by-transaksi' && req.method === 'PUT') {
+      const { transaksi_id, household_id, nominal } = req.body;
+      if (!transaksi_id || !household_id) return res.json({ success: false, error: 'transaksi_id dan household_id wajib' });
+
+      // Ambil tabungan_id dulu sebelum update
+      const histData = await sb(`/tabungan_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}&select=tabungan_id`);
+
+      // Update nominal di history
+      const histResult = await sb(
+        `/tabungan_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}`,
+        'PATCH',
+        { nominal: Number(nominal) || 0 }
+      );
+      if (!histResult.ok) return res.json({ success: false, error: 'Gagal update riwayat tabungan' });
+
+      // Recalculate terkumpul di tabel tabungan
+      if (histData.ok && histData.data?.length > 0) {
+        const tabungan_id = histData.data[0].tabungan_id;
+        const sumResult = await sb(`/tabungan_history?tabungan_id=eq.${tabungan_id}&household_id=eq.${household_id}&select=nominal`);
+        if (sumResult.ok) {
+          const total = (sumResult.data || []).reduce((s, h) => s + Number(h.nominal || 0), 0);
+          await sb(`/tabungan?id=eq.${tabungan_id}&household_id=eq.${household_id}`, 'PATCH', { terkumpul: total });
+        }
+      }
+
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // TABUNGAN HISTORY — DELETE by transaksi_id
+    // ═══════════════════════════════════════
+    if (action === 'delete-tabungan-history-by-transaksi' && req.method === 'DELETE') {
+      const { transaksi_id, household_id } = req.query;
+      if (!transaksi_id || !household_id) return res.json({ success: false, error: 'transaksi_id dan household_id wajib' });
+
+      // Ambil tabungan_id sebelum hapus
+      const histData = await sb(`/tabungan_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}&select=tabungan_id,nominal`);
+      const affected = histData.data || [];
+
+      // Hapus dari history
+      const delResult = await sb(
+        `/tabungan_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}`,
+        'DELETE'
+      );
+      if (!delResult.ok) return res.json({ success: false, error: 'Gagal hapus riwayat tabungan' });
+
+      // Recalculate terkumpul untuk setiap tabungan yang terdampak
+      const tabIds = [...new Set(affected.map(h => h.tabungan_id))];
+      for (const tabungan_id of tabIds) {
+        const sumResult = await sb(`/tabungan_history?tabungan_id=eq.${tabungan_id}&household_id=eq.${household_id}&select=nominal`);
+        if (sumResult.ok) {
+          const total = (sumResult.data || []).reduce((s, h) => s + Number(h.nominal || 0), 0);
+          await sb(`/tabungan?id=eq.${tabungan_id}&household_id=eq.${household_id}`, 'PATCH', { terkumpul: total });
+        }
+      }
+
+      return res.json({ success: true });
     }
 
     // ═══════════════════════════════════════
