@@ -182,9 +182,10 @@ img { max-width: 100%; }
   border-radius: 16px; margin-bottom: 6px;
 }
 [data-theme="ocean"] .hdr {
-  background: rgba(255,255,255,0.75);
-  border-color: rgba(2,132,199,0.18);
+  background: rgba(2,132,199,0.1);
+  border-color: rgba(2,132,199,0.2);
 }
+[data-theme="ocean"] #dashPeriodLabel { color: var(--tx); }
 [data-theme="ocean"] .hdr-menu-btn {
   border-color: rgba(2,132,199,0.25);
   background: rgba(2,132,199,0.08);
@@ -463,7 +464,8 @@ img { max-width: 100%; }
   font-size: 0.78rem; font-weight: 700;
 }
 .hk-pill.g { background: var(--grn-bg); color: var(--grn); border: 1px solid rgba(52,211,153,0.2); }
-.hk-pill.r { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+.hk-pill.r { background: rgba(248,113,113,0.22); color: var(--red); border: 1px solid rgba(248,113,113,0.4); }
+[data-theme="ocean"] .hk-pill.r { background: var(--red-bg); border-color: rgba(248,113,113,0.2); }
 
 /* ── STAT CARDS ── */
 .stat-row3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
