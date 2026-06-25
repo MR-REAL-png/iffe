@@ -80,6 +80,19 @@ async function submitEdit(){
 
   try{
     await sheetsUpdate(id,{tanggal:tgl,bulan,kategori:kat,nominal:nom,pembayaran:bank||'Cash',detail:ket,metode:met,jenis});
+
+    // Sinkron tabungan_history jika kategori Tabungan dan nominal berubah
+    if(kat==='Tabungan'){
+      const hid=getHouseholdId();
+      try{
+        await fetch(`${API_URL}/api/sheets?action=update-tabungan-history-by-transaksi`,{
+          method:'PUT',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({transaksi_id:String(id),household_id:hid,nominal:nom})
+        });
+      }catch(e2){console.warn('Sinkron tabungan gagal:',e2);}
+    }
+
     closeOv(null,'ovEdit');
     toast(`${IC.ok} Transaksi diperbarui!`,'ok');
     allRows=[];
@@ -106,7 +119,21 @@ function confirmDelete(id){
 
 async function doDelete(id){
   try{
+    // Cek apakah transaksi ini terhubung ke tabungan
+    const hid=getHouseholdId();
+    const r=allRows.find(x=>x.id===id||x.rowIndex===id);
+
     await sheetsDelete(id);
+
+    // Sinkron tabungan_history jika kategori Tabungan
+    if(r?.kategori==='Tabungan'){
+      try{
+        await fetch(`${API_URL}/api/sheets?action=delete-tabungan-history-by-transaksi&transaksi_id=${encodeURIComponent(String(id))}&household_id=${hid}`,{
+          method:'DELETE'
+        });
+      }catch(e2){console.warn('Sinkron hapus tabungan gagal:',e2);}
+    }
+
     closeOv(null,'ovConfirm');
     toast('Transaksi dihapus','ok');
     allRows=[];
