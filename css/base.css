@@ -92,24 +92,7 @@ img { max-width: 100%; }
   position: absolute; inset: 0;
   background: linear-gradient(160deg, #0c3460 0%, #0a4a8c 50%, #0c3460 100%);
 }
-.cb-blob1 {
-  position: absolute; width: 420px; height: 420px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 70%);
-  top: -120px; left: -80px;
-  animation: blobF1 9s ease-in-out infinite;
-}
-.cb-blob2 {
-  position: absolute; width: 360px; height: 360px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(14,165,233,0.18) 0%, transparent 70%);
-  top: 25%; right: -90px;
-  animation: blobF2 11s ease-in-out infinite;
-}
-.cb-blob3 {
-  position: absolute; width: 280px; height: 280px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%);
-  bottom: 10%; left: 10%;
-  animation: blobF3 8s ease-in-out infinite;
-}
+.cb-blob1, .cb-blob2, .cb-blob3 { display: none; }
 @keyframes blobF1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(25px,35px)} }
 @keyframes blobF2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,25px)} }
 @keyframes blobF3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-25px)} }
@@ -131,24 +114,7 @@ img { max-width: 100%; }
   z-index: -1; pointer-events: none; overflow: hidden;
 }
 [data-theme="ocean"] #oceanBg { display: block; }
-.ocean-glow1 {
-  position: absolute; top: -60px; right: -60px;
-  width: 380px; height: 380px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(2,132,199,0.22) 0%, transparent 70%);
-  animation: blobF1 8s ease-in-out infinite;
-}
-.ocean-glow2 {
-  position: absolute; bottom: 80px; left: -60px;
-  width: 300px; height: 300px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(14,165,233,0.18) 0%, transparent 70%);
-  animation: blobF2 10s ease-in-out infinite;
-}
-.ocean-glow3 {
-  position: absolute; top: 45%; left: 25%;
-  width: 220px; height: 220px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(14,165,233,0.18) 0%, transparent 70%);
-  animation: blobF3 12s ease-in-out infinite;
-}
+.ocean-glow1, .ocean-glow2, .ocean-glow3 { display: none; }
 .ocean-wave {
   position: absolute; bottom: 0; left: -10%; right: -10%; height: 200px;
   background: linear-gradient(180deg, transparent, rgba(2,132,199,0.1));
@@ -418,10 +384,10 @@ img { max-width: 100%; }
   border: 3px solid rgba(5,10,22,0.97);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   color: #fff; position: relative; top: -18px;
-  box-shadow: 0 6px 20px rgba(56,189,248,0.4), 0 0 0 1px rgba(56,189,248,0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
   transition: all .2s var(--ease);
 }
-.bnav-fab:active { transform: scale(0.92) translateY(-2px); box-shadow: 0 3px 12px rgba(56,189,248,0.3); }
+.bnav-fab:active { transform: scale(0.92) translateY(-2px); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 
 /* ── PERIOD BADGE ── */
 .period-badge {
@@ -490,7 +456,7 @@ img { max-width: 100%; }
   position: relative; overflow: hidden;
   animation: cardIn .35s var(--ease) both;
 }
-.stat3-glow { position: absolute; inset: 0; pointer-events: none; }
+.stat3-glow { display: none; }
 .stat3-ico { margin-bottom: 6px; display: flex; justify-content: center; }
 .stat3-val { font-family: var(--ffd); font-size: 1rem; font-weight: 700; line-height: 1.1; }
 .stat3-lbl { font-size: 0.58rem; color: var(--tx3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
