@@ -592,6 +592,26 @@ select.inp { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.
   border: 1px solid rgba(2,132,199,0.5);
 }
 
+/* ── DATA PAGE: kontras lebih jelas di tema light ── */
+[data-theme="ocean"] .fw-btn {
+  background: rgba(2,132,199,0.08); border: 1px solid rgba(2,132,199,0.3); color: var(--tx2);
+}
+[data-theme="ocean"] .fw-btn.on { background: rgba(2,132,199,0.16); border-color: rgba(2,132,199,0.5); color: var(--ac); }
+[data-theme="ocean"] .sel-sm {
+  background: #ffffff; border: 1px solid rgba(2,132,199,0.3); color: var(--tx);
+}
+[data-theme="ocean"] .data-summary {
+  background: #ffffff; border: 1px solid rgba(2,132,199,0.25);
+  box-shadow: 0 2px 8px rgba(2,132,199,0.08);
+}
+[data-theme="ocean"] .dc {
+  background: #ffffff; border: 1px solid rgba(2,132,199,0.2);
+  box-shadow: 0 2px 8px rgba(2,132,199,0.06);
+}
+[data-theme="ocean"] .dtag {
+  background: rgba(2,132,199,0.1); border: 1px solid rgba(2,132,199,0.3); color: var(--ac);
+}
+
 /* ── BUTTONS ── */
 .btn-ok {
   flex: 1; padding: 12px 16px; border-radius: 12px;
@@ -750,8 +770,8 @@ select.inp { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.
 .dc-tags-left { display: flex; gap: 4px; flex-wrap: wrap; }
 .dtag {
   padding: 2px 7px; border-radius: 6px;
-  background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2);
-  font-size: 0.6rem; font-weight: 600; color: var(--tx3);
+  background: rgba(56,189,248,0.16); border: 1px solid rgba(56,189,248,0.35);
+  font-size: 0.6rem; font-weight: 600; color: var(--ac);
 }
 .dc-ket-inline { font-size: 0.65rem; color: var(--tx3); font-style: italic; }
 .dc-edit-row { margin-top: 8px; border-top: 1px solid var(--bdr); padding-top: 6px; }
