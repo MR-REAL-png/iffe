@@ -721,16 +721,29 @@ async function submitTopup(id,current,nama){
   if(!lockBusy('topupTab'))return;
   try{
     const hid=getHouseholdId();
+    const session=getSession();
+    // Update terkumpul di tabungan
     await fetch(`${API_URL}/api/sheets?action=update-tabungan`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,household_id:hid,terkumpul:current+tambah})});
-    await fetch(`${API_URL}/api/sheets?action=append-tabungan-history`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,tabungan_id:id,nominal:tambah,sumber:sumber||null,tanggal:getLocalDate()})});
+
+    let transaksi_id=null;
     if(sumber){
-      await sheetsAppend({
+      // Catat sebagai transaksi Pengeluaran, simpan id-nya
+      const txRes=await fetch(`${API_URL}/api/sheets?action=append`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        household_id:hid,recorded_by:session?.username||'',
         tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
         kategori:'Tabungan',nominal:tambah,pembayaran:sumber,
         detail:`Topup tabungan: ${nama||''}`,metode:'Transfer',jenis:'Pengeluaran'
-      });
+      })});
+      const txJson=await txRes.json();
+      transaksi_id=txJson.data?.id||null;
       allRows=[];
     }
+    // Simpan history tabungan + transaksi_id (untuk sinkronisasi edit/hapus)
+    await fetch(`${API_URL}/api/sheets?action=append-tabungan-history`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      household_id:hid,tabungan_id:id,nominal:tambah,
+      sumber:sumber||null,tanggal:getLocalDate(),
+      transaksi_id
+    })});
     closeBs();toast('Topup berhasil ✓','ok');loadTabungan();
     if(sumber)loadDashboard();
   }catch(e){toast('Gagal topup: '+e.message,'err')}
