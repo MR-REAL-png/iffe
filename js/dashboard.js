@@ -442,9 +442,9 @@ async function loadRekap(){
           </div>
 
           <!-- Arus Kas Tahunan -->
-          <div style="background:linear-gradient(135deg,rgba(56,189,248,0.12),rgba(244,114,182,0.1));border:1px solid rgba(56,189,248,0.2);border-radius:14px;padding:14px;text-align:center;margin-bottom:12px">
-            <div style="font-size:0.55rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Arus Kas Tahunan</div>
-            <div style="font-family:var(--ffd);font-size:1.6rem;font-weight:700;color:${kasTotal>=0?'var(--grn)':'var(--red)'}">${kasTotal<0?'−':''}${rp(Math.abs(kasTotal))}</div>
+          <div class="hero-kas" style="text-align:center;margin-bottom:12px">
+            <div class="hk-lbl" style="text-align:center">Arus Kas Tahunan</div>
+            <div class="hk-val" style="text-align:center;font-size:1.6rem">${kasTotal<0?'−':''}${rp(Math.abs(kasTotal))}</div>
           </div>
 
           <!-- Per Bulan -->
@@ -460,7 +460,7 @@ async function loadRekap(){
                   <div style="font-size:0.55rem;font-weight:700;color:var(--grn);text-transform:uppercase;margin-bottom:3px">Pemasukan</div>
                   <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--grn)">${rpShort(m.masuk)}</div>
                 </div>
-                <div style="background:var(--red-bg);border-radius:10px;padding:8px;text-align:center">
+                <div style="background:rgba(248,113,113,0.22);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:8px;text-align:center">
                   <div style="font-size:0.55rem;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:3px">Pengeluaran</div>
                   <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--red)">${rpShort(m.keluar)}</div>
                 </div>
