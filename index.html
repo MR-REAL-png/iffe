@@ -32,6 +32,44 @@
 .bulan-nav-center { flex: 1; text-align: center; }
 .bulan-nav-lbl { font-family: var(--ffd); font-size: 1rem; font-weight: 700; color: var(--tx); }
 .bulan-nav-sub { font-size: 0.62rem; margin-top: 2px; }
+
+/* ── INPUT MODAL — 2 KOLOM ── */
+.inp-row-2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 12px;
+}
+.inp-row-2 .inp-row { margin-bottom: 0; }
+
+/* ── MODAL FOOTER 3 BTN ── */
+.modal-ft-3 {
+  display: flex; gap: 8px; padding: 12px 16px;
+  border-top: 1px solid rgba(56,189,248,0.12);
+  flex-shrink: 0; align-items: center;
+  background: rgba(10,22,50,0.6);
+}
+/* Scan btn — ukuran sejajar dengan Batal */
+.btn-scan {
+  height: 44px; padding: 0 12px; border-radius: 12px; flex-shrink: 0;
+  background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.28);
+  color: #a78bfa; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  transition: all .2s;
+}
+.btn-scan:active { background: rgba(167,139,250,0.22); transform: scale(0.97); }
+.btn-scan:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Sejajarkan btn-cx dan btn-ok tingginya */
+.modal-ft-3 .btn-cx,
+.modal-ft-3 .btn-ok {
+  height: 44px; display: flex; align-items: center; justify-content: center;
+}
+
+/* ── LABEL INPUT DENGAN IKON ── */
+.inp-lbl {
+  display: flex !important; align-items: center; gap: 5px;
+  font-size: 0.68rem; font-weight: 700; color: var(--tx3);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
+}
+.inp-lbl svg { flex-shrink: 0; opacity: 0.7; }
 </style>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
