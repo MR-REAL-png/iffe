@@ -427,14 +427,29 @@ function openSettModal(type){
     hideFt();
   }
   else if(type==='periode'){
-    title.textContent='Setting Periode';
+    title.textContent='Periode Keuangan';
     const cur=JSON.parse(localStorage.getItem('mm_periode')||'{}');
+    const isManual=!!(cur.startDate&&cur.endDate&&cur.isManual);
     const{startDate,endDate}=getActivePeriodResolved();
     body.innerHTML=`
-      <p style="font-size:0.78rem;color:var(--tx2);margin-bottom:12px">Secara default periode dihitung otomatis (tanggal 24 bulan lalu → 24 bulan ini). Kamu bisa override di sini.</p>
-      <div class="inp-row"><label class="inp-lbl">Mulai</label><input type="date" id="periodeStart" class="inp" value="${cur.startDate?cur.startDate.slice(0,10):startDate.toISOString().slice(0,10)}"></div>
-      <div class="inp-row"><label class="inp-lbl">Selesai</label><input type="date" id="periodeEnd" class="inp" value="${cur.endDate?cur.endDate.slice(0,10):endDate.toISOString().slice(0,10)}"></div>
-      <button class="btn-cx" style="width:100%;margin-top:8px" onclick="resetPeriode()">Reset ke Otomatis</button>
+      <p style="font-size:0.78rem;color:var(--tx2);margin-bottom:14px;line-height:1.6">
+        Default: <b>per bulan kalender</b> — navigasi ‹ › di dashboard.<br>
+        Mode manual: set tanggal mulai & selesai sendiri.
+      </p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:10px 12px;background:var(--glass);border:1px solid var(--bdr2);border-radius:12px">
+        <div>
+          <div style="font-size:0.82rem;font-weight:700;color:var(--tx)">Mode Manual</div>
+          <div style="font-size:0.65rem;color:var(--tx3)">Set tanggal periode sendiri</div>
+        </div>
+        <button class="sett-toggle ${isManual?'on':''}" id="periodeManualToggle" onclick="togglePeriodeManual()"></button>
+      </div>
+      <div id="periodeInputs" style="display:${isManual?'block':'none'}">
+        <div class="inp-row"><label class="inp-lbl">Mulai</label><input type="date" id="periodeStart" class="inp" value="${cur.startDate?cur.startDate.slice(0,10):startDate.toISOString().slice(0,10)}"></div>
+        <div class="inp-row"><label class="inp-lbl">Selesai</label><input type="date" id="periodeEnd" class="inp" value="${cur.endDate?cur.endDate.slice(0,10):endDate.toISOString().slice(0,10)}"></div>
+      </div>
+      <div id="periodeOtoInfo" style="display:${isManual?'none':'block'};text-align:center;padding:16px;color:var(--tx3);font-size:0.8rem">
+        ✓ Mode otomatis aktif — gunakan ‹ › di dashboard untuk pindah bulan
+      </div>
     `;
   }
   else if(type==='alertpct'){
@@ -503,15 +518,20 @@ function saveAnggaran(){
 
 function saveSettModal(){
   if(settModalType==='periode'){
-    const start=document.getElementById('periodeStart')?.value;
-    const end  =document.getElementById('periodeEnd')?.value;
-    if(!start||!end){toast('Isi tanggal periode','err');return}
-    localStorage.setItem('mm_periode',JSON.stringify({startDate:start,endDate:end}));
-    updatePeriodUI();
-    toast('Periode disimpan ✓','ok');
-    pushSettings();
-    closeOv(null,'ovSett');
-    loadDashboard();
+    const isManual=document.getElementById('periodeManualToggle')?.classList.contains('on');
+    if(isManual){
+      const start=document.getElementById('periodeStart')?.value;
+      const end  =document.getElementById('periodeEnd')?.value;
+      if(!start||!end){toast('Isi tanggal periode','err');return}
+      localStorage.setItem('mm_periode',JSON.stringify({startDate:start,endDate:end,isManual:true}));
+      updatePeriodUI();
+      toast('Periode manual disimpan ✓','ok');
+      pushSettings();
+      closeOv(null,'ovSett');
+      allRows=[];loadDashboard();
+    } else {
+      resetPeriode();
+    }
   }
   else if(settModalType==='alertpct'){
     const v=parseInt(document.getElementById('alertPctInput')?.value)||80;
@@ -537,7 +557,21 @@ function resetPeriode(){
   toast('Periode direset ke otomatis','ok');
   pushSettings();
   closeOv(null,'ovSett');
-  loadDashboard();
+  allRows=[];loadDashboard();
+}
+
+function togglePeriodeManual(){
+  const toggle=document.getElementById('periodeManualToggle');
+  const inputs=document.getElementById('periodeInputs');
+  const otoInfo=document.getElementById('periodeOtoInfo');
+  if(!toggle)return;
+  const nowOn=toggle.classList.toggle('on');
+  if(inputs)inputs.style.display=nowOn?'block':'none';
+  if(otoInfo)otoInfo.style.display=nowOn?'none':'block';
+  if(!nowOn){
+    // Reset ke otomatis langsung
+    resetPeriode();
+  }
 }
 
 // ═══ KELOLA KATEGORI ═══
