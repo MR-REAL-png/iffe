@@ -462,7 +462,14 @@ function openSettModal(type){
   else if(type==='katrata'){
     title.textContent='Kategori Rata-rata Harian';
     const fixedCats=JSON.parse(localStorage.getItem('mm_fixed_cats')||'["Tabungan","Piutang","Kos","Tf Rumah","Listrik Rumah","Internet","Listrik"]');
-    const allKats=[...new Set(allRows.map(r=>r.kategori).filter(Boolean))].sort();
+    // Hanya tampilkan kategori Pengeluaran — bukan Pemasukan
+    const KAT_PMS=typeof KAT_PEMASUKAN!=='undefined'?KAT_PEMASUKAN:['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
+    const allKats=[...new Set(
+      allRows
+        .filter(r=>r.jenis==='Pengeluaran')
+        .map(r=>r.kategori)
+        .filter(k=>k&&!KAT_PMS.includes(k))
+    )].sort();
     body.innerHTML=`
       <p style="font-size:0.78rem;color:var(--tx2);margin-bottom:12px">Kategori yang dicentang akan <b>dikecualikan</b> dari perhitungan rata-rata harian (pengeluaran tetap).</p>
       <div id="fixedCatList">${allKats.map(k=>`<label class="sett-check-item"><input type="checkbox" value="${k}" ${fixedCats.includes(k)?'checked':''}> ${k}</label>`).join('')}</div>
