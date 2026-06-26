@@ -259,9 +259,15 @@ async function fetchDBOptions(){
     });
     const customKats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
     const customBanks=JSON.parse(localStorage.getItem('mm_custom_banks')||'[]');
+    // kategoris hanya pengeluaran — pemasukan sudah hardcode di KAT_PEMASUKAN
+    const KAT_PMS=typeof KAT_PEMASUKAN!=='undefined'?KAT_PEMASUKAN:['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
+    const katPengeluaran=[...new Set([
+      ...kategoris.filter(k=>!KAT_PMS.includes(k)),
+      ...customKats.filter(k=>!KAT_PMS.includes(k))
+    ])].sort();
     dbOpts={
       banks:[...new Set([...banks,...customBanks])],
-      kategoris:[...new Set([...kategoris,...customKats])].sort(),
+      kategoris:katPengeluaran,
       metodes:['Cash','Transfer','QRIS'],
       jenis:['Pemasukan','Pengeluaran']
     };
@@ -298,19 +304,32 @@ function syncMetodeBank(metodeId,bankId){
   }
 }
 
+// Kategori Pemasukan — hardcode, tidak campur dengan pengeluaran
+const KAT_PEMASUKAN = ['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
+
+// Kategori Pengeluaran — dari data + custom, tidak include kategori pemasukan
+function getKatPengeluaran(){
+  const customKats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
+  const fromData=[...new Set(
+    allRows
+      .filter(r=>r.jenis==='Pengeluaran')
+      .map(r=>r.kategori)
+      .filter(k=>k&&!KAT_PEMASUKAN.includes(k))
+  )];
+  return [...new Set([...fromData,...customKats.filter(k=>!KAT_PEMASUKAN.includes(k))])].sort();
+}
+
 function fillKat(jenisId,katId){
   const jenis=document.getElementById(jenisId)?.value;
   const sel=document.getElementById(katId);if(!sel)return;
   if(!jenis){sel.innerHTML='<option value="">— Pilih Jenis dulu —</option>';return;}
-  const customKats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
-  const fromData=[...new Set(allRows.filter(r=>r.jenis===jenis).map(r=>r.kategori).filter(Boolean))];
-  const all=[...new Set([...fromData,...customKats])].sort();
   if(jenis==='Pemasukan'){
-    const defIn=['Gaji','Bonus','Freelance','Transfer Masuk','Lainnya'];
-    const merged=[...new Set([...defIn,...all])];
-    sel.innerHTML=merged.map(k=>`<option value="${k}">${k}</option>`).join('');
+    sel.innerHTML=KAT_PEMASUKAN.map(k=>`<option value="${k}">${k}</option>`).join('');
   } else {
-    sel.innerHTML=all.map(k=>`<option value="${k}">${k}</option>`).join('');
+    const kats=getKatPengeluaran();
+    sel.innerHTML=kats.length
+      ? kats.map(k=>`<option value="${k}">${k}</option>`).join('')
+      : '<option value="">— Belum ada kategori —</option>';
   }
 }
 
@@ -318,7 +337,14 @@ function renderQuickKat(){
   const el=document.getElementById('quickKat');if(!el)return;
   const jenis=document.getElementById('inJenis')?.value;
   if(!jenis){el.innerHTML='';return;}
-  const recent=[...new Set(allRows.filter(r=>r.jenis===jenis).slice(0,30).map(r=>r.kategori).filter(Boolean))].slice(0,6);
+  const KAT_PMS=typeof KAT_PEMASUKAN!=='undefined'?KAT_PEMASUKAN:['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
+  const recent=[...new Set(
+    allRows
+      .filter(r=>r.jenis===jenis)
+      .slice(0,50)
+      .map(r=>r.kategori)
+      .filter(k=>k&&(jenis==='Pemasukan'?KAT_PMS.includes(k):!KAT_PMS.includes(k)))
+  )].slice(0,6);
   el.innerHTML=recent.map(k=>`<button class="qk-btn" onclick="document.getElementById('inKat').value='${k.replace(/'/g,"\\'")}'">${k}</button>`).join('');
 }
 
