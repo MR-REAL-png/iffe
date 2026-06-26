@@ -547,10 +547,7 @@ function renderKalender(){
   const el=document.getElementById('kalGrid');if(!el)return;
   const lbl=document.getElementById('kalNavLbl');
   if(lbl)lbl.textContent=`${MOS[kalMonth]} ${kalYear}`;
-  const{startDate,endDate}=getActivePeriodResolved();
-  const sd=new Date(startDate);sd.setHours(0,0,0,0);
-  const ed=new Date(endDate);ed.setHours(23,59,59,999);
-  const rows=allRows.filter(r=>{const d=new Date(r.tanggal);return d>=sd&&d<=ed});
+  const rows=allRows;
   const byDay={};
   rows.filter(r=>r.jenis==='Pengeluaran').forEach(r=>{byDay[r.tanggal]=(byDay[r.tanggal]||0)+r.nominal});
   const first=new Date(kalYear,kalMonth,1).getDay();
