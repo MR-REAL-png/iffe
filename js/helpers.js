@@ -45,40 +45,75 @@ function parseTanggal(raw){
 }
 
 // ═══ PERIODE ═══
-function getEffective25(year,month){
-  const d=new Date(year,month,24);const dow=d.getDay();if(dow===6)d.setDate(23);return d;
-}
-function getActivePeriod(){
-  const today=new Date();today.setHours(0,0,0,0);
-  const y=today.getFullYear(),m=today.getMonth();
-  const eff=getEffective25(y,m);let s,e;
-  if(today>eff){s=new Date(eff);const nm=m===11?0:m+1,ny=m===11?y+1:y;e=getEffective25(ny,nm);}
-  else{const pm=m===0?11:m-1,py=m===0?y-1:y;s=getEffective25(py,pm);e=new Date(eff);}
-  return{startDate:s,endDate:e};
-}
-function getActivePeriodResolved(){
-  const periodeCustom=JSON.parse(localStorage.getItem('mm_periode')||'{}');
-  if(periodeCustom.startDate&&periodeCustom.endDate)
-    return{startDate:new Date(periodeCustom.startDate),endDate:new Date(periodeCustom.endDate)};
-  return getActivePeriod();
-}
+// Mode: otomatis per bulan kalender, atau manual via Settings
+// dashActiveBulan & dashActiveYear: state bulan yang sedang ditampilkan di dashboard
+let dashActiveBulan = new Date().getMonth();   // 0-11
+let dashActiveYear  = new Date().getFullYear();
+
 function fmtDateShort(d){return`${d.getDate()} ${MOS[d.getMonth()].slice(0,3)} ${d.getFullYear()}`}
+
+// Cek apakah pakai periode manual
+function isManualPeriode(){
+  const p=JSON.parse(localStorage.getItem('mm_periode')||'{}');
+  return !!(p.startDate&&p.endDate&&p.isManual);
+}
+
+// Ambil periode yang aktif:
+// - Manual: pakai custom dari localStorage
+// - Otomatis: bulan kalender yang sedang dipilih di dashboard
+function getActivePeriodResolved(){
+  const p=JSON.parse(localStorage.getItem('mm_periode')||'{}');
+  if(p.startDate&&p.endDate&&p.isManual)
+    return{startDate:new Date(p.startDate),endDate:new Date(p.endDate),isManual:true};
+  // Otomatis: awal hingga akhir bulan yang dipilih
+  const y=dashActiveYear,m=dashActiveBulan;
+  const startDate=new Date(y,m,1);
+  const endDate=new Date(y,m+1,0); // hari terakhir bulan
+  return{startDate,endDate,isManual:false};
+}
+
 function getSisaHari(endDate){
   const today=new Date();today.setHours(0,0,0,0);
   const end=new Date(endDate);end.setHours(0,0,0,0);
+  if(end<today)return{total:0,weekday:0,weekend:0};
   let total=0,weekday=0,weekend=0,cur=new Date(today);
-  while(cur<end){cur.setDate(cur.getDate()+1);if(cur<=end){const dow=cur.getDay();if(dow===0||dow===6)weekend++;else weekday++;total++;}}
+  while(cur<=end){const dow=cur.getDay();if(dow===0||dow===6)weekend++;else weekday++;total++;cur.setDate(cur.getDate()+1);}
   return{total,weekday,weekend};
 }
+
 function updatePeriodUI(){
-  const{startDate,endDate}=getActivePeriodResolved();
-  const ps=`${fmtDateShort(startDate)} – ${fmtDateShort(endDate)}`;
+  const{startDate,endDate,isManual}=getActivePeriodResolved();
+  const ps=isManual
+    ?`${fmtDateShort(startDate)} – ${fmtDateShort(endDate)}`
+    :`${MOS[dashActiveBulan]} ${dashActiveYear}`;
   const sisa=getSisaHari(endDate);
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
-  set('drawerPeriodVal',ps);set('drawerSub',`Sisa ${sisa.total} hari`);
-  set('dashPeriodVal',ps);set('dashPeriodDays',`${sisa.total} hari lagi`);
+  set('drawerPeriodVal',ps);
+  set('drawerSub',`Sisa ${sisa.total} hari`);
+  set('dashPeriodVal',ps);
+  set('dashPeriodDays',isManual?`${sisa.total} hari lagi`:`${sisa.total} hari lagi`);
   set('hk-period-text',ps);
   set('sisaTotal',sisa.total);set('sisaWeekday',sisa.weekday);set('sisaWeekend',sisa.weekend);
+  // Update label manual/otomatis
+  const modeLbl=document.getElementById('periodeModeLabel');
+  if(modeLbl)modeLbl.textContent=isManual?'Manual':'Otomatis';
+}
+
+// Navigasi bulan (mode otomatis)
+function prevBulan(){
+  if(isManualPeriode())return;
+  if(dashActiveBulan===0){dashActiveBulan=11;dashActiveYear--;}
+  else dashActiveBulan--;
+  allRows=[];loadDashboard();
+}
+function nextBulan(){
+  if(isManualPeriode())return;
+  const now=new Date();
+  // Tidak bisa maju ke masa depan
+  if(dashActiveYear===now.getFullYear()&&dashActiveBulan===now.getMonth())return;
+  if(dashActiveBulan===11){dashActiveBulan=0;dashActiveYear++;}
+  else dashActiveBulan++;
+  allRows=[];loadDashboard();
 }
 
 // ═══ LOGO ═══
