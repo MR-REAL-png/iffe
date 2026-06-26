@@ -151,7 +151,7 @@ img { max-width: 100%; }
   background: rgba(2,132,199,0.1);
   border-color: rgba(2,132,199,0.2);
 }
-[data-theme="ocean"] #dashPeriodLabel { color: var(--ac); }
+[data-theme="ocean"] #dashPeriodLabel { color: var(--ac) !important; }
 [data-theme="ocean"] .modal,
 [data-theme="ocean"] .modal-ft {
   background: #ffffff;
@@ -445,8 +445,8 @@ img { max-width: 100%; }
 }
 .hk-pill.g::before { content: '↓'; }
 .hk-pill.r::before { content: '↑'; }
-.hk-pill.g { background: rgba(34,197,94,0.25); color: #fff; border: 1px solid rgba(34,197,94,0.5); }
-.hk-pill.r { background: rgba(248,113,113,0.25); color: #fff; border: 1px solid rgba(248,113,113,0.5); }
+.hk-pill.g { background: rgba(34,197,94,0.25); color: #4ade80; border: 1px solid rgba(34,197,94,0.5); }
+.hk-pill.r { background: rgba(248,113,113,0.25); color: #fca5a5; border: 1px solid rgba(248,113,113,0.5); }
 
 /* Tema Light — hero kas pakai abu² netral, bukan biru cerah */
 [data-theme="ocean"] .hero-kas {
