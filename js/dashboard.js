@@ -40,10 +40,6 @@ function doRefresh(){
 
 // ═══ DASHBOARD ═══
 async function loadDashboard(){
-  const now=new Date();
-  const b=MOS[now.getMonth()],t=String(now.getFullYear());
-  const lbl=document.getElementById('dashPeriodLabel');
-  if(lbl)lbl.textContent=`${b} ${t}`;
   document.getElementById('d-kas').textContent='...';
   document.getElementById('d-masuk').textContent='...';
   document.getElementById('d-keluar').textContent='...';
@@ -56,50 +52,72 @@ async function loadDashboard(){
   }
   try{
     if(!allRows.length)allRows=await fetchAllData();
-    const{startDate,endDate}=getActivePeriodResolved();
+    const{startDate,endDate,isManual}=getActivePeriodResolved();
     const sd=new Date(startDate);sd.setHours(0,0,0,0);
     const ed=new Date(endDate);ed.setHours(23,59,59,999);
+
+    // ── Arus kas = AKUMULASI SEMUA transaksi (tidak difilter periode) ──
+    const allMasuk=allRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
+    const allKeluar=allRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
+    const kasTotal=allMasuk-allKeluar;
+
+    // ── Stat cards & chart = filter periode/bulan yang dipilih ──
     const rows=allRows.filter(r=>{const d=new Date(r.tanggal);return d>=sd&&d<=ed});
     const masuk=rows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
     const keluar=rows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
-    const kas=masuk-keluar;
     const days=[...new Set(rows.map(r=>r.tanggal))].length;
-    const tdim=new Date(parseInt(t),MOS.indexOf(b)+1,0).getDate();
+    const tdim=new Date(dashActiveYear,dashActiveBulan+1,0).getDate();
     const FIXED_CATS=JSON.parse(localStorage.getItem('mm_fixed_cats')||'["Tabungan","Piutang","Kos","Tf Rumah","Listrik Rumah","Internet","Listrik"]');
     const fleks=rows.filter(r=>r.jenis==='Pengeluaran'&&!FIXED_CATS.some(fc=>r.kategori.toLowerCase().includes(fc.toLowerCase())));
     const totalFleks=fleks.reduce((s,r)=>s+r.nominal,0);
-    const totalDaysPeriode=Math.round((ed-sd)/(1000*60*60*24));
+    const totalDaysPeriode=Math.max(1,Math.round((ed-sd)/(1000*60*60*24))+1);
     const avgHarian=totalDaysPeriode>0?Math.round(totalFleks/totalDaysPeriode):0;
     const byKat=groupBy(rows.filter(r=>r.jenis==='Pengeluaran'),'kategori');
     const byKatArr=Object.entries(byKat).map(([k,v])=>({kategori:k,nominal:v.reduce((s,r)=>s+r.nominal,0)})).sort((a,b)=>b.nominal-a.nominal);
     const byKatFleks=groupBy(fleks,'kategori');
     const byKatFleksArr=Object.entries(byKatFleks).map(([k,v])=>({kategori:k,nominal:v.reduce((s,r)=>s+r.nominal,0)})).sort((a,b)=>b.nominal-a.nominal);
 
-    document.getElementById('hk-periode-lbl').textContent=`${b} ${t}`;
-    countUp('d-kas',Math.abs(kas),kas<0?'−':'');
+    // ── Label periode di hero kas ──
+    const periodeLabel=isManual
+      ?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`
+      :`${MOS[dashActiveBulan]} ${dashActiveYear}`;
+    document.getElementById('hk-periode-lbl').textContent=periodeLabel;
+
+    // Update navigasi bulan
+    const navLbl=document.getElementById('dashBulanLabel');
+    if(navLbl)navLbl.textContent=isManual?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`:periodeLabel;
+    const navPrev=document.getElementById('dashPrevBulan');
+    const navNext=document.getElementById('dashNextBulan');
+    if(navPrev)navPrev.style.opacity=isManual?'0.3':'1';
+    if(navNext){
+      const now=new Date();
+      const atLatest=dashActiveYear===now.getFullYear()&&dashActiveBulan===now.getMonth();
+      navNext.style.opacity=(atLatest||isManual)?'0.3':'1';
+    }
+
+    // ── Render nilai ──
+    // Arus kas hero = akumulasi total
+    countUp('d-kas',Math.abs(kasTotal),kasTotal<0?'−':'');
+    // Pills = periode/bulan ini
     document.getElementById('d-masuk').textContent=rpShort(masuk);
     document.getElementById('d-keluar').textContent=rpShort(keluar);
     document.getElementById('d-avg').textContent=rpShort(avgHarian);
     document.getElementById('d-active-days').textContent=`${days} hari`;
     document.getElementById('d-total-days-val').textContent=`${tdim} hari`;
 
-    // Rata² Budget = kas sisa ÷ sisa hari
+    // Rata² Budget = kas periode ÷ sisa hari
     const sisaHariNow=getSisaHari(endDate).total;
-    const avgBudget=sisaHariNow>0?Math.round(kas/sisaHariNow):0;
+    const avgBudget=sisaHariNow>0?Math.round((masuk-keluar)/sisaHariNow):0;
     const elAvgBudget=document.getElementById('d-avg-budget');
     if(elAvgBudget){
-      elAvgBudget.textContent=kas<=0?'—':rpShort(avgBudget);
-      elAvgBudget.style.color=kas<=0?'var(--red)':'#fbbf24';
+      const kasPerPeriode=masuk-keluar;
+      elAvgBudget.textContent=kasPerPeriode<=0?'—':rpShort(avgBudget);
+      elAvgBudget.style.color=kasPerPeriode<=0?'var(--red)':'#fbbf24';
     }
 
-    avgDetailData={totalFleksibel:totalFleks,totalDays:totalDaysPeriode,avgHarian,byKategori:byKatFleksArr,kas,masuk,keluar,sisaHari:sisaHariNow,avgBudget,startDate,endDate};
+    avgDetailData={totalFleksibel:totalFleks,totalDays:totalDaysPeriode,avgHarian,byKategori:byKatFleksArr,kas:kasTotal,masuk,keluar,sisaHari:sisaHariNow,avgBudget,startDate,endDate};
 
-    // Render member activity di dashboard
     renderMemberActivity(rows);
-
-    // Komposisi pengeluaran selalu ditampilkan (tidak lagi disembunyikan saat ada budget)
-
-    // Render chart dengan delay supaya DOM siap
     setTimeout(()=>{
       renderChartKat(byKatArr);
       renderChartHarian(rows);
