@@ -8,10 +8,10 @@
 
 /* ── VARIABLES ── */
 :root {
-  /* Background — navy dark seperti Ocean SE_REAL */
-  --bg:  #0c3460;
-  --bg2: #0a4a8c;
-  /* Surface */
+  /* ── SHIF DARK (default) — navy biru gelap ── */
+  --bg:  #0d1b3e;
+  --bg2: #0f2048;
+  /* Surface — nilai dari SE_REAL */
   --sur:   rgba(255,255,255,0.08);
   --glass: rgba(255,255,255,0.08);
   --glass2:rgba(255,255,255,0.14);
@@ -20,18 +20,19 @@
   --bdr:  rgba(255,255,255,0.10);
   --bdr2: rgba(255,255,255,0.18);
   /* Text */
-  --tx:  #f0f6ff;
-  --tx2: #B8DEFF;
-  --tx3: #7AAED0;
-  /* Accent — biru ocean (sky blue), tanpa pink */
+  --tx:  #ffffff;
+  --tx2: #a8d4f0;
+  --tx3: #5080a0;
+  /* Accent — biru ocean + pink SHIF */
   --ac:  #38bdf8;
-  --ac2: #0ea5e9;
+  --ac2: #f472b6;
   --glow:rgba(56,189,248,0.35);
+  --blu: #60a5fa;
   /* Semantic */
   --grn:    #34d399;
   --grn-bg: rgba(52,211,153,0.15);
   --red:    #f87171;
-  --red-bg: rgba(248,113,113,0.22);
+  --red-bg: rgba(248,113,113,0.15);
   /* Border radius */
   --r:   16px;
   --rsm: 12px;
@@ -52,6 +53,7 @@
   --sur:   rgba(14,165,233,0.06);
   --glass: rgba(255,255,255,0.55);
   --glass2:rgba(255,255,255,0.78);
+  --glass-bdr: rgba(14,116,144,0.2);
   --bdr:  rgba(14,116,144,0.12);
   --bdr2: rgba(14,116,144,0.2);
   --tx:  #0c2a3d;
@@ -92,7 +94,7 @@ img { max-width: 100%; }
 [data-theme="ocean"] #cosmicBg { display: none; }
 .cb-grad {
   position: absolute; inset: 0;
-  background: linear-gradient(160deg, #0c3460 0%, #0a4a8c 50%, #0c3460 100%);
+  background: linear-gradient(160deg, #0d1b3e 0%, #122550 45%, #0d1b3e 100%);
 }
 .cb-blob1, .cb-blob2, .cb-blob3 { display: none; }
 @keyframes blobF1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(25px,35px)} }
@@ -1114,224 +1116,202 @@ body.modal-open { overflow: hidden !important; position: fixed; width: 100%; }
 .modal-bd, .bs-body { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 
 /* ══════════════════════════════════════════════════
-   SHIF — KOMPONEN SESUAI SE_REAL
+   SHIF DARK — KOMPONEN (tidak berlaku di ocean)
 ══════════════════════════════════════════════════ */
+:root .bs-kas-row,
+:root .bmon-item,
+:root .bank-detail-card,
+:root .dompet-total,
+:root .tab-item,
+:root .notif-item,
+:root .sett-group,
+:root .bs-kat,
+:root .qk-btn,
+:root .period-badge,
+:root .bulan-nav { border-color: var(--glass-bdr); }
 
-/* ── CARD UMUM (semua halaman) ── */
-.bs-kas-pill, .bmon-item, .bs-bud-stat,
-.bs-struk, .bank-detail-card,
-.tab-item, .month-item, .sisa-card,
-.notif-item, .metode-card,
-.rekap-stat, .rekap-kas,
-.kal-detail, .kal-tx,
-.atm-dots, .dompet-total {
-  background: var(--glass);
-  border-color: var(--glass-bdr);
+/* Header dark */
+.hdr {
+  background: rgba(8,18,50,0.85) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
 }
-
-/* ── TRANSACTION CARD ── */
-.bs-kas-row {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-}
-
-/* ── KALENDER ── */
-.kal-day.has-data {
-  background: rgba(56,189,248,0.18);
-  border: 1px solid rgba(56,189,248,0.35);
-  color: #fff;
-}
-.kal-day.has-data::after {
-  background: var(--ac);
-}
-.kal-nav {
-  border-color: var(--glass-bdr);
-  background: var(--glass);
-}
-.kal-detail {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-}
-.kal-tx {
-  background: rgba(255,255,255,0.05);
+[data-theme="ocean"] .hdr {
+  background: rgba(224,242,254,0.9) !important;
+  border-color: rgba(14,116,144,0.2) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* ── NOTIFIKASI ── */
-.notif-item {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
+/* Modal & BS dark */
+.modal {
+  background: rgba(10,18,48,0.97) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(56,189,248,0.2) !important;
+}
+.modal-hd {
+  background: rgba(10,18,48,0.98) !important;
+  border-bottom-color: rgba(255,255,255,0.1) !important;
+}
+.modal-ft, .modal-ft-3 {
+  background: rgba(10,18,48,0.98) !important;
+  border-top-color: rgba(255,255,255,0.1) !important;
+}
+.bs-sheet {
+  background: rgba(10,18,48,0.97) !important;
+  border-top-color: rgba(255,255,255,0.15) !important;
+}
+.bs-hd {
+  border-bottom-color: rgba(255,255,255,0.1) !important;
+}
+[data-theme="ocean"] .modal {
+  background: rgba(255,255,255,0.97) !important;
+  border-color: rgba(14,116,144,0.2) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+}
+[data-theme="ocean"] .modal-hd,
+[data-theme="ocean"] .modal-ft,
+[data-theme="ocean"] .modal-ft-3 {
+  background: rgba(240,249,255,0.98) !important;
+  border-color: rgba(14,116,144,0.12) !important;
+}
+[data-theme="ocean"] .bs-sheet {
+  background: rgba(255,255,255,0.97) !important;
+  border-top-color: rgba(14,116,144,0.15) !important;
 }
 
-/* ── REKAP TOTAL ── */
-.rekap-stat {
-  background: rgba(255,255,255,0.10);
-  border-radius: 10px;
+/* Input dark */
+.inp {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1.5px solid rgba(255,255,255,0.15) !important;
+  color: #fff !important;
 }
-.rekap-kas {
-  background: rgba(255,255,255,0.08);
-  border-radius: 10px;
+.inp::placeholder { color: rgba(255,255,255,0.3) !important; }
+.inp:focus {
+  border-color: var(--ac) !important;
+  box-shadow: 0 0 0 3px var(--glow) !important;
 }
-.month-item {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
+[data-theme="ocean"] .inp {
+  background: rgba(255,255,255,0.7) !important;
+  border-color: rgba(14,116,144,0.25) !important;
+  color: #0c2a3d !important;
 }
-.month-col {
-  background: rgba(255,255,255,0.05);
-}
-
-/* ── METODE BAYAR ── */
-.metode-hero {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-.metode-card {
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.15);
+[data-theme="ocean"] .inp::placeholder { color: rgba(12,42,61,0.35) !important; }
+[data-theme="ocean"] .inp:focus {
+  border-color: #0284c7 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(2,132,199,0.1) !important;
 }
 
-/* ── DOMPET ── */
-.bank-detail-card {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-  border-radius: var(--rsm);
-  padding: 12px;
-  margin-bottom: 8px;
-}
-.dompet-total {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-  border-radius: var(--rsm);
-  padding: 10px 14px;
-  margin-bottom: 12px;
-}
-
-/* ── CHART BACKGROUND ── */
+/* Chart transparan */
 .chart-card {
   background: var(--glass) !important;
   border: 1px solid var(--glass-bdr) !important;
 }
-.chart-card canvas {
-  background: transparent !important;
+.chart-card canvas { background: transparent !important; }
+
+/* Bottom nav dark */
+.bnav::after { background-color: rgba(8,18,50,0.97) !important; }
+[data-theme="ocean"] .bnav::after { background-color: rgba(255,255,255,0.95) !important; }
+
+/* Drawer dark */
+.drawer {
+  background: rgba(8,18,50,0.98) !important;
+  border-right-color: rgba(255,255,255,0.12) !important;
 }
 
-/* ── POPUP / BOTTOM SHEET BODY ── */
-.bs-kat, .bs-bud-stat, .bs-bud-tx,
-.bs-struk-rows, .bs-struk-header,
-.bs-struk-nom, .bs-struk-footer {
-  background: var(--glass);
-  border-color: var(--glass-bdr);
+/* Modal-x */
+.modal-x {
+  border-color: rgba(255,255,255,0.2) !important;
+  background: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+[data-theme="ocean"] .modal-x {
+  border-color: rgba(14,116,144,0.25) !important;
+  background: rgba(14,116,144,0.08) !important;
+  color: #3a6a85 !important;
 }
 
-/* ── SETTINGS ── */
-.sett-group {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
+/* btn-cx dark */
+.btn-cx {
+  border-color: rgba(255,255,255,0.2) !important;
+  background: rgba(255,255,255,0.08) !important;
+  color: var(--tx2) !important;
 }
-.sett-item {
-  border-bottom-color: var(--bdr);
-}
-.sett-item:active {
-  background: rgba(255,255,255,0.05);
-}
-
-/* ── DATA SUMMARY BAR ── */
-.data-summary {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-}
-.ds-sep {
-  background: var(--bdr);
+[data-theme="ocean"] .btn-cx {
+  border-color: rgba(14,116,144,0.25) !important;
+  background: rgba(14,116,144,0.08) !important;
+  color: #3a6a85 !important;
 }
 
-/* ── BMON ITEMS ── */
-.bmon-item {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
+/* Scan btn */
+.btn-scan {
+  background: rgba(167,139,250,0.12) !important;
+  border-color: rgba(167,139,250,0.28) !important;
+  color: #a78bfa !important;
 }
-.bmon-bar {
-  background: rgba(255,255,255,0.10);
-}
-
-/* ── KOMPOSISI LEGEND ── */
-.cl-item .cl-txt { color: var(--tx2); }
-
-/* ── STAT CARDS (dashboard) ── */
-.stat-card, .stat-mini {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
+[data-theme="ocean"] .btn-scan {
+  background: rgba(2,132,199,0.08) !important;
+  border-color: rgba(2,132,199,0.25) !important;
+  color: #0284c7 !important;
 }
 
-/* ── QUICK KAT ── */
-.qk-btn {
-  border-color: var(--glass-bdr);
-  background: var(--glass);
-  color: var(--tx2);
+/* INP-ROW 2 kolom */
+.inp-row-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 12px;
 }
+.inp-row-2 .inp-row { margin-bottom: 0; }
 
-/* ── PERIOD BADGE ── */
-.period-badge, .bulan-nav {
+/* Modal footer 3 btn */
+.modal-ft-3 {
+  display: flex; gap: 8px; padding: 12px 14px;
+  flex-shrink: 0; align-items: center;
+  position: sticky; bottom: 0; z-index: 2;
+}
+.modal-ft-3 .btn-cx,
+.modal-ft-3 .btn-ok {
+  height: 44px; display: flex; align-items: center; justify-content: center;
+}
+.btn-scan {
+  height: 44px; padding: 0 14px; border-radius: 12px;
+  flex-shrink: 0; font-size: 0.75rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center;
+  gap: 5px; white-space: nowrap; transition: all .2s;
+}
+.btn-scan:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Bulan nav */
+.bulan-nav {
+  display: flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; padding: 10px 12px; margin-bottom: 14px;
 }
+[data-theme="ocean"] .bulan-nav {
+  background: rgba(2,132,199,0.06);
+  border-color: rgba(2,132,199,0.18);
+}
+.bulan-nav-btn {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2);
+  color: var(--ac); cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all .15s;
+}
+.bulan-nav-btn:active { background: rgba(56,189,248,0.25); transform: scale(0.9); }
+.bulan-nav-center { flex: 1; text-align: center; }
+.bulan-nav-lbl { font-family: var(--ffd); font-size: 1rem; font-weight: 700; color: var(--tx); }
+.bulan-nav-sub { font-size: 0.62rem; margin-top: 2px; }
 
-/* ── SCAN OVERLAY ── */
-.scan-overlay {
-  background: rgba(10,18,48,0.97);
-  border: 1px solid var(--glass-bdr);
-}
-
-/* ── DRAWER PERIOD ── */
-.drawer-period {
-  background: linear-gradient(135deg,rgba(56,189,248,0.2),rgba(244,114,182,0.15));
-  border: 1px solid rgba(56,189,248,0.3);
-}
-
-/* ── ATM DOTS ── */
-.atm-dots span { background: var(--tx3); }
-.atm-dots span.active { background: var(--ac); }
-
-/* ── TABUNGAN ── */
-.tab-item {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-}
-.tab-amt-item {
-  background: rgba(255,255,255,0.06);
-}
-.tab-bar {
-  background: rgba(255,255,255,0.12);
-}
-
-/* ── PIUTANG / TRANSFER CARDS ── */
-#piutangList > div,
-#transferList > div {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-}
-
-/* ── TOGGLE VIEW BTN ── */
-.toggle-view-btn {
-  border-color: var(--glass-bdr);
-  background: var(--glass);
-}
-.toggle-view-btn.on {
-  border-color: rgba(56,189,248,0.4);
-  background: rgba(56,189,248,0.1);
-  color: var(--ac);
-}
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  background: var(--glass);
-  border: 1px solid var(--glass-bdr);
-}
-
-/* ── INP-ROW LABEL ── */
+/* inp-lbl dengan ikon */
 .inp-lbl {
   display: flex !important; align-items: center; gap: 5px;
   font-size: 0.64rem; font-weight: 800;
-  color: var(--tx3); text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--tx3) !important; text-transform: uppercase; letter-spacing: 0.07em;
   margin-bottom: 5px;
 }
+
+/* Android scroll */
+body.modal-open { overflow: hidden !important; position: fixed; width: 100%; }
+.ov, .bs-ov { touch-action: none; }
+.modal-bd, .bs-body { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
