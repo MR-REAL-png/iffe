@@ -6,6 +6,17 @@
 /* ── FONTS ── */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
+/* ── SHIF BRAND FONT (upload ke /fonts/) ── */
+/* Ganti 'ShifFont' dengan nama font yang kamu pilih */
+/* Ganti 'ShifFont-Regular.woff2' dengan nama file yang kamu upload */
+@font-face {
+  font-family: 'ShifFont';
+  src: url('./fonts/ShifFont-Regular.woff2') format('woff2'),
+       url('./fonts/ShifFont-Regular.ttf') format('truetype');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
 /* ── VARIABLES ── */
 :root {
   /* ── SHIF DARK (default) — navy biru gelap ── */
@@ -187,6 +198,7 @@ img { max-width: 100%; }
 }
 .brand-ico img { width: 100%; height: 100%; object-fit: contain; }
 .brand-name {
+  font-family: 'ShifFont', var(--ffd) !important;
   font-family: var(--ffd); font-size: 1.1rem; font-weight: 700;
   background: linear-gradient(90deg, #38bdf8, #0ea5e9);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -230,6 +242,7 @@ img { max-width: 100%; }
   flex-shrink: 0;
 }
 .drawer-title {
+  font-family: 'ShifFont', var(--ffd) !important;
   font-family: var(--ffd); font-size: 1rem;
   background: linear-gradient(90deg, #38bdf8, #0ea5e9);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -1319,3 +1332,12 @@ body.modal-open { overflow: hidden !important; position: fixed; width: 100%; }
 body.modal-open { overflow: hidden !important; position: fixed; width: 100%; }
 .ov, .bs-ov { touch-action: none; }
 .modal-bd, .bs-body { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+
+/* ── SHIF BRAND FONT — override settUserLogin ── */
+#settUserLogin {
+  font-family: 'ShifFont', var(--ffd) !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em;
+  color: var(--ac) !important;
+}
