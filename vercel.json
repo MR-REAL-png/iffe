@@ -2,6 +2,10 @@
   "version": 2,
   "routes": [
     {
+      "src": "/api/parse-image",
+      "dest": "/api/parse-image.js"
+    },
+    {
       "src": "/api/gemini",
       "dest": "/api/gemini.js"
     },
