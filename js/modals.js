@@ -369,16 +369,20 @@ function applyAIResult(data) {
   const bankVal = data.bank || data.pembayaran || '';
   if (bankVal) {
     setTimeout(() => {
+      // Pastikan dropdown bank sudah diisi (setelah syncMetodeBank)
       const bankEl = document.getElementById('inBank');
-      if (bankEl) {
-        const opts = [...bankEl.options];
-        const match = opts.find(o =>
-          o.value.toLowerCase() === bankVal.toLowerCase() ||
-          bankVal.toLowerCase().includes(o.value.toLowerCase())
-        );
-        if (match) bankEl.value = match.value;
+      if (!bankEl) return;
+      // Coba cari exact match dulu, lalu partial
+      const opts = [...bankEl.options];
+      const bLow = bankVal.toLowerCase();
+      const match = opts.find(o => o.value && o.value.toLowerCase() === bLow)
+        || opts.find(o => o.value && bLow.includes(o.value.toLowerCase()))
+        || opts.find(o => o.value && o.value.toLowerCase().includes(bLow));
+      if (match) {
+        bankEl.value = match.value;
+        bankEl.disabled = false;
       }
-    }, 150);
+    }, 200);
   }
 
   // Keterangan
@@ -719,14 +723,36 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 // Hook: setiap input modal dibuka, init AI scan UI
-function openInputModal(){
-  // Set tanggal hari ini
+function resetInputForm(){
+  // Reset semua field ke kondisi awal
   const tgl=document.getElementById('inTgl');
-  if(tgl&&!tgl.value)tgl.value=new Date().toISOString().slice(0,10);
+  if(tgl)tgl.value=new Date().toISOString().slice(0,10);
   syncBulan('in');
+  const jenis=document.getElementById('inJenis');
+  if(jenis)jenis.value='';
   fillKat('inJenis','inKat');
-  renderQuickKat();
+  if(typeof renderQuickKat==='function')renderQuickKat();
+  const nom=document.getElementById('inNom');
+  if(nom)nom.value='';
+  const met=document.getElementById('inMetode');
+  if(met)met.value='';
   fillBank('inBank','');
+  const bank=document.getElementById('inBank');
+  if(bank)bank.disabled=false;
+  const ket=document.getElementById('inKet');
+  if(ket)ket.value='';
+  const qi=document.getElementById('quickKat');
+  if(qi)qi.innerHTML='';
+}
+
+function closeInputModal(){
+  resetInputForm();
+  closeOv(null,'ovInput');
+}
+
+function openInputModal(){
+  // Reset form dulu supaya selalu bersih
+  resetInputForm();
   // Label recorded by
   const recBy=document.getElementById('inputRecBy');
   const session=getSession();
@@ -734,7 +760,7 @@ function openInputModal(){
     recBy.innerHTML=`<span style="color:${session.color}">${IC.users} Dicatat oleh: <b>${session.username}</b></span>`;
   }
   openOv('ovInput');
-  // Init AI scan countdown (lanjut jika modal dibuka lagi saat countdown masih jalan)
+  // Init AI scan countdown
   initAiScanUI();
 }
 
