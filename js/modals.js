@@ -222,13 +222,12 @@ async function handleAiScanImg(event) {
   if (ov) ov.style.display = 'flex';
   if (cancelBtn) cancelBtn.style.display = 'none';
 
-  // Compress & resize sebelum kirim (handle HEIC/foto besar dari iPhone)
+  // Compress & resize sebelum kirim
   if (lbl) lbl.textContent = 'Memproses gambar...';
   let base64, mimeOut = 'image/jpeg';
   try {
     base64 = await resizeAndCompress(file);
   } catch {
-    // Fallback ke FileReader biasa jika canvas gagal
     base64 = await new Promise(res => {
       const reader = new FileReader();
       reader.onload = e => res(e.target.result.split(',')[1]);
@@ -241,109 +240,106 @@ async function handleAiScanImg(event) {
 
   aiScanAbort = false;
   if (cancelBtn) cancelBtn.style.display = 'block';
+  if (lbl) lbl.textContent = 'Menganalisis struk...';
 
-  // Jumlah key di server — coba dari index 0 sampai 2
-  const TOTAL_KEYS = 3;
-  let lastErr = null;
+  // Ambil kategori & bank yang aktif dari dbOpts
+  const categories = dbOpts?.kategoris || [];
+  const banks = dbOpts?.banks || [];
 
-  for (let ki = 0; ki < TOTAL_KEYS; ki++) {
-    if (aiScanAbort) break;
-    if (lbl) lbl.textContent = `Menganalisis... (API ${ki + 1}/${TOTAL_KEYS})`;
+  try {
+    const result = await callParseImage(base64, mimeOut, categories, banks);
+    if (aiScanAbort) return;
+    if (ov) ov.style.display = 'none';
+    applyAIResult(result);
+    toast('Struk berhasil dibaca ✓', 'ok');
+  } catch (e) {
+    if (ov) ov.style.display = 'none';
+    if (aiScanAbort) return;
 
-    try {
-      const result = await callGeminiViaVercel(ki, base64, mimeOut);
-      if (aiScanAbort) break;
-      if (ov) ov.style.display = 'none';
-      applyAIResult(result);
-      toast('Struk berhasil dibaca ✓', 'ok');
-      return;
-    } catch (e) {
-      lastErr = e;
-      const status = e.status || 0;
-      if (status === 429) {
-        // Key ini kena rate limit → coba key berikutnya
-        toast(`API ${ki + 1} rate limit, coba key berikutnya...`, '');
-        continue;
-      }
-      // Error lain (400, 500, network) → coba key berikutnya juga
-      console.warn(`Gemini key ${ki + 1} gagal:`, e.message);
+    const status = e.status || 0;
+    let cooldownSec, errMsg;
+
+    if (status === 429) {
+      cooldownSec = 60;
+      errMsg = `⚠️ API sedang rate-limited. Tunggu 1 menit`;
+    } else if (status === 422) {
+      cooldownSec = 10;
+      errMsg = `⚠️ Gambar tidak terbaca. Coba foto lebih jelas`;
+    } else if (status >= 500) {
+      cooldownSec = 30;
+      errMsg = `⚠️ Server error. Tunggu 30 detik`;
+    } else {
+      cooldownSec = 15;
+      errMsg = `⚠️ Gagal: ${e.message || 'Unknown error'}`;
     }
+
+    setScanCooldown(cooldownSec, errMsg);
+    startScanCountdownUI(cooldownSec, errMsg);
+    toast(errMsg, 'err');
   }
-
-  // Semua key gagal
-  if (ov) ov.style.display = 'none';
-  if (aiScanAbort) return;
-
-  const status = lastErr?.status || 0;
-  let cooldownSec, errMsg;
-
-  if (status === 429) {
-    cooldownSec = lastErr?.retryAfter || 60;
-    errMsg = `⚠️ Semua API key kena limit. Tunggu ${cooldownSec >= 60 ? Math.ceil(cooldownSec/60)+'m' : cooldownSec+'s'}`;
-  } else if (status === 503 || status === 500) {
-    cooldownSec = 30;
-    errMsg = `⚠️ Server Gemini error (${status}). Tunggu 30 detik`;
-  } else if (status === 400) {
-    cooldownSec = 10;
-    errMsg = `⚠️ Gambar tidak terbaca. Coba foto ulang`;
-  } else {
-    cooldownSec = 15;
-    errMsg = `⚠️ Gagal: ${lastErr?.message || 'Unknown error'}`;
-  }
-
-  setScanCooldown(cooldownSec, errMsg);
-  startScanCountdownUI(cooldownSec, errMsg);
-  toast(errMsg, 'err');
 }
 
-// Panggil endpoint Vercel — key aman di server
-async function callGeminiViaVercel(keyIndex, base64Data, mimeType) {
-  const res = await fetch(`${API_URL}/api/gemini`, {
+// Panggil /api/parse-image — key dirotasi di server dengan retry & delay
+async function callParseImage(base64Data, mimeType, categories = [], banks = []) {
+  const res = await fetch(`${API_URL}/api/parse-image`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageBase64: base64Data, mimeType, keyIndex })
+    body: JSON.stringify({
+      imageBase64: base64Data,
+      mimeType,
+      categories,
+      banks,
+    })
   });
 
   const json = await res.json().catch(() => ({}));
 
   if (!res.ok) {
     const err = new Error(json.error || `HTTP ${res.status}`);
-    err.status = json.status || res.status;
-    err.retryAfter = json.retryAfter || 60;
+    err.status = res.status;
     throw err;
   }
 
-  if (!json.success || !json.data) throw new Error('Respons server tidak valid');
-  return json.data;
+  // Response langsung berupa object hasil parse (bukan {success, data})
+  if (typeof json !== 'object' || !json) throw new Error('Respons server tidak valid');
+  return json;
 }
 
 function applyAIResult(data) {
   if (!data) return;
-  // Tanggal
+
+  // Tanggal — support YYYY-MM-DD dan DD/MM/YYYY
   if (data.tanggal) {
+    let tglVal = data.tanggal;
+    // Konversi DD/MM/YYYY → YYYY-MM-DD
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(tglVal)) {
+      const [d,m,y] = tglVal.split('/');
+      tglVal = `${y}-${m}-${d}`;
+    }
     const tglEl = document.getElementById('inTgl');
-    if (tglEl) { tglEl.value = data.tanggal; syncBulan('in'); }
+    if (tglEl && tglVal) { tglEl.value = tglVal; syncBulan('in'); }
   }
+
   // Jenis
   if (data.jenis) {
     const jenisEl = document.getElementById('inJenis');
     if (jenisEl) {
       jenisEl.value = data.jenis;
       fillKat('inJenis', 'inKat');
-      renderQuickKat();
+      if (typeof renderQuickKat === 'function') renderQuickKat();
     }
   }
+
   // Kategori (setelah fillKat)
   if (data.kategori) {
     setTimeout(() => {
       const katEl = document.getElementById('inKat');
       if (katEl) {
-        // Cari opsi yang cocok (case-insensitive)
         const opts = [...katEl.options];
-        const match = opts.find(o => o.value.toLowerCase() === data.kategori.toLowerCase());
-        if (match) katEl.value = match.value;
-        else {
-          // Tambah opsi baru
+        const match = opts.find(o => o.value.toLowerCase() === (data.kategori||'').toLowerCase());
+        if (match) {
+          katEl.value = match.value;
+        } else {
           const opt = document.createElement('option');
           opt.value = data.kategori;
           opt.textContent = data.kategori;
@@ -351,15 +347,15 @@ function applyAIResult(data) {
           katEl.value = data.kategori;
         }
       }
-    }, 100);
+    }, 120);
   }
+
   // Nominal
   if (data.nominal) {
     const nomEl = document.getElementById('inNom');
-    if (nomEl) {
-      nomEl.value = Number(data.nominal).toLocaleString('id-ID');
-    }
+    if (nomEl) nomEl.value = Number(data.nominal).toLocaleString('id-ID');
   }
+
   // Metode
   if (data.metode) {
     const metEl = document.getElementById('inMetode');
@@ -368,6 +364,23 @@ function applyAIResult(data) {
       syncMetodeBank('inMetode', 'inBank');
     }
   }
+
+  // Bank — dari field 'bank' (SE_REAL format)
+  const bankVal = data.bank || data.pembayaran || '';
+  if (bankVal) {
+    setTimeout(() => {
+      const bankEl = document.getElementById('inBank');
+      if (bankEl) {
+        const opts = [...bankEl.options];
+        const match = opts.find(o =>
+          o.value.toLowerCase() === bankVal.toLowerCase() ||
+          bankVal.toLowerCase().includes(o.value.toLowerCase())
+        );
+        if (match) bankEl.value = match.value;
+      }
+    }, 150);
+  }
+
   // Keterangan
   if (data.keterangan) {
     const ketEl = document.getElementById('inKet');
