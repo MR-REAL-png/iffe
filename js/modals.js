@@ -16,24 +16,31 @@ async function submitInput(){
   const btn = document.querySelector('#ovInput .btn-ok');
   if(btn){btn.disabled=true;btn.textContent='Menyimpan...';}
 
+  const payload = {
+    tanggal: tgl, bulan,
+    kategori: kat, nominal: nom,
+    pembayaran: bank||'Cash',
+    detail: ket, metode: met, jenis,
+    recorded_by: session?.username||'',
+    household_id: getHouseholdId(),
+  };
+
   try{
-    await sheetsAppend({
-      tanggal: tgl,
-      bulan,
-      kategori: kat,
-      nominal: nom,
-      pembayaran: bank||'Cash',
-      detail: ket,
-      metode: met,
-      jenis,
-      recorded_by: session?.username||''
-    });
-    closeOv(null,'ovInput');
-    toast(`${IC.ok} Transaksi disimpan!`,'ok');
-    allRows=[];
-    await fetchDBOptions();
-    await loadDashboard();
-    if(document.getElementById('pg-data')?.classList.contains('on'))loadData();
+    // Gunakan offline queue jika tidak ada koneksi
+    const result = typeof submitWithOfflineSupport==='function'
+      ? await submitWithOfflineSupport(payload)
+      : await sheetsAppend(payload);
+
+    closeInputModal();
+    if(result?.offline){
+      toast('💾 Disimpan offline — akan sync saat online','');
+    } else {
+      toast(`${IC.ok} Transaksi disimpan!`,'ok');
+      allRows=[];
+      await fetchDBOptions();
+      await loadDashboard();
+      if(document.getElementById('pg-data')?.classList.contains('on'))loadData();
+    }
   }catch(e){
     toast('Gagal simpan: '+e.message,'err');
   }finally{
