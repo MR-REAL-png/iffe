@@ -12,6 +12,28 @@
 <link rel="apple-touch-icon" href="./logo.png">
 <link rel="icon" type="image/png" href="./logo.png">
 <link rel="manifest" href="manifest.json">
+<script>
+  // Register Service Worker untuk offline support
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(reg => {
+          console.log('[SW] Registered:', reg.scope);
+          // Cek update SW
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[SW] Update tersedia');
+                newSW.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[SW] Register gagal:', err));
+    });
+  }
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -90,7 +112,8 @@
     <div class="brand-ico" id="brandIco" style="width:34px;height:34px;border-radius:10px"></div>
     <div class="brand-name">SHIF</div>
   </div>
-  <div class="hdr-right">
+  <div class="hdr-right" style="display:flex;align-items:center;gap:6px">
+    <div id="offlineBadge" style="display:none;font-size:0.55rem;font-weight:700;padding:2px 7px;border-radius:50px;background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)">● offline</div>
     
     <div class="hdr-clock">
       <div class="hdr-clock-time" id="hdrTime">--:--</div>
@@ -567,6 +590,9 @@
 <div class="toast" id="toast"></div>
 
 <!-- PIN / LOGIN OVERLAY -->
+<!-- Offline Status Bar -->
+<div id="offlineStatusBar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(251,191,36,0.95);color:#0d1b3e;font-size:0.72rem;font-weight:700;padding:6px 16px;text-align:center;backdrop-filter:blur(8px)"></div>
+
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-stars" id="pinStars"></div>
   <div class="pin-blob pin-blob-1"></div>
@@ -577,6 +603,7 @@
   </div>
 </div>
 
+<script src="js/offline-queue.js"></script>
 <script src="js/config.js"></script>
 <script src="js/helpers.js"></script>
 <script src="js/auth.js"></script>
@@ -586,5 +613,11 @@
 <script src="js/modals.js"></script>
 </div>
 <script src="js/export.js"></script>
+<script>
+  // Init offline queue setelah semua JS loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    initOfflineQueue();
+  });
+</script>
 </body>
 </html>
