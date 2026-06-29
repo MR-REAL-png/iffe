@@ -404,16 +404,90 @@ function doExportRingkasan() {
   closeBs();
   setTimeout(() => {
     openBs('Ringkasan Laporan', `
-      ${html}
-      <div style="padding:4px 0 8px">
-        <div style="font-size:0.7rem;color:var(--tx3);text-align:center;margin-bottom:12px">
-          📸 Screenshot halaman ini untuk menyimpan atau share
-        </div>
+      <div id="ringkasanCard">${html}</div>
+      <div style="display:flex;gap:8px;padding:4px 0 8px">
+        <button onclick="shareRingkasan()" style="flex:1;height:44px;border-radius:12px;background:linear-gradient(135deg,#38bdf8,#f472b6);border:none;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--ffb)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Z"/></svg>
+          Share
+        </button>
+        <button onclick="simpanRingkasan()" style="flex:1;height:44px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:var(--tx);font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--ffb)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+          Simpan Gambar
+        </button>
       </div>
     `);
     saveExportHistory('Ringkasan', bulan, tahun, rows.length);
     updateHistoryUI();
   }, 300);
+}
+
+// ── SHARE RINGKASAN ──
+async function shareRingkasan() {
+  const card = document.getElementById('ringkasanCard');
+  if (!card) return;
+
+  // Coba Web Share API dulu (native share sheet iOS/Android)
+  if (navigator.share) {
+    try {
+      const canvas = await renderToCanvas(card);
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'SHIF_Ringkasan.png', { type: 'image/png' });
+        await navigator.share({
+          title: 'Laporan Keuangan SHIF',
+          files: [file],
+        });
+      }, 'image/png');
+      return;
+    } catch(e) {
+      if (e.name !== 'AbortError') console.warn('Share gagal:', e);
+    }
+  }
+  // Fallback ke simpan gambar
+  simpanRingkasan();
+}
+
+// ── SIMPAN GAMBAR ──
+async function simpanRingkasan() {
+  const card = document.getElementById('ringkasanCard');
+  if (!card) { toast('Konten tidak ditemukan', 'err'); return; }
+
+  toast('Membuat gambar...', '');
+
+  try {
+    const canvas = await renderToCanvas(card);
+    const a = document.createElement('a');
+    a.download = `SHIF_Ringkasan_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    toast('Gambar berhasil disimpan ✓', 'ok');
+  } catch(e) {
+    toast('Gagal buat gambar: ' + e.message, 'err');
+  }
+}
+
+// ── RENDER HTML KE CANVAS ──
+async function renderToCanvas(el) {
+  // Load html2canvas jika belum ada
+  if (typeof html2canvas === 'undefined') {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const canvas = await html2canvas(el, {
+    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0d1b3e',
+    scale: 2, // retina quality
+    useCORS: true,
+    logging: false,
+    width: el.offsetWidth,
+    height: el.offsetHeight,
+  });
+
+  return canvas;
 }
 
 // Update history di UI tanpa close modal
