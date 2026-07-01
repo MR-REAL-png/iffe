@@ -206,7 +206,7 @@
   </div>
   <!-- Navigasi Bulan -->
   <div class="bulan-nav">
-    <button class="bulan-nav-btn" id="dashPrevBulan" onclick="prevBulan()">
+    <button class="bulan-nav-btn" id="dashPrevBulan" onclick="prevBulan();setTimeout(refreshChartsOnly,800)">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <div class="bulan-nav-center">
@@ -217,7 +217,7 @@
         <span id="periodeModeLabel" style="color:var(--tx3)">Otomatis</span>
       </div>
     </div>
-    <button class="bulan-nav-btn" id="dashNextBulan" onclick="nextBulan()">
+    <button class="bulan-nav-btn" id="dashNextBulan" onclick="nextBulan();setTimeout(refreshChartsOnly,800)">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
     </button>
   </div>
