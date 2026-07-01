@@ -173,19 +173,24 @@ function renderMemberActivity(rows){
 
 // ═══ CHART KOMPOSISI ═══
 function renderChartKat(byCat){
-  const wrap=document.getElementById('chartKat')?.parentElement;if(!wrap)return;
+  // Pakai wrapper div langsung — bukan parentElement dari canvas
+  const wrap=document.getElementById('chartKatWrap');if(!wrap)return;
+  // Destroy instance lama
   if(chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
-  wrap.innerHTML='';
+  // Bersihkan DOM sepenuhnya
+  while(wrap.firstChild)wrap.removeChild(wrap.firstChild);
   if(!byCat.length){
-    wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada pengeluaran</p></div>`;
+    const empty=document.createElement('div');
+    empty.className='empty';
+    empty.innerHTML=`<div class="ei">${IC.chart}</div><p>Belum ada pengeluaran</p>`;
+    wrap.appendChild(empty);
     const legEl=document.getElementById('chartLegend');if(legEl)legEl.innerHTML='';
     return;
   }
-  // Pakai ID unik setiap render supaya tidak ada konflik canvas lama
-  const uid='ck_'+Date.now();
-  wrap.innerHTML=`<canvas id="${uid}"></canvas>`;
-  setTimeout(()=>{
-  const canvas=document.getElementById(uid);if(!canvas)return;
+  // Buat canvas baru fresh
+  const canvas=document.createElement('canvas');
+  canvas.height=200;
+  wrap.appendChild(canvas);
   const ctx=canvas.getContext('2d');
   const total=byCat.reduce((s,k)=>s+k.nominal,0);
   const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
@@ -230,18 +235,23 @@ function renderChartKat(byCat){
 
 // ═══ CHART HARIAN ═══
 function renderChartHarian(rows){
-  const wrap=document.getElementById('chartHarian')?.parentElement;if(!wrap)return;
+  const wrap=document.getElementById('chartHarianWrap');if(!wrap)return;
   if(chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
-  // Selalu reset container dulu
-  wrap.innerHTML='';
+  // Bersihkan DOM sepenuhnya
+  while(wrap.firstChild)wrap.removeChild(wrap.firstChild);
   const byDay={};
   rows.filter(r=>r.jenis==='Pengeluaran').forEach(r=>{byDay[r.tanggal]=(byDay[r.tanggal]||0)+r.nominal});
   const sorted=Object.keys(byDay).sort();
-  if(!sorted.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data harian</p></div>`;return}
-  const uid2='ch_'+Date.now();
-  wrap.innerHTML=`<canvas id="${uid2}"></canvas>`;
-  setTimeout(()=>{
-  const canvas=document.getElementById(uid2);if(!canvas)return;
+  if(!sorted.length){
+    const empty=document.createElement('div');
+    empty.className='empty';
+    empty.innerHTML=`<div class="ei">${IC.chart}</div><p>Belum ada data harian</p>`;
+    wrap.appendChild(empty);
+    return;
+  }
+  const canvas=document.createElement('canvas');
+  canvas.height=140;
+  wrap.appendChild(canvas);
   const ctx=canvas.getContext('2d');
   const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
   const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
@@ -268,7 +278,6 @@ function renderChartHarian(rows){
       }
     }
   });
-  }); // end setTimeout
 }
 
 // ═══ BUDGET / KOMPOSISI ═══
