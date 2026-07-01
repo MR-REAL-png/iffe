@@ -174,19 +174,18 @@ function renderMemberActivity(rows){
 // ═══ CHART KOMPOSISI ═══
 function renderChartKat(byCat){
   const wrap=document.getElementById('chartKat')?.parentElement;if(!wrap)return;
-  // Destroy dulu sebelum apapun
   if(chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
-  // Selalu reset container supaya canvas benar-benar fresh
   wrap.innerHTML='';
   if(!byCat.length){
     wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada pengeluaran</p></div>`;
     const legEl=document.getElementById('chartLegend');if(legEl)legEl.innerHTML='';
     return;
   }
-  wrap.innerHTML='<canvas id="chartKat"></canvas>';
-  // requestAnimationFrame supaya DOM sudah siap sebelum Chart.js init
-  requestAnimationFrame(()=>{
-  const canvas=document.getElementById('chartKat');if(!canvas)return;
+  // Pakai ID unik setiap render supaya tidak ada konflik canvas lama
+  const uid='ck_'+Date.now();
+  wrap.innerHTML=`<canvas id="${uid}"></canvas>`;
+  setTimeout(()=>{
+  const canvas=document.getElementById(uid);if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const total=byCat.reduce((s,k)=>s+k.nominal,0);
   const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
@@ -239,9 +238,10 @@ function renderChartHarian(rows){
   rows.filter(r=>r.jenis==='Pengeluaran').forEach(r=>{byDay[r.tanggal]=(byDay[r.tanggal]||0)+r.nominal});
   const sorted=Object.keys(byDay).sort();
   if(!sorted.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data harian</p></div>`;return}
-  wrap.innerHTML='<canvas id="chartHarian"></canvas>';
-  requestAnimationFrame(()=>{
-  const canvas=document.getElementById('chartHarian');if(!canvas)return;
+  const uid2='ch_'+Date.now();
+  wrap.innerHTML=`<canvas id="${uid2}"></canvas>`;
+  setTimeout(()=>{
+  const canvas=document.getElementById(uid2);if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
   const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
@@ -268,7 +268,7 @@ function renderChartHarian(rows){
       }
     }
   });
-  }); // end requestAnimationFrame
+  }); // end setTimeout
 }
 
 // ═══ BUDGET / KOMPOSISI ═══
