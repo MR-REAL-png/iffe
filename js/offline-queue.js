@@ -168,25 +168,43 @@ function initOfflineQueue() {
 }
 
 // ── SUBMIT DENGAN OFFLINE SUPPORT ──
-// Dipanggil dari modals.js sebagai pengganti sheetsAppend langsung
 async function submitWithOfflineSupport(payload) {
-  if (navigator.onLine) {
-    // Online → langsung ke server
-    const res = await fetch(`${API_URL}/api/sheets?action=append`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP ${res.status}`);
+  // Cek koneksi dengan cara yang lebih reliable daripada navigator.onLine
+  // navigator.onLine kadang tidak akurat di mobile
+  const isOnline = navigator.onLine;
+
+  if (isOnline) {
+    try {
+      const res = await fetch(`${API_URL}/api/sheets?action=append`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      return res.json();
+    } catch(e) {
+      // Kalau fetch gagal (network error / "Load failed") meski navigator.onLine=true
+      // → simpan ke offline queue sebagai fallback
+      const isNetworkError = e instanceof TypeError ||
+        e.message.includes('Load failed') ||
+        e.message.includes('Failed to fetch') ||
+        e.message.includes('NetworkError');
+
+      if (isNetworkError) {
+        console.warn('[oq] Network error saat online, simpan ke queue:', e.message);
+        await oqAdd({ payload, savedAt: new Date().toISOString() });
+        await updateOfflineBadge();
+        return { success: true, offline: true };
+      }
+      throw e; // Error lain (HTTP error) → lempar ke atas
     }
-    return res.json();
   } else {
     // Offline → simpan ke antrian
     await oqAdd({ payload, savedAt: new Date().toISOString() });
     await updateOfflineBadge();
-    // Return mock success
     return { success: true, offline: true };
   }
 }
