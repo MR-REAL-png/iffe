@@ -29,13 +29,37 @@ function doRefresh(){
   const p=document.querySelector('.page.on');if(!p)return;
   allRows=[];toast('Memuat ulang...');
   const id=p.id.replace('pg-','');
-  if(id==='dashboard')loadDashboard();
+  if(id==='dashboard'){
+    // Force reset semua chart sebelum reload
+    if(typeof resetCharts==='function')resetCharts();
+    loadDashboard();
+  }
   else if(id==='data')loadData();
   else if(id==='dompet')loadDompet();
   else if(id==='rekap')loadRekap();
   else if(id==='metode')loadMetode();
   else if(id==='notif')loadNotif();
   else if(id==='tabungan')loadTabungan();
+}
+
+// Refresh chart saja tanpa reload data (untuk debug / force re-render)
+function refreshChartsOnly(){
+  if(typeof resetCharts==='function')resetCharts();
+  const byKat=groupBy(allRows.filter(r=>{
+    const{startDate,endDate}=getActivePeriodResolved();
+    const sd=new Date(startDate);sd.setHours(0,0,0,0);
+    const ed=new Date(endDate);ed.setHours(23,59,59,999);
+    const d=new Date(r.tanggal);return d>=sd&&d<=ed&&r.jenis==='Pengeluaran';
+  }),'kategori');
+  const byKatArr=Object.entries(byKat).map(([k,v])=>({kategori:k,nominal:v.reduce((s,r)=>s+r.nominal,0)})).sort((a,b)=>b.nominal-a.nominal);
+  const{startDate,endDate}=getActivePeriodResolved();
+  const sd=new Date(startDate);sd.setHours(0,0,0,0);
+  const ed=new Date(endDate);ed.setHours(23,59,59,999);
+  const rows=allRows.filter(r=>{const d=new Date(r.tanggal);return d>=sd&&d<=ed});
+  setTimeout(()=>{
+    renderChartKat(byKatArr);
+    renderChartHarian(rows);
+  },50);
 }
 
 // ═══ DASHBOARD ═══
