@@ -150,10 +150,20 @@ function renderMemberActivity(rows){
 // ═══ CHART KOMPOSISI ═══
 function renderChartKat(byCat){
   const wrap=document.getElementById('chartKat')?.parentElement;if(!wrap)return;
+  // Destroy dulu sebelum apapun
   if(chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
-  if(!byCat.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada pengeluaran</p></div>`;return}
+  // Selalu reset container supaya canvas benar-benar fresh
+  wrap.innerHTML='';
+  if(!byCat.length){
+    wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada pengeluaran</p></div>`;
+    const legEl=document.getElementById('chartLegend');if(legEl)legEl.innerHTML='';
+    return;
+  }
   wrap.innerHTML='<canvas id="chartKat"></canvas>';
-  const ctx=document.getElementById('chartKat').getContext('2d');
+  // requestAnimationFrame supaya DOM sudah siap sebelum Chart.js init
+  requestAnimationFrame(()=>{
+  const canvas=document.getElementById('chartKat');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
   const total=byCat.reduce((s,k)=>s+k.nominal,0);
   const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
   const bdrCol=isOcean?'rgba(10,74,140,0.6)':'rgba(15,12,41,0.6)';
@@ -192,18 +202,23 @@ function renderChartKat(byCat){
       return`<div class="cl-item"><div class="cl-dot" style="background:${col}"></div><span class="cl-txt" style="color:${legendColor}">${lbl} ${pct}%</span></div>`;
     }).join('');
   }
+  }); // end requestAnimationFrame
 }
 
 // ═══ CHART HARIAN ═══
 function renderChartHarian(rows){
   const wrap=document.getElementById('chartHarian')?.parentElement;if(!wrap)return;
   if(chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
+  // Selalu reset container dulu
+  wrap.innerHTML='';
   const byDay={};
   rows.filter(r=>r.jenis==='Pengeluaran').forEach(r=>{byDay[r.tanggal]=(byDay[r.tanggal]||0)+r.nominal});
   const sorted=Object.keys(byDay).sort();
   if(!sorted.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data harian</p></div>`;return}
   wrap.innerHTML='<canvas id="chartHarian"></canvas>';
-  const ctx=document.getElementById('chartHarian').getContext('2d');
+  requestAnimationFrame(()=>{
+  const canvas=document.getElementById('chartHarian');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
   const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
   const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
   const values=sorted.map(d=>byDay[d]);
@@ -229,6 +244,7 @@ function renderChartHarian(rows){
       }
     }
   });
+  }); // end requestAnimationFrame
 }
 
 // ═══ BUDGET / KOMPOSISI ═══
