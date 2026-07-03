@@ -100,38 +100,20 @@ function updatePeriodUI(){
 }
 
 // Navigasi bulan (mode otomatis)
-function resetCharts(){
-  // Destroy semua chart instance dan reset container sebelum ganti bulan
-  // Ini mencegah Chart.js reference ke canvas yang sudah detached
-  if(typeof chartKat!=='undefined'&&chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
-  if(typeof chartHarian!=='undefined'&&chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
-  // Reset container ke kosong
-  const wk=document.getElementById('chartKat')?.parentElement;
-  if(wk)wk.innerHTML='';
-  const wh=document.getElementById('chartHarian')?.parentElement;
-  if(wh)wh.innerHTML='';
-  const leg=document.getElementById('chartLegend');
-  if(leg)leg.innerHTML='';
-}
-
 function prevBulan(){
   if(isManualPeriode())return;
-  resetCharts();
   if(dashActiveBulan===0){dashActiveBulan=11;dashActiveYear--;}
   else dashActiveBulan--;
-  // Paksa fetch ulang data dari server
-  allRows=[];
-  loadDashboard();
+  allRows=[];loadDashboard();
 }
 function nextBulan(){
   if(isManualPeriode())return;
   const now=new Date();
+  // Tidak bisa maju ke masa depan
   if(dashActiveYear===now.getFullYear()&&dashActiveBulan===now.getMonth())return;
-  resetCharts();
   if(dashActiveBulan===11){dashActiveBulan=0;dashActiveYear++;}
   else dashActiveBulan++;
-  allRows=[];
-  loadDashboard();
+  allRows=[];loadDashboard();
 }
 
 // ═══ LOGO ═══
