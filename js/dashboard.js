@@ -144,8 +144,8 @@ async function loadDashboard(){
     renderMemberActivity(rows);
     setTimeout(()=>{
       renderChartKat(byKatArr);
-      renderChartHarian(rows);
-    },100);
+      setTimeout(()=>renderChartHarian(rows),200);
+    },300);
     renderBudget(byKatArr);
     updatePeriodUI();
     renderMemberAvatars();
