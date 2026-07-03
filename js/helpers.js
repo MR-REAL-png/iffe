@@ -119,7 +119,9 @@ function prevBulan(){
   resetCharts();
   if(dashActiveBulan===0){dashActiveBulan=11;dashActiveYear--;}
   else dashActiveBulan--;
-  allRows=[];loadDashboard();
+  // Paksa fetch ulang data dari server
+  allRows=[];
+  loadDashboard();
 }
 function nextBulan(){
   if(isManualPeriode())return;
@@ -128,7 +130,8 @@ function nextBulan(){
   resetCharts();
   if(dashActiveBulan===11){dashActiveBulan=0;dashActiveYear++;}
   else dashActiveBulan++;
-  allRows=[];loadDashboard();
+  allRows=[];
+  loadDashboard();
 }
 
 // ═══ LOGO ═══
