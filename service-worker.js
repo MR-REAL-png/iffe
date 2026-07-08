@@ -3,7 +3,7 @@
 // Cache-first untuk file statis, network-first untuk API
 // ═══════════════════════════════════════════════════
 
-const CACHE_NAME = 'shif-v1';
+const CACHE_NAME = 'shif-v2'; // ⚠️ NAIKKAN angka ini tiap kali ada update besar (v2, v3, dst)
 const OFFLINE_URL = './index.html';
 
 // File statis yang di-cache saat install
@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
   './css/components.css',
   './css/pin.css',
   './js/config.js',
+  './js/csel.js',
   './js/helpers.js',
   './js/auth.js',
   './js/dashboard.js',
@@ -23,6 +24,7 @@ const STATIC_ASSETS = [
   './js/settings.js',
   './js/modals.js',
   './js/export.js',
+  './js/offline-queue.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
 ];
 
@@ -72,7 +74,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // File statis → Cache first, fallback network
+  // File JS/CSS statis → Network first supaya update selalu kepakai,
+  // fallback ke cache kalau offline
+  if (/\.(js|css)$/.test(url.pathname)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Aset lain (gambar, font, dll) → Cache first, fallback network
   event.respondWith(cacheFirst(request));
 });
 
