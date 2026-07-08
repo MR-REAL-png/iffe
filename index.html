@@ -92,6 +92,42 @@
   text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
 }
 .inp-lbl svg { flex-shrink: 0; opacity: 0.7; }
+
+/* ── CUSTOM SELECT (csel) — pengganti <select> kategori/bank ── */
+.csel { position: relative; }
+.csel-btn {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  text-align: left; cursor: pointer; font-family: inherit;
+  color: var(--tx); background: var(--bg2, rgba(255,255,255,0.04));
+}
+.csel-btn:active { opacity: 0.85; }
+.csel-btn.disabled { opacity: 0.45; cursor: not-allowed; }
+.csel-ico { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; color: var(--ac); }
+.csel-ico svg { width: 100%; height: 100%; }
+.csel-lbl { flex: 1; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csel-chev { flex-shrink: 0; opacity: 0.5; }
+.csel-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+.csel-panel {
+  display: none; position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 50;
+  max-height: 260px; overflow-y: auto; background: var(--bg2, #16213e);
+  border: 1px solid var(--bdr2); border-radius: 12px; padding: 6px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
+.csel-panel.open { display: block; }
+.csel-opt {
+  display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 9px;
+  font-size: 0.84rem; color: var(--tx); cursor: pointer;
+}
+.csel-opt:active, .csel-opt.sel { background: rgba(56,189,248,0.12); }
+.csel-opt-ico { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; color: var(--ac); }
+.csel-opt-ico svg { width: 100%; height: 100%; }
+.csel-opt-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.csel-opt-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csel-empty { padding: 12px; text-align: center; font-size: 0.78rem; color: var(--tx3); }
+
+/* ── ICON PICKER (Settings > Kategori) ── */
+#newKatIconPicker.open, #newKatIconPicker[style*="grid"] { display: grid !important; }
+.kat-ico-opt:active { background: rgba(56,189,248,0.15) !important; }
 </style>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
@@ -475,7 +511,15 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/><path d="M6 6h.008v.008H6V6Z"/></svg>
           Kategori
         </label>
-        <select id="inKat" class="inp"><option value="">— Pilih Jenis dulu —</option></select>
+        <div class="csel">
+          <button type="button" class="inp csel-btn" id="inKatBtn" onclick="cselToggle('inKat')">
+            <span class="csel-ico" id="inKatIco"></span>
+            <span class="csel-lbl" id="inKatLbl">— Pilih Jenis dulu —</span>
+            <svg class="csel-chev" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <input type="hidden" id="inKat" value="">
+          <div class="csel-panel" id="inKatPanel"></div>
+        </div>
       </div>
       <!-- Nominal (RP) -->
       <div class="inp-row">
@@ -504,7 +548,15 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg>
             Bank
           </label>
-          <select id="inBank" class="inp"></select>
+          <div class="csel">
+            <button type="button" class="inp csel-btn" id="inBankBtn" onclick="cselToggle('inBank')">
+              <span class="csel-ico" id="inBankIco"></span>
+              <span class="csel-lbl" id="inBankLbl">— Pilih Rekening —</span>
+              <svg class="csel-chev" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <input type="hidden" id="inBank" value="">
+            <div class="csel-panel" id="inBankPanel"></div>
+          </div>
         </div>
       </div>
       <!-- Keterangan -->
@@ -541,10 +593,30 @@
       <input type="hidden" id="eId">
       <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="eTgl" class="inp" onchange="syncBulan('e')"></div>
       <div class="inp-row"><label class="inp-lbl">Jenis</label><select id="eJenis" class="inp" onchange="fillKat('eJenis','eKat')"><option value="">— Pilih —</option><option>Pemasukan</option><option>Pengeluaran</option></select></div>
-      <div class="inp-row"><label class="inp-lbl">Kategori</label><select id="eKat" class="inp"></select></div>
+      <div class="inp-row"><label class="inp-lbl">Kategori</label>
+        <div class="csel">
+          <button type="button" class="inp csel-btn" id="eKatBtn" onclick="cselToggle('eKat')">
+            <span class="csel-ico" id="eKatIco"></span>
+            <span class="csel-lbl" id="eKatLbl">— Pilih —</span>
+            <svg class="csel-chev" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <input type="hidden" id="eKat" value="">
+          <div class="csel-panel" id="eKatPanel"></div>
+        </div>
+      </div>
       <div class="inp-row"><label class="inp-lbl">Nominal</label><input type="text" id="eNom" class="inp" inputmode="numeric" placeholder="0" oninput="fmtNom(this)"></div>
       <div class="inp-row"><label class="inp-lbl">Metode</label><select id="eMetode" class="inp" onchange="syncMetodeBank('eMetode','eBank')"><option value="">— Pilih —</option><option>Cash</option><option>Transfer</option><option>QRIS</option></select></div>
-      <div class="inp-row"><label class="inp-lbl">Rekening</label><select id="eBank" class="inp"></select></div>
+      <div class="inp-row"><label class="inp-lbl">Rekening</label>
+        <div class="csel">
+          <button type="button" class="inp csel-btn" id="eBankBtn" onclick="cselToggle('eBank')">
+            <span class="csel-ico" id="eBankIco"></span>
+            <span class="csel-lbl" id="eBankLbl">— Pilih —</span>
+            <svg class="csel-chev" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <input type="hidden" id="eBank" value="">
+          <div class="csel-panel" id="eBankPanel"></div>
+        </div>
+      </div>
       <div class="inp-row"><label class="inp-lbl">Keterangan</label><input type="text" id="eKet" class="inp" placeholder="Opsional..."></div>
     </div>
     <div class="modal-ft"><button class="btn-cx" onclick="closeOv(null,'ovEdit')">Batal</button><button class="btn-ok" onclick="submitEdit()">Simpan</button></div>
@@ -604,6 +676,7 @@
 
 <script src="js/offline-queue.js"></script>
 <script src="js/config.js"></script>
+<script src="js/csel.js"></script>
 <script src="js/helpers.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/dashboard.js"></script>
