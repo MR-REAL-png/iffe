@@ -434,9 +434,13 @@ function openSettModal(type){
         ${KAT_ICON_LIST.map(ic=>`<button type="button" class="kat-ico-opt" data-key="${ic.key}" onclick="pickNewKatIcon('${ic.key}')" title="${ic.label}" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx2)"><span style="display:inline-flex;width:18px;height:18px">${ic.svg}</span></button>`).join('')}
       </div>
       <div id="katList">${allNames.map(name=>{
-        const key=getKatIconKey(name);
-        return`<div class="sett-tag-item"><span style="display:flex;align-items:center">${katIconInline(name,16)}${name}</span><button onclick="removeKat('${name.replace(/'/g,"\\'")}')">×</button></div>`;
+        return`<div class="sett-tag-item" onclick="openKatIconEditor('${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
+          <span style="display:flex;align-items:center">${katIconInline(name,16)}${name}</span>
+          <button onclick="event.stopPropagation();removeKat('${name.replace(/'/g,"\\'")}')">×</button>
+        </div>`;
       }).join('')}</div>
+      <div class="csel-backdrop" id="katIconEditBackdrop" onclick="closeKatIconEditor()"></div>
+      <div class="csel-panel" id="katIconEditPanel" style="grid-template-columns:repeat(6,1fr);display:none;gap:6px"></div>
     `;
     hideFt();
   }
@@ -455,8 +459,12 @@ function openSettModal(type){
       <div id="bankList">${allNames.map(name=>{
         const color=getBankColor(name);
         const dot=color?`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:8px;flex-shrink:0"></span>`:`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--tx3);opacity:0.3;margin-right:8px;flex-shrink:0"></span>`;
-        return`<div class="sett-tag-item"><span style="display:flex;align-items:center">${dot}${name}</span><button onclick="removeBank('${name.replace(/'/g,"\\'")}')">×</button></div>`;
+        return`<div class="sett-tag-item" onclick="openBankColorEditor('${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
+          <span style="display:flex;align-items:center">${dot}${name}</span>
+          <button onclick="event.stopPropagation();removeBank('${name.replace(/'/g,"\\'")}')">×</button>
+        </div>`;
       }).join('')}</div>
+      <input type="color" id="editBankColorInput" style="position:fixed;opacity:0;pointer-events:none;width:0;height:0">
     `;
     hideFt();
   }
@@ -654,6 +662,40 @@ function removeKat(name){
   fetchDBOptions();openSettModal('kategori');pushSettings();
 }
 
+// ── Edit ikon kategori yang SUDAH ADA (klik item di list) ──
+let editingKatName='';
+function openKatIconEditor(name){
+  editingKatName=name;
+  const panel=document.getElementById('katIconEditPanel');
+  const bd=document.getElementById('katIconEditBackdrop');
+  if(!panel||!bd)return;
+  const curKey=getKatIconKey(name);
+  panel.innerHTML=KAT_ICON_LIST.map(ic=>`<button type="button" class="kat-ico-opt" data-key="${ic.key}" onclick="chooseKatIconFor('${ic.key}')" title="${ic.label}" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid ${ic.key===curKey?'var(--ac)':'var(--bdr2)'};display:flex;align-items:center;justify-content:center;color:var(--tx2)"><span style="display:inline-flex;width:18px;height:18px">${ic.svg}</span></button>`).join('');
+  panel.style.display='grid';
+  panel.classList.add('open');
+  bd.classList.add('open');
+}
+function closeKatIconEditor(){
+  const panel=document.getElementById('katIconEditPanel');
+  const bd=document.getElementById('katIconEditBackdrop');
+  if(panel){panel.classList.remove('open');panel.style.display='none';}
+  if(bd)bd.classList.remove('open');
+}
+function chooseKatIconFor(key){
+  if(!editingKatName)return;
+  const kats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
+  const existing=kats.find(k=>k.name===editingKatName);
+  if(existing)existing.icon=key;
+  else kats.push({name:editingKatName,icon:key});
+  localStorage.setItem('mm_custom_kats',JSON.stringify(kats));
+  rebuildKatIconMap();
+  closeKatIconEditor();
+  fetchDBOptions();
+  openSettModal('kategori');
+  toast('Ikon diperbarui ✓','ok');
+  pushSettings();
+}
+
 // ═══ KELOLA REKENING ═══
 function addCustomBank(){
   const v=document.getElementById('newBankInput')?.value.trim();
@@ -674,6 +716,29 @@ function removeBank(name){
   localStorage.setItem('mm_custom_banks',JSON.stringify(banks.filter(b=>b.name!==name)));
   rebuildBankColorMap();
   fetchDBOptions();openSettModal('rekening');pushSettings();
+}
+
+// ── Edit warna rekening yang SUDAH ADA (klik item di list) ──
+let editingBankName='';
+function openBankColorEditor(name){
+  editingBankName=name;
+  const input=document.getElementById('editBankColorInput');
+  if(!input)return;
+  input.value=getBankColor(name)||'#38bdf8';
+  input.onchange=()=>{
+    if(!editingBankName)return;
+    const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+    const existing=banks.find(b=>b.name===editingBankName);
+    if(existing)existing.color=input.value;
+    else banks.push({name:editingBankName,color:input.value});
+    localStorage.setItem('mm_custom_banks',JSON.stringify(banks));
+    rebuildBankColorMap();
+    fetchDBOptions();
+    openSettModal('rekening');
+    toast('Warna diperbarui ✓','ok');
+    pushSettings();
+  };
+  input.click();
 }
 
 // ═══ TOGGLE NOTIF ═══
