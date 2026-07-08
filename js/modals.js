@@ -455,7 +455,7 @@ function openSettModal(type){
         <button class="btn-ok" style="padding:10px 14px" onclick="addCustomBank()">+</button>
       </div>
       <div id="bankList">${allNames.map(name=>{
-        const color=getBankColor(name);
+        const color=getBankDisplayColor(name);
         const dot=color?`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:8px;flex-shrink:0"></span>`:`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--tx3);opacity:0.3;margin-right:8px;flex-shrink:0"></span>`;
         return`<div class="sett-tag-item" onclick="openBankColorPicker('edit','${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
           <span style="display:flex;align-items:center">${dot}${name}</span>
@@ -706,7 +706,7 @@ function openBankColorPicker(mode,name){
   const panel=document.getElementById('bankColorPopupPanel');
   const bd=document.getElementById('bankColorPopupBackdrop');
   if(!panel||!bd)return;
-  const curColor=(mode==='edit'?(getBankColor(name)||''):(selectedNewBankColor||'#38bdf8')).toLowerCase();
+  const curColor=(mode==='edit'?(getBankDisplayColor(name)||''):(selectedNewBankColor||'#38bdf8')).toLowerCase();
   const resetBtn=mode==='edit'?`<button type="button" onclick="resetBankColorPopup()" title="Pakai warna default" style="width:32px;height:32px;border-radius:50%;background:var(--glass);border:2px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:0.65rem">✕</button>`:'';
   panel.innerHTML=resetBtn+BANK_COLOR_PALETTE.map(c=>`<button type="button" onclick="chooseBankColorPopup('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${c.toLowerCase()===curColor?'#fff':'transparent'};box-shadow:0 0 0 1px var(--bdr2)"></button>`).join('');
   panel.style.display='grid';
