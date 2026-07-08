@@ -447,21 +447,23 @@ function openSettModal(type){
     const customNames=customBanks.map(b=>b.name);
     const BUKAN_BANK=['cash','transfer','qris'];
     const allNames=[...new Set([...allRows.map(r=>r.pembayaran).filter(b=>b&&!BUKAN_BANK.includes(b.toLowerCase())),...customNames])].sort();
+    selectedNewBankColor='#38bdf8';
     body.innerHTML=`
       <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center">
-        <input type="color" id="newBankColor" value="#38bdf8" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px solid var(--bdr2);background:none;padding:2px">
+        <button type="button" id="newBankColorBtn" onclick="openBankColorPicker('new')" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;background:${selectedNewBankColor};border:1px solid var(--bdr2)"></button>
         <input type="text" id="newBankInput" class="inp" placeholder="Tambah rekening baru..." style="flex:1">
         <button class="btn-ok" style="padding:10px 14px" onclick="addCustomBank()">+</button>
       </div>
       <div id="bankList">${allNames.map(name=>{
         const color=getBankColor(name);
         const dot=color?`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:8px;flex-shrink:0"></span>`:`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--tx3);opacity:0.3;margin-right:8px;flex-shrink:0"></span>`;
-        return`<div class="sett-tag-item" onclick="openBankColorEditor('${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
+        return`<div class="sett-tag-item" onclick="openBankColorPicker('edit','${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
           <span style="display:flex;align-items:center">${dot}${name}</span>
           <button onclick="event.stopPropagation();removeBank('${name.replace(/'/g,"\\'")}')">×</button>
         </div>`;
       }).join('')}</div>
-      <input type="color" id="editBankColorInput" style="position:fixed;opacity:0;pointer-events:none;width:0;height:0">
+      <div class="csel-backdrop" id="bankColorPopupBackdrop" onclick="closeBankColorPicker()"></div>
+      <div class="csel-panel" id="bankColorPopupPanel" style="grid-template-columns:repeat(6,1fr);display:none;gap:12px;padding:16px"></div>
     `;
     hideFt();
   }
@@ -693,9 +695,55 @@ function removeKat(name){
 }
 
 // ═══ KELOLA REKENING ═══
+const BANK_COLOR_PALETTE=['#38bdf8','#818cf8','#a78bfa','#f472b6','#fb923c','#fbbf24','#4ade80','#34d399','#2dd4bf','#60a5fa','#f87171','#e879f9','#a3e635','#facc15','#94a3b8','#f43f5e'];
+let selectedNewBankColor='#38bdf8';
+let _bankColorPickerMode='';
+let _bankColorPickerTarget='';
+
+function openBankColorPicker(mode,name){
+  _bankColorPickerMode=mode;
+  _bankColorPickerTarget=name||'';
+  const panel=document.getElementById('bankColorPopupPanel');
+  const bd=document.getElementById('bankColorPopupBackdrop');
+  if(!panel||!bd)return;
+  const curColor=(mode==='edit'?(getBankColor(name)||'#38bdf8'):(selectedNewBankColor||'#38bdf8')).toLowerCase();
+  panel.innerHTML=BANK_COLOR_PALETTE.map(c=>`<button type="button" onclick="chooseBankColorPopup('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${c.toLowerCase()===curColor?'#fff':'transparent'};box-shadow:0 0 0 1px var(--bdr2)"></button>`).join('');
+  panel.style.display='grid';
+  panel.classList.add('open');
+  bd.classList.add('open');
+}
+function closeBankColorPicker(){
+  const panel=document.getElementById('bankColorPopupPanel');
+  const bd=document.getElementById('bankColorPopupBackdrop');
+  if(panel){panel.classList.remove('open');panel.style.display='none';}
+  if(bd)bd.classList.remove('open');
+  _bankColorPickerMode='';_bankColorPickerTarget='';
+}
+function chooseBankColorPopup(color){
+  if(_bankColorPickerMode==='new'){
+    selectedNewBankColor=color;
+    const btn=document.getElementById('newBankColorBtn');
+    if(btn)btn.style.background=color;
+    closeBankColorPicker();
+  }else if(_bankColorPickerMode==='edit'){
+    const name=_bankColorPickerTarget;
+    const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+    const existing=banks.find(b=>b.name===name);
+    if(existing)existing.color=color;
+    else banks.push({name,color});
+    localStorage.setItem('mm_custom_banks',JSON.stringify(banks));
+    rebuildBankColorMap();
+    closeBankColorPicker();
+    fetchDBOptions();
+    openSettModal('rekening');
+    toast('Warna diperbarui ✓','ok');
+    pushSettings();
+  }
+}
+
 function addCustomBank(){
   const v=document.getElementById('newBankInput')?.value.trim();
-  const color=document.getElementById('newBankColor')?.value||null;
+  const color=selectedNewBankColor||'#38bdf8';
   if(!v)return;
   const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
   if(!banks.some(b=>b.name===v)){
@@ -712,29 +760,6 @@ function removeBank(name){
   localStorage.setItem('mm_custom_banks',JSON.stringify(banks.filter(b=>b.name!==name)));
   rebuildBankColorMap();
   fetchDBOptions();openSettModal('rekening');pushSettings();
-}
-
-// ── Edit warna rekening yang SUDAH ADA (klik item di list) ──
-let editingBankName='';
-function openBankColorEditor(name){
-  editingBankName=name;
-  const input=document.getElementById('editBankColorInput');
-  if(!input)return;
-  input.value=getBankColor(name)||'#38bdf8';
-  input.onchange=()=>{
-    if(!editingBankName)return;
-    const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
-    const existing=banks.find(b=>b.name===editingBankName);
-    if(existing)existing.color=input.value;
-    else banks.push({name:editingBankName,color:input.value});
-    localStorage.setItem('mm_custom_banks',JSON.stringify(banks));
-    rebuildBankColorMap();
-    fetchDBOptions();
-    openSettModal('rekening');
-    toast('Warna diperbarui ✓','ok');
-    pushSettings();
-  };
-  input.click();
 }
 
 // ═══ TOGGLE NOTIF ═══
