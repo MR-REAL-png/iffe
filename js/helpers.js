@@ -321,7 +321,7 @@ async function fetchDBOptions(){
 function fillBank(id,val,excludeCash){
   const banks=dbOpts.banks||[];
   const list=excludeCash?banks:['Cash',...banks];
-  const opts=list.map(b=>({value:b,label:b,color:getBankColor(b)}));
+  const opts=list.map(b=>({value:b,label:b,color:getBankDisplayColor(b)}));
   cselSetOptions(id,opts,val,'— Pilih Rekening —');
 }
 
