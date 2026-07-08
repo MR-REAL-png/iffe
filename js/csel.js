@@ -211,6 +211,21 @@ function rebuildBankColorMap(){
 function getBankColor(name){
   return bankColorMap[(name||'').toLowerCase()]||null;
 }
+// Warna yang ditampilkan di manapun (list Kelola Rekening, dropdown Bank input transaksi, dst):
+// custom kalau ada, kalau nggak pakai warna tema bawaan dari BANK_THEMES (dompet.js)
+// — biar SELALU konsisten sama warna kartu ATM di halaman Dompet.
+function extractFirstColor(grad){
+  const m=grad&&grad.match(/#[0-9a-fA-F]{3,6}/);
+  return m?m[0]:'#38bdf8';
+}
+function getBankDisplayColor(name){
+  const custom=getBankColor(name);
+  if(custom)return custom;
+  if(typeof BANK_THEMES==='undefined')return null;
+  const key=Object.keys(BANK_THEMES).find(k=>name&&name.toLowerCase().includes(k.toLowerCase())&&k!=='default');
+  const theme=key?BANK_THEMES[key]:null;
+  return theme?extractFirstColor(theme.grad):null;
+}
 function lightenColor(hex,pct){
   hex=(hex||'').replace('#','');
   if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
