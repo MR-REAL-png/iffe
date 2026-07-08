@@ -100,8 +100,23 @@ function updatePeriodUI(){
 }
 
 // Navigasi bulan (mode otomatis)
+function resetCharts(){
+  // Destroy semua chart instance dan reset container sebelum ganti bulan
+  // Ini mencegah Chart.js reference ke canvas yang sudah detached
+  if(typeof chartKat!=='undefined'&&chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
+  if(typeof chartHarian!=='undefined'&&chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
+  // Reset container ke kosong
+  const wk=document.getElementById('chartKat')?.parentElement;
+  if(wk)wk.innerHTML='';
+  const wh=document.getElementById('chartHarian')?.parentElement;
+  if(wh)wh.innerHTML='';
+  const leg=document.getElementById('chartLegend');
+  if(leg)leg.innerHTML='';
+}
+
 function prevBulan(){
   if(isManualPeriode())return;
+  resetCharts();
   if(dashActiveBulan===0){dashActiveBulan=11;dashActiveYear--;}
   else dashActiveBulan--;
   allRows=[];loadDashboard();
@@ -109,8 +124,8 @@ function prevBulan(){
 function nextBulan(){
   if(isManualPeriode())return;
   const now=new Date();
-  // Tidak bisa maju ke masa depan
   if(dashActiveYear===now.getFullYear()&&dashActiveBulan===now.getMonth())return;
+  resetCharts();
   if(dashActiveBulan===11){dashActiveBulan=0;dashActiveYear++;}
   else dashActiveBulan++;
   allRows=[];loadDashboard();
@@ -257,16 +272,20 @@ async function fetchDBOptions(){
       if(r.pembayaran&&!['cash','transfer','qris'].includes(r.pembayaran.toLowerCase()))banks.push(r.pembayaran);
       if(r.kategori)kategoris.push(r.kategori);
     });
-    const customKats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
-    const customBanks=JSON.parse(localStorage.getItem('mm_custom_banks')||'[]');
+    const customKatsRaw=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
+    const customBanksRaw=JSON.parse(localStorage.getItem('mm_custom_banks')||'[]');
+    const customKatNames=normalizeKatList(customKatsRaw).map(k=>k.name);
+    const customBankNames=normalizeBankList(customBanksRaw).map(b=>b.name);
+    // Rebuild map ikon kategori & warna bank supaya getKatIconSVG/getBankColor up-to-date
+    rebuildKatIconMap();rebuildBankColorMap();
     // kategoris hanya pengeluaran — pemasukan sudah hardcode di KAT_PEMASUKAN
     const KAT_PMS=typeof KAT_PEMASUKAN!=='undefined'?KAT_PEMASUKAN:['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
     const katPengeluaran=[...new Set([
       ...kategoris.filter(k=>!KAT_PMS.includes(k)),
-      ...customKats.filter(k=>!KAT_PMS.includes(k))
+      ...customKatNames.filter(k=>!KAT_PMS.includes(k))
     ])].sort();
     dbOpts={
-      banks:[...new Set([...banks,...customBanks])],
+      banks:[...new Set([...banks,...customBankNames])],
       kategoris:katPengeluaran,
       metodes:['Cash','Transfer','QRIS'],
       jenis:['Pemasukan','Pengeluaran']
@@ -276,13 +295,12 @@ async function fetchDBOptions(){
   }catch(e){console.error('fetchDBOptions:',e)}
 }
 
-// ═══ FILL BANK & KATEGORI ═══
+// ═══ FILL BANK & KATEGORI (custom dropdown / csel) ═══
 function fillBank(id,val,excludeCash){
-  const sel=document.getElementById(id);if(!sel)return;
   const banks=dbOpts.banks||[];
-  const opts=excludeCash?banks:['Cash',...banks];
-  sel.innerHTML='<option value="">— Pilih Rekening —</option>'+
-    opts.map(b=>`<option value="${b}"${b===val?' selected':''}>${b}</option>`).join('');
+  const list=excludeCash?banks:['Cash',...banks];
+  const opts=list.map(b=>({value:b,label:b,color:getBankColor(b)}));
+  cselSetOptions(id,opts,val,'— Pilih Rekening —');
 }
 
 // ═══ SYNC METODE → REKENING ═══
@@ -309,7 +327,7 @@ const KAT_PEMASUKAN = ['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','
 
 // Kategori Pengeluaran — dari data + custom, tidak include kategori pemasukan
 function getKatPengeluaran(){
-  const customKats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
+  const customKats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]')).map(k=>k.name);
   const fromData=[...new Set(
     allRows
       .filter(r=>r.jenis==='Pengeluaran')
@@ -321,15 +339,14 @@ function getKatPengeluaran(){
 
 function fillKat(jenisId,katId){
   const jenis=document.getElementById(jenisId)?.value;
-  const sel=document.getElementById(katId);if(!sel)return;
-  if(!jenis){sel.innerHTML='<option value="">— Pilih Jenis dulu —</option>';return;}
+  if(!jenis){cselSetOptions(katId,[],'','— Pilih Jenis dulu —');return;}
   if(jenis==='Pemasukan'){
-    sel.innerHTML=KAT_PEMASUKAN.map(k=>`<option value="${k}">${k}</option>`).join('');
+    const opts=KAT_PEMASUKAN.map(k=>({value:k,label:k,icon:getKatIconSVG(k)}));
+    cselSetOptions(katId,opts,document.getElementById(katId)?.value||'','— Pilih Kategori —');
   } else {
     const kats=getKatPengeluaran();
-    sel.innerHTML=kats.length
-      ? kats.map(k=>`<option value="${k}">${k}</option>`).join('')
-      : '<option value="">— Belum ada kategori —</option>';
+    const opts=kats.map(k=>({value:k,label:k,icon:getKatIconSVG(k)}));
+    cselSetOptions(katId,opts,document.getElementById(katId)?.value||'',kats.length?'— Pilih Kategori —':'— Belum ada kategori —');
   }
 }
 
@@ -345,7 +362,7 @@ function renderQuickKat(){
       .map(r=>r.kategori)
       .filter(k=>k&&(jenis==='Pemasukan'?KAT_PMS.includes(k):!KAT_PMS.includes(k)))
   )].slice(0,6);
-  el.innerHTML=recent.map(k=>`<button class="qk-btn" onclick="document.getElementById('inKat').value='${k.replace(/'/g,"\\'")}'">${k}</button>`).join('');
+  el.innerHTML=recent.map(k=>`<button class="qk-btn" onclick="document.getElementById('inKat').value='${k.replace(/'/g,"\\'")}'">${katIconInline(k,14)}${k}</button>`).join('');
 }
 
 // ═══ FILTER BY WHO (siapa yang catat) ═══
@@ -531,6 +548,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // Inisialisasi theme
   const savedTheme=localStorage.getItem('mm_t')||'cosmic';
   setTheme(savedTheme,false);
+  if(typeof rebuildKatIconMap==='function')rebuildKatIconMap();
+  if(typeof rebuildBankColorMap==='function')rebuildBankColorMap();
   initParticles();
   updateClock();
   initLogo();
