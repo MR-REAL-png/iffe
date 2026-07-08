@@ -121,22 +121,37 @@
 .csel-lbl { flex: 1; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .csel-chev { flex-shrink: 0; opacity: 0.5; }
 .csel-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+
+/* Backdrop di belakang popup, dim seluruh layar */
+.csel-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 998;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+}
+.csel-backdrop.open { display: block; }
+
+/* Panel sekarang jadi popup CENTER-OVERLAY (mirip native picker "Jenis") */
 .csel-panel {
-  display: none; position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 50;
-  max-height: 260px; overflow-y: auto; background: var(--bg2, #16213e);
-  border: 1px solid var(--bdr2); border-radius: 12px; padding: 6px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  display: none; position: fixed; left: 50%; top: 50%;
+  transform: translate(-50%, -50%); z-index: 999;
+  width: min(320px, 86vw); max-height: 60vh; overflow-y: auto;
+  background: var(--bg2, #16213e);
+  border: 1px solid var(--bdr2); border-radius: 16px; padding: 8px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
 }
 .csel-panel.open { display: block; }
 .csel-opt {
-  display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 9px;
-  font-size: 0.84rem; color: var(--tx); cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 11px 12px; border-radius: 10px;
+  font-size: 0.9rem; color: var(--tx); cursor: pointer;
 }
+.csel-opt-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .csel-opt:active, .csel-opt.sel { background: rgba(56,189,248,0.12); }
 .csel-opt-ico { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; color: var(--ac); }
 .csel-opt-ico svg { width: 100%; height: 100%; }
 .csel-opt-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .csel-opt-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csel-opt-check { display: none; flex-shrink: 0; width: 18px; height: 18px; color: var(--ac); }
+.csel-opt.sel .csel-opt-check { display: inline-flex; }
 .csel-empty { padding: 12px; text-align: center; font-size: 0.78rem; color: var(--tx3); }
 
 /* ── ICON PICKER (Settings > Kategori) ── */
@@ -677,6 +692,7 @@
 <!-- PIN / LOGIN OVERLAY -->
 <!-- Offline Status Bar -->
 <div id="offlineStatusBar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(251,191,36,0.95);color:#0d1b3e;font-size:0.72rem;font-weight:700;padding:6px 16px;text-align:center;backdrop-filter:blur(8px)"></div>
+<div class="csel-backdrop" id="cselBackdrop" onclick="cselCloseAll()"></div>
 
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-stars" id="pinStars"></div>
