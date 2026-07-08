@@ -337,22 +337,19 @@ function applyAIResult(data) {
     }
   }
 
-  // Kategori (setelah fillKat)
+  // Kategori (setelah fillKat) — inKat sekarang custom dropdown (csel), bukan <select>
   if (data.kategori) {
     setTimeout(() => {
-      const katEl = document.getElementById('inKat');
-      if (katEl) {
-        const opts = [...katEl.options];
-        const match = opts.find(o => o.value.toLowerCase() === (data.kategori||'').toLowerCase());
-        if (match) {
-          katEl.value = match.value;
-        } else {
-          const opt = document.createElement('option');
-          opt.value = data.kategori;
-          opt.textContent = data.kategori;
-          katEl.appendChild(opt);
-          katEl.value = data.kategori;
-        }
+      const panel = document.getElementById('inKatPanel');
+      const opts = (panel && panel._cselOptions) || [];
+      const match = opts.find(o => String(o.value).toLowerCase() === (data.kategori||'').toLowerCase());
+      if (match) {
+        cselChoose('inKat', match.value);
+      } else {
+        // Kategori dari AI belum ada di list — tambahkan sementara ke opsi panel lalu pilih
+        const newOpt = { value: data.kategori, label: data.kategori, icon: getKatIconSVG(data.kategori) };
+        opts.push(newOpt);
+        cselSetOptions('inKat', opts, data.kategori, '— Pilih Kategori —');
       }
     }, 120);
   }
@@ -376,18 +373,16 @@ function applyAIResult(data) {
   const bankVal = data.bank || data.pembayaran || '';
   if (bankVal) {
     setTimeout(() => {
-      // Pastikan dropdown bank sudah diisi (setelah syncMetodeBank)
-      const bankEl = document.getElementById('inBank');
-      if (!bankEl) return;
-      // Coba cari exact match dulu, lalu partial
-      const opts = [...bankEl.options];
+      // Pastikan dropdown bank sudah diisi (setelah syncMetodeBank) — inBank sekarang csel
+      const panel = document.getElementById('inBankPanel');
+      const opts = (panel && panel._cselOptions) || [];
       const bLow = bankVal.toLowerCase();
-      const match = opts.find(o => o.value && o.value.toLowerCase() === bLow)
-        || opts.find(o => o.value && bLow.includes(o.value.toLowerCase()))
-        || opts.find(o => o.value && o.value.toLowerCase().includes(bLow));
+      const match = opts.find(o => o.value && String(o.value).toLowerCase() === bLow)
+        || opts.find(o => o.value && bLow.includes(String(o.value).toLowerCase()))
+        || opts.find(o => o.value && String(o.value).toLowerCase().includes(bLow));
       if (match) {
-        bankEl.value = match.value;
-        bankEl.disabled = false;
+        cselChoose('inBank', match.value);
+        document.getElementById('inBank').disabled = false;
       }
     }, 200);
   }
@@ -425,28 +420,43 @@ function openSettModal(type){
   }
   else if(type==='kategori'){
     title.textContent='Kelola Kategori';
-    const customKats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
-    const allKats=[...new Set([...allRows.map(r=>r.kategori).filter(Boolean),...customKats])].sort();
+    const customKats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
+    const customNames=customKats.map(k=>k.name);
+    const allNames=[...new Set([...allRows.map(r=>r.kategori).filter(Boolean),...customNames])].sort();
+    selectedNewKatIcon='other';
     body.innerHTML=`
-      <div style="margin-bottom:10px;display:flex;gap:8px">
+      <div style="margin-bottom:8px;display:flex;gap:8px">
+        <button type="button" id="newKatIconBtn" onclick="toggleNewKatIconPicker()" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;background:var(--glass);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">${katIconInline('',22)}</button>
         <input type="text" id="newKatInput" class="inp" placeholder="Tambah kategori baru..." style="flex:1">
         <button class="btn-ok" style="padding:10px 14px" onclick="addCustomKat()">+</button>
       </div>
-      <div id="katList">${allKats.map(k=>`<div class="sett-tag-item"><span>${k}</span><button onclick="removeKat('${k.replace(/'/g,"\\'")}')">×</button></div>`).join('')}</div>
+      <div id="newKatIconPicker" style="display:none;margin-bottom:12px;padding:10px;background:var(--glass);border:1px solid var(--bdr2);border-radius:12px;max-height:180px;overflow-y:auto;grid-template-columns:repeat(6,1fr);gap:6px">
+        ${KAT_ICON_LIST.map(ic=>`<button type="button" class="kat-ico-opt" data-key="${ic.key}" onclick="pickNewKatIcon('${ic.key}')" title="${ic.label}" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx2)"><span style="display:inline-flex;width:18px;height:18px">${ic.svg}</span></button>`).join('')}
+      </div>
+      <div id="katList">${allNames.map(name=>{
+        const key=getKatIconKey(name);
+        return`<div class="sett-tag-item"><span style="display:flex;align-items:center">${katIconInline(name,16)}${name}</span><button onclick="removeKat('${name.replace(/'/g,"\\'")}')">×</button></div>`;
+      }).join('')}</div>
     `;
     hideFt();
   }
   else if(type==='rekening'){
     title.textContent='Kelola Rekening';
-    const customBanks=JSON.parse(localStorage.getItem('mm_custom_banks')||'[]');
+    const customBanks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+    const customNames=customBanks.map(b=>b.name);
     const BUKAN_BANK=['cash','transfer','qris'];
-    const allBanks=[...new Set([...allRows.map(r=>r.pembayaran).filter(b=>b&&!BUKAN_BANK.includes(b.toLowerCase())),...customBanks])].sort();
+    const allNames=[...new Set([...allRows.map(r=>r.pembayaran).filter(b=>b&&!BUKAN_BANK.includes(b.toLowerCase())),...customNames])].sort();
     body.innerHTML=`
-      <div style="margin-bottom:10px;display:flex;gap:8px">
+      <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center">
+        <input type="color" id="newBankColor" value="#38bdf8" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px solid var(--bdr2);background:none;padding:2px">
         <input type="text" id="newBankInput" class="inp" placeholder="Tambah rekening baru..." style="flex:1">
         <button class="btn-ok" style="padding:10px 14px" onclick="addCustomBank()">+</button>
       </div>
-      <div id="bankList">${allBanks.map(b=>`<div class="sett-tag-item"><span>${b}</span><button onclick="removeBank('${b.replace(/'/g,"\\'")}')">×</button></div>`).join('')}</div>
+      <div id="bankList">${allNames.map(name=>{
+        const color=getBankColor(name);
+        const dot=color?`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:8px;flex-shrink:0"></span>`:`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--tx3);opacity:0.3;margin-right:8px;flex-shrink:0"></span>`;
+        return`<div class="sett-tag-item"><span style="display:flex;align-items:center">${dot}${name}</span><button onclick="removeBank('${name.replace(/'/g,"\\'")}')">×</button></div>`;
+      }).join('')}</div>
     `;
     hideFt();
   }
@@ -510,7 +520,8 @@ function openSettModal(type){
 function renderAnggaranModal(body){
   const key=getBudgetMonthKey(anggaranModalYear,anggaranModalMonth);
   const budgets=getBudgetsForMonth(key);
-  const allKats=[...new Set([...allRows.map(r=>r.kategori).filter(Boolean),...JSON.parse(localStorage.getItem('mm_custom_kats')||'[]')])].sort();
+  const customKatNames=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]')).map(k=>k.name);
+  const allKats=[...new Set([...allRows.map(r=>r.kategori).filter(Boolean),...customKatNames])].sort();
   body.innerHTML=`
     <div class="ang-nav">
       <button class="kal-nav-btn" onclick="changeAnggaranMonth(-1)">‹</button>
@@ -519,7 +530,7 @@ function renderAnggaranModal(body){
     </div>
     ${allKats.map(k=>`
       <div class="ang-row">
-        <label class="ang-lbl">${k}</label>
+        <label class="ang-lbl" style="display:flex;align-items:center">${katIconInline(k,15)}${k}</label>
         <input type="text" class="ang-inp inp" data-kat="${k}" inputmode="numeric" oninput="fmtNom(this)" value="${budgets[k]?Number(budgets[k]).toLocaleString('id-ID'):''}">
       </div>
     `).join('')}
@@ -606,36 +617,62 @@ function togglePeriodeManual(){
 }
 
 // ═══ KELOLA KATEGORI ═══
+let selectedNewKatIcon='other';
+function toggleNewKatIconPicker(){
+  const el=document.getElementById('newKatIconPicker');if(!el)return;
+  const willShow=el.style.display==='none';
+  el.style.display=willShow?'grid':'none';
+}
+function pickNewKatIcon(key){
+  selectedNewKatIcon=key;
+  document.querySelectorAll('.kat-ico-opt').forEach(b=>b.style.borderColor=b.dataset.key===key?'var(--ac)':'var(--bdr2)');
+  const btn=document.getElementById('newKatIconBtn');
+  const ic=KAT_ICON_MAP[key];
+  if(btn&&ic)btn.innerHTML=`<span style="display:inline-flex;width:22px;height:22px">${ic.svg}</span>`;
+  document.getElementById('newKatIconPicker').style.display='none';
+}
+
 function addCustomKat(){
   const v=document.getElementById('newKatInput')?.value.trim();
   if(!v)return;
-  const kats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
-  if(!kats.includes(v)){kats.push(v);localStorage.setItem('mm_custom_kats',JSON.stringify(kats));}
+  const kats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
+  if(!kats.some(k=>k.name===v)){
+    kats.push({name:v,icon:selectedNewKatIcon||'other'});
+    localStorage.setItem('mm_custom_kats',JSON.stringify(kats));
+  }
+  rebuildKatIconMap();
   fetchDBOptions();
   openSettModal('kategori');
   toast('Kategori ditambahkan ✓','ok');
   pushSettings();
 }
 
-function removeKat(k){
-  const kats=JSON.parse(localStorage.getItem('mm_custom_kats')||'[]');
-  localStorage.setItem('mm_custom_kats',JSON.stringify(kats.filter(x=>x!==k)));
+function removeKat(name){
+  const kats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
+  localStorage.setItem('mm_custom_kats',JSON.stringify(kats.filter(k=>k.name!==name)));
+  rebuildKatIconMap();
   fetchDBOptions();openSettModal('kategori');pushSettings();
 }
 
 // ═══ KELOLA REKENING ═══
 function addCustomBank(){
   const v=document.getElementById('newBankInput')?.value.trim();
+  const color=document.getElementById('newBankColor')?.value||null;
   if(!v)return;
-  const banks=JSON.parse(localStorage.getItem('mm_custom_banks')||'[]');
-  if(!banks.includes(v)){banks.push(v);localStorage.setItem('mm_custom_banks',JSON.stringify(banks));}
+  const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+  if(!banks.some(b=>b.name===v)){
+    banks.push({name:v,color});
+    localStorage.setItem('mm_custom_banks',JSON.stringify(banks));
+  }
+  rebuildBankColorMap();
   fetchDBOptions();openSettModal('rekening');
   toast('Rekening ditambahkan ✓','ok');pushSettings();
 }
 
-function removeBank(b){
-  const banks=JSON.parse(localStorage.getItem('mm_custom_banks')||'[]');
-  localStorage.setItem('mm_custom_banks',JSON.stringify(banks.filter(x=>x!==b)));
+function removeBank(name){
+  const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+  localStorage.setItem('mm_custom_banks',JSON.stringify(banks.filter(b=>b.name!==name)));
+  rebuildBankColorMap();
   fetchDBOptions();openSettModal('rekening');pushSettings();
 }
 
