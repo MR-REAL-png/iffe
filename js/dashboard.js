@@ -401,7 +401,7 @@ function renderCards(rows){
     const cards=txs.map((r,ri)=>{
       const isIn=r.jenis==='Pemasukan',cls=isIn?'inc':'spd',arr=isIn?'↓':'↑';
       const kat=r.kategori||'';
-      const bankColor=typeof getBankColor==='function'?getBankColor(r.pembayaran):null;
+      const bankColor=typeof getBankDisplayColor==='function'?getBankDisplayColor(r.pembayaran):null;
       const tags=[r.pembayaran,r.metode].filter(Boolean).map((t,ti)=>{
         const isBank=ti===0&&r.pembayaran&&t===r.pembayaran&&bankColor;
         return isBank?`<span class="dtag" style="background:${bankColor}20;color:${bankColor};border-color:${bankColor}40"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${bankColor};margin-right:4px"></span>${t}</span>`:`<span class="dtag">${t}</span>`;
@@ -898,7 +898,7 @@ function openStrukDetail(id){
       <div class="struk-row"><span>Tanggal</span><span>${formatTgl(r.tanggal)}</span></div>
       <div class="struk-row"><span>Jenis</span><span>${r.jenis}</span></div>
       <div class="struk-row"><span>Metode</span><span>${r.metode||'—'}</span></div>
-      <div class="struk-row"><span>Rekening</span><span style="display:flex;align-items:center;gap:5px">${(()=>{const c=typeof getBankColor==='function'?getBankColor(r.pembayaran):null;return c?`<span style="width:9px;height:9px;border-radius:50%;background:${c};display:inline-block"></span>`:'';})()}${r.pembayaran||'—'}</span></div>
+      <div class="struk-row"><span>Rekening</span><span style="display:flex;align-items:center;gap:5px">${(()=>{const c=typeof getBankDisplayColor==='function'?getBankDisplayColor(r.pembayaran):null;return c?`<span style="width:9px;height:9px;border-radius:50%;background:${c};display:inline-block"></span>`:'';})()}${r.pembayaran||'—'}</span></div>
       ${r.detail?`<div class="struk-row"><span>Keterangan</span><span>${r.detail}</span></div>`:''}
       ${r.recorded_by?`<div class="struk-row"><span>Dicatat oleh</span><span style="color:${recColor};font-weight:600">${r.recorded_by}</span></div>`:''}
     </div>
