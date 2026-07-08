@@ -266,7 +266,7 @@ function renderBudget(byCat){
   el.innerHTML=tampil.map((k,i)=>{
     const pct=total>0?Math.round(k.nominal/total*100):0;
     const cls=pct>=30?'bud-over':pct>=15?'bud-warn':'bud-ok';
-    return`<div class="bud-item tap-card" style="animation-delay:${i*0.05}s;cursor:pointer" onclick="openBudItemDetail('${k.kategori.replace(/'/g,"\\'")}')"><div class="bud-top"><span class="bud-name">${k.kategori}</span><span class="bud-pct">${pct}%</span></div><div class="bud-bar"><div class="bud-fill ${cls}" style="width:0%" data-w="${pct}"></div></div><div class="bud-amts"><span>${rpShort(k.nominal)}</span><span>dari ${rpShort(total)}</span></div></div>`;
+    return`<div class="bud-item tap-card" style="animation-delay:${i*0.05}s;cursor:pointer" onclick="openBudItemDetail('${k.kategori.replace(/'/g,"\\'")}')"><div class="bud-top"><span class="bud-name" style="display:flex;align-items:center">${katIconInline(k.kategori,15)}${k.kategori}</span><span class="bud-pct">${pct}%</span></div><div class="bud-bar"><div class="bud-fill ${cls}" style="width:0%" data-w="${pct}"></div></div><div class="bud-amts"><span>${rpShort(k.nominal)}</span><span>dari ${rpShort(total)}</span></div></div>`;
   }).join('');
   setTimeout(()=>{el.querySelectorAll('.bud-fill').forEach(e=>e.style.width=e.dataset.w+'%')},100);
   renderBudgetMonitor(byCat);
@@ -296,7 +296,7 @@ function renderBudgetMonitor(byCat){
   secLbl.style.display='';el.style.display='flex';
   el.innerHTML=items.map(({k,budget,pct,cls,barW,over},i)=>`
     <div class="bmon-item tap-card" style="animation-delay:${i*0.05}s;cursor:pointer" onclick="openBudItemDetail('${k.kategori.replace(/'/g,"\\'")}')">
-      <div class="bmon-top"><span class="bmon-name">${k.kategori}</span><span class="bmon-pct" style="color:${pct>100?'var(--red)':pct>=alertPct?'#fbbf24':'var(--grn)'}">${pct}%</span></div>
+      <div class="bmon-top"><span class="bmon-name" style="display:flex;align-items:center">${katIconInline(k.kategori,15)}${k.kategori}</span><span class="bmon-pct" style="color:${pct>100?'var(--red)':pct>=alertPct?'#fbbf24':'var(--grn)'}">${pct}%</span></div>
       <div class="bmon-bar"><div class="bmon-fill ${cls}" style="width:0%" data-w="${barW}"></div></div>
       <div class="bmon-amts"><span class="${over?'over':''}">${rpShort(k.nominal)} terpakai</span><span>dari ${rpShort(budget)}</span></div>
     </div>`).join('');
@@ -401,7 +401,11 @@ function renderCards(rows){
     const cards=txs.map((r,ri)=>{
       const isIn=r.jenis==='Pemasukan',cls=isIn?'inc':'spd',arr=isIn?'↓':'↑';
       const kat=r.kategori||'';
-      const tags=[r.pembayaran,r.metode].filter(Boolean).map(t=>`<span class="dtag">${t}</span>`).join('');
+      const bankColor=typeof getBankColor==='function'?getBankColor(r.pembayaran):null;
+      const tags=[r.pembayaran,r.metode].filter(Boolean).map((t,ti)=>{
+        const isBank=ti===0&&r.pembayaran&&t===r.pembayaran&&bankColor;
+        return isBank?`<span class="dtag" style="background:${bankColor}20;color:${bankColor};border-color:${bankColor}40"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${bankColor};margin-right:4px"></span>${t}</span>`:`<span class="dtag">${t}</span>`;
+      }).join('');
       const ketHtml=r.detail?`<span class="dc-ket-inline">${r.detail}</span>`:'';
       // Badge dicatat oleh
       const recColor=colorMap[r.recorded_by]||'var(--tx3)';
@@ -410,7 +414,7 @@ function renderCards(rows){
       const editHtml=editBtn?`<div class="dc-edit-row">${editBtn}</div>`:'';
       return`<div class="dc ${cls}" style="animation-delay:${(gi*0.05)+(ri*0.03)}s" onclick="event.stopPropagation();openStrukDetail(${r.rowIndex})">
         <div class="dc-row1">
-          <div class="dc-left"><span class="dc-kat">${kat}</span>${recBadge}</div>
+          <div class="dc-left"><span class="dc-kat" style="display:inline-flex;align-items:center">${katIconInline(kat,15)}${kat}</span>${recBadge}</div>
           <div class="dc-right"><span class="dc-nom ${cls}">${arr} ${rp(r.nominal)}</span></div>
         </div>
         <div class="dc-divider"></div>
@@ -829,7 +833,7 @@ function openAvgDetail(){
       <div class="avg-item"><div class="avg-val" style="color:var(--red)">${rp(keluar)}</div><div class="avg-lbl">Total Keluar</div></div>
     </div>
     <div style="margin:12px 0 8px;font-size:0.75rem;color:var(--tx3)">Pengeluaran fleksibel per kategori:</div>
-    ${byKategori.map((k,i)=>`<div class="avg-row"><span style="color:${CHART_COLORS[i%CHART_COLORS.length]}">${k.kategori}</span><span style="color:var(--tx)">${rp(k.nominal)}</span></div>`).join('')}
+    ${byKategori.map((k,i)=>`<div class="avg-row"><span style="color:${CHART_COLORS[i%CHART_COLORS.length]};display:flex;align-items:center">${katIconInline(k.kategori,14)}${k.kategori}</span><span style="color:var(--tx)">${rp(k.nominal)}</span></div>`).join('')}
   `;
   openBs('Detail Rata-rata',html);
 }
@@ -864,7 +868,9 @@ function openBudItemDetail(kat){
   const members=getHouseholdMembers();
   const colorMap={};members.forEach(m=>colorMap[m.username]=m.color);
   const html=`
-    <div style="text-align:center;margin-bottom:12px"><div style="font-size:1.3rem;font-weight:700;color:var(--ac)">${rp(total)}</div><div style="font-size:0.75rem;color:var(--tx3)">${rows.length} transaksi</div></div>
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin:0 auto 6px;color:var(--ac)">${getKatIconSVG(kat)}</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--ac)">${rp(total)}</div><div style="font-size:0.75rem;color:var(--tx3)">${rows.length} transaksi</div></div>
     ${rows.map(r=>{
       const recColor=colorMap[r.recorded_by]||'var(--tx3)';
       const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recColor}15;color:${recColor}">${r.recorded_by}</span>`:'';
@@ -887,12 +893,12 @@ function openStrukDetail(id){
   const html=`
     <div class="struk">
       <div class="struk-nom ${isIn?'inc':'spd'}">${isIn?'↓':'↑'} ${rp(r.nominal)}</div>
-      <div class="struk-kat">${r.kategori}</div>
+      <div class="struk-kat" style="display:flex;align-items:center;justify-content:center">${katIconInline(r.kategori,16)}${r.kategori}</div>
       <div class="struk-divider"></div>
       <div class="struk-row"><span>Tanggal</span><span>${formatTgl(r.tanggal)}</span></div>
       <div class="struk-row"><span>Jenis</span><span>${r.jenis}</span></div>
       <div class="struk-row"><span>Metode</span><span>${r.metode||'—'}</span></div>
-      <div class="struk-row"><span>Rekening</span><span>${r.pembayaran||'—'}</span></div>
+      <div class="struk-row"><span>Rekening</span><span style="display:flex;align-items:center;gap:5px">${(()=>{const c=typeof getBankColor==='function'?getBankColor(r.pembayaran):null;return c?`<span style="width:9px;height:9px;border-radius:50%;background:${c};display:inline-block"></span>`:'';})()}${r.pembayaran||'—'}</span></div>
       ${r.detail?`<div class="struk-row"><span>Keterangan</span><span>${r.detail}</span></div>`:''}
       ${r.recorded_by?`<div class="struk-row"><span>Dicatat oleh</span><span style="color:${recColor};font-weight:600">${r.recorded_by}</span></div>`:''}
     </div>
