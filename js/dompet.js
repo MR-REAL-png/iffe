@@ -15,6 +15,12 @@ const BANK_THEMES={
 };
 
 function getBankTheme(name){
+  // Warna custom yang dipilih user (color picker di Settings > Rekening) selalu diprioritaskan
+  const customColor=typeof getBankColor==='function'?getBankColor(name):null;
+  if(customColor){
+    const light=typeof lightenColor==='function'?lightenColor(customColor,22):customColor;
+    return{grad:`linear-gradient(135deg,${customColor},${light})`,motif:'dots',logo:null};
+  }
   const key=Object.keys(BANK_THEMES).find(k=>name&&name.toLowerCase().includes(k.toLowerCase()));
   return BANK_THEMES[key]||BANK_THEMES.default;
 }
