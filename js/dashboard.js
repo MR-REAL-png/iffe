@@ -644,7 +644,7 @@ function showKalDetail(tgl){
       const recColor=colorMap[r.recorded_by]||'var(--tx3)';
       const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recColor}15;color:${recColor}">${r.recorded_by}</span>`:'';
       return`<div class="dc ${isIn?'inc':'spd'}" style="margin-bottom:8px">
-        <div class="dc-row1"><div class="dc-left"><span class="dc-kat">${r.kategori}</span>${recBadge}</div><div class="dc-right"><span class="dc-nom ${isIn?'inc':'spd'}">${isIn?'↓':'↑'} ${rp(r.nominal)}</span></div></div>
+        <div class="dc-row1"><div class="dc-left"><span class="dc-kat">${typeof katIconInline==='function'?katIconInline(r.kategori,14):''}${r.kategori}</span>${recBadge}</div><div class="dc-right"><span class="dc-nom ${isIn?'inc':'spd'}">${isIn?'↓':'↑'} ${rp(r.nominal)}</span></div></div>
         ${r.detail?`<div style="font-size:0.72rem;color:var(--tx3);padding:4px 0 0">${r.detail}</div>`:''}
       </div>`;
     }).join('');
