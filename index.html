@@ -108,17 +108,19 @@
 .inp-lbl svg { flex-shrink: 0; opacity: 0.7; }
 
 /* ── CUSTOM SELECT (csel) — pengganti <select> kategori/bank ── */
+/* Elemen sudah punya class="inp csel-btn" di HTML, jadi background/warna/font/padding
+   SENGAJA tidak di-override di sini — biar 100% ngikutin style .inp yang sama persis
+   dipakai <select> Jenis & Metode. Cuma tambahin layout flex buat icon+label+chevron. */
 .csel { position: relative; }
 .csel-btn {
   width: 100%; display: flex; align-items: center; gap: 8px;
-  text-align: left; cursor: pointer; font-family: inherit;
-  color: var(--tx); background: var(--bg2, rgba(255,255,255,0.04));
+  text-align: left; cursor: pointer; font: inherit; color: inherit;
 }
 .csel-btn:active { opacity: 0.85; }
 .csel-btn.disabled { opacity: 0.45; cursor: not-allowed; }
 .csel-ico { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; color: var(--ac); }
 .csel-ico svg { width: 100%; height: 100%; }
-.csel-lbl { flex: 1; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csel-lbl { flex: 1; font: inherit; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .csel-chev { flex-shrink: 0; opacity: 0.5; }
 .csel-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
 
