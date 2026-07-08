@@ -426,21 +426,18 @@ function openSettModal(type){
     selectedNewKatIcon='other';
     body.innerHTML=`
       <div style="margin-bottom:8px;display:flex;gap:8px">
-        <button type="button" id="newKatIconBtn" onclick="toggleNewKatIconPicker()" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;background:var(--glass);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">${katIconInline('',22)}</button>
+        <button type="button" id="newKatIconBtn" onclick="openKatIconPicker('new')" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;background:var(--glass);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">${katIconInline('',22)}</button>
         <input type="text" id="newKatInput" class="inp" placeholder="Tambah kategori baru..." style="flex:1">
         <button class="btn-ok" style="padding:10px 14px" onclick="addCustomKat()">+</button>
       </div>
-      <div id="newKatIconPicker" style="display:none;margin-bottom:12px;padding:10px;background:var(--glass);border:1px solid var(--bdr2);border-radius:12px;max-height:180px;overflow-y:auto;grid-template-columns:repeat(6,1fr);gap:6px">
-        ${KAT_ICON_LIST.map(ic=>`<button type="button" class="kat-ico-opt" data-key="${ic.key}" onclick="pickNewKatIcon('${ic.key}')" title="${ic.label}" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx2)"><span style="display:inline-flex;width:18px;height:18px">${ic.svg}</span></button>`).join('')}
-      </div>
       <div id="katList">${allNames.map(name=>{
-        return`<div class="sett-tag-item" onclick="openKatIconEditor('${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
+        return`<div class="sett-tag-item" onclick="openKatIconPicker('edit','${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
           <span style="display:flex;align-items:center">${katIconInline(name,16)}${name}</span>
           <button onclick="event.stopPropagation();removeKat('${name.replace(/'/g,"\\'")}')">×</button>
         </div>`;
       }).join('')}</div>
-      <div class="csel-backdrop" id="katIconEditBackdrop" onclick="closeKatIconEditor()"></div>
-      <div class="csel-panel" id="katIconEditPanel" style="grid-template-columns:repeat(6,1fr);display:none;gap:6px"></div>
+      <div class="csel-backdrop" id="katIconPopupBackdrop" onclick="closeKatIconPicker()"></div>
+      <div class="csel-panel" id="katIconPopupPanel" style="grid-template-columns:repeat(6,1fr);display:none;gap:6px"></div>
     `;
     hideFt();
   }
@@ -626,18 +623,51 @@ function togglePeriodeManual(){
 
 // ═══ KELOLA KATEGORI ═══
 let selectedNewKatIcon='other';
-function toggleNewKatIconPicker(){
-  const el=document.getElementById('newKatIconPicker');if(!el)return;
-  const willShow=el.style.display==='none';
-  el.style.display=willShow?'grid':'none';
+
+// ── Popup ikon TERPUSAT — dipakai utk "tambah kategori baru" & "edit ikon kategori lama" ──
+let _katIconPickerMode='';   // 'new' | 'edit'
+let _katIconPickerTarget=''; // nama kategori (khusus mode 'edit')
+
+function openKatIconPicker(mode,name){
+  _katIconPickerMode=mode;
+  _katIconPickerTarget=name||'';
+  const panel=document.getElementById('katIconPopupPanel');
+  const bd=document.getElementById('katIconPopupBackdrop');
+  if(!panel||!bd)return;
+  const curKey=mode==='edit'?getKatIconKey(name):(selectedNewKatIcon||'other');
+  panel.innerHTML=KAT_ICON_LIST.map(ic=>`<button type="button" class="kat-ico-opt" data-key="${ic.key}" onclick="chooseKatIconPopup('${ic.key}')" title="${ic.label}" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid ${ic.key===curKey?'var(--ac)':'var(--bdr2)'};display:flex;align-items:center;justify-content:center;color:var(--tx2)"><span style="display:inline-flex;width:18px;height:18px">${ic.svg}</span></button>`).join('');
+  panel.style.display='grid';
+  panel.classList.add('open');
+  bd.classList.add('open');
 }
-function pickNewKatIcon(key){
-  selectedNewKatIcon=key;
-  document.querySelectorAll('.kat-ico-opt').forEach(b=>b.style.borderColor=b.dataset.key===key?'var(--ac)':'var(--bdr2)');
-  const btn=document.getElementById('newKatIconBtn');
-  const ic=KAT_ICON_MAP[key];
-  if(btn&&ic)btn.innerHTML=`<span style="display:inline-flex;width:22px;height:22px">${ic.svg}</span>`;
-  document.getElementById('newKatIconPicker').style.display='none';
+function closeKatIconPicker(){
+  const panel=document.getElementById('katIconPopupPanel');
+  const bd=document.getElementById('katIconPopupBackdrop');
+  if(panel){panel.classList.remove('open');panel.style.display='none';}
+  if(bd)bd.classList.remove('open');
+  _katIconPickerMode='';_katIconPickerTarget='';
+}
+function chooseKatIconPopup(key){
+  if(_katIconPickerMode==='new'){
+    selectedNewKatIcon=key;
+    const btn=document.getElementById('newKatIconBtn');
+    const ic=KAT_ICON_MAP[key];
+    if(btn&&ic)btn.innerHTML=`<span style="display:inline-flex;width:22px;height:22px">${ic.svg}</span>`;
+    closeKatIconPicker();
+  }else if(_katIconPickerMode==='edit'){
+    const name=_katIconPickerTarget;
+    const kats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
+    const existing=kats.find(k=>k.name===name);
+    if(existing)existing.icon=key;
+    else kats.push({name,icon:key});
+    localStorage.setItem('mm_custom_kats',JSON.stringify(kats));
+    rebuildKatIconMap();
+    closeKatIconPicker();
+    fetchDBOptions();
+    openSettModal('kategori');
+    toast('Ikon diperbarui ✓','ok');
+    pushSettings();
+  }
 }
 
 function addCustomKat(){
@@ -660,40 +690,6 @@ function removeKat(name){
   localStorage.setItem('mm_custom_kats',JSON.stringify(kats.filter(k=>k.name!==name)));
   rebuildKatIconMap();
   fetchDBOptions();openSettModal('kategori');pushSettings();
-}
-
-// ── Edit ikon kategori yang SUDAH ADA (klik item di list) ──
-let editingKatName='';
-function openKatIconEditor(name){
-  editingKatName=name;
-  const panel=document.getElementById('katIconEditPanel');
-  const bd=document.getElementById('katIconEditBackdrop');
-  if(!panel||!bd)return;
-  const curKey=getKatIconKey(name);
-  panel.innerHTML=KAT_ICON_LIST.map(ic=>`<button type="button" class="kat-ico-opt" data-key="${ic.key}" onclick="chooseKatIconFor('${ic.key}')" title="${ic.label}" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid ${ic.key===curKey?'var(--ac)':'var(--bdr2)'};display:flex;align-items:center;justify-content:center;color:var(--tx2)"><span style="display:inline-flex;width:18px;height:18px">${ic.svg}</span></button>`).join('');
-  panel.style.display='grid';
-  panel.classList.add('open');
-  bd.classList.add('open');
-}
-function closeKatIconEditor(){
-  const panel=document.getElementById('katIconEditPanel');
-  const bd=document.getElementById('katIconEditBackdrop');
-  if(panel){panel.classList.remove('open');panel.style.display='none';}
-  if(bd)bd.classList.remove('open');
-}
-function chooseKatIconFor(key){
-  if(!editingKatName)return;
-  const kats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
-  const existing=kats.find(k=>k.name===editingKatName);
-  if(existing)existing.icon=key;
-  else kats.push({name:editingKatName,icon:key});
-  localStorage.setItem('mm_custom_kats',JSON.stringify(kats));
-  rebuildKatIconMap();
-  closeKatIconEditor();
-  fetchDBOptions();
-  openSettModal('kategori');
-  toast('Ikon diperbarui ✓','ok');
-  pushSettings();
 }
 
 // ═══ KELOLA REKENING ═══
