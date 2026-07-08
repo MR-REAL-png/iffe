@@ -59,8 +59,11 @@ function cselSetOptions(id,options,selectedVal,placeholder){
   }else{
     panel.innerHTML=options.map(o=>`
       <div class="csel-opt" data-val="${String(o.value).replace(/"/g,'&quot;')}" onclick="cselChoose('${id}','${String(o.value).replace(/'/g,"\\'")}')">
-        ${o.icon?`<span class="csel-opt-ico">${o.icon}</span>`:(o.color?`<span class="csel-opt-dot" style="background:${o.color}"></span>`:'')}
-        <span class="csel-opt-lbl">${o.label}</span>
+        <span class="csel-opt-left">
+          ${o.icon?`<span class="csel-opt-ico">${o.icon}</span>`:(o.color?`<span class="csel-opt-dot" style="background:${o.color}"></span>`:'')}
+          <span class="csel-opt-lbl">${o.label}</span>
+        </span>
+        <svg class="csel-opt-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
       </div>`).join('');
   }
   const valid=options.some(o=>String(o.value)===String(selectedVal));
@@ -71,8 +74,7 @@ function cselChoose(id,val){
   const hidden=document.getElementById(id);
   if(!hidden)return;
   hidden.value=val;
-  const panel=document.getElementById(id+'Panel');
-  if(panel)panel.classList.remove('open');
+  cselCloseAll();
   hidden.dispatchEvent(new Event('change'));
 }
 
@@ -85,16 +87,24 @@ function cselUpdateBtn(id,val,label,icon,color){
   if(panel)panel.querySelectorAll('.csel-opt').forEach(el=>el.classList.toggle('sel',el.dataset.val===String(val)));
 }
 
+function cselCloseAll(){
+  document.querySelectorAll('.csel-panel.open').forEach(p=>p.classList.remove('open'));
+  const bd=document.getElementById('cselBackdrop');if(bd)bd.classList.remove('open');
+}
+
 function cselToggle(id){
   const panel=document.getElementById(id+'Panel');
   const btn=document.getElementById(id+'Btn');
   if(!panel||(btn&&btn.disabled))return;
   const isOpen=panel.classList.contains('open');
-  document.querySelectorAll('.csel-panel.open').forEach(p=>p.classList.remove('open'));
-  if(!isOpen)panel.classList.add('open');
+  cselCloseAll();
+  if(!isOpen){
+    panel.classList.add('open');
+    const bd=document.getElementById('cselBackdrop');if(bd)bd.classList.add('open');
+  }
 }
 document.addEventListener('click',(e)=>{
-  if(!e.target.closest('.csel'))document.querySelectorAll('.csel-panel.open').forEach(p=>p.classList.remove('open'));
+  if(!e.target.closest('.csel')&&!e.target.closest('.csel-panel'))cselCloseAll();
 });
 
 // ═══════════════════════════════════════════════════
@@ -125,6 +135,23 @@ const KAT_ICON_LIST=[
   {key:'sport',label:'Olahraga',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 6 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-6-3.5-9s1-6.5 3.5-9Z"/></svg>'},
   {key:'insurance',label:'Asuransi',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.75v6c0 5 3.2 8.7 7.5 9.75 4.3-1.05 7.5-4.75 7.5-9.75v-6L12 2.5Z"/><path d="m9.25 12 2 2 3.5-4"/></svg>'},
   {key:'family',label:'Keluarga',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><path d="M2.5 20c0-3 2.5-5.25 5.5-5.25S13.5 17 13.5 20M10.5 20c0-3 2.5-5.25 5.5-5.25s5.5 2.25 5.5 5.25"/></svg>'},
+  {key:'coffee',label:'Kopi/Cafe',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.25h11.25v6a4.5 4.5 0 0 1-4.5 4.5h-2.25a4.5 4.5 0 0 1-4.5-4.5v-6Z"/><path d="M15.75 9.75h1.5a2.25 2.25 0 0 1 0 4.5h-1.5"/><path d="M7.5 4.5c0-.83.4-1.2.75-1.5M11 4.5c0-.83.4-1.2.75-1.5"/></svg>'},
+  {key:'laundry',label:'Laundry',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.75" y="2.25" width="16.5" height="19.5" rx="2"/><circle cx="12" cy="13.5" r="4.5"/><circle cx="12" cy="13.5" r="2"/><circle cx="7" cy="5.25" r=".6" fill="currentColor" stroke="none"/><circle cx="10" cy="5.25" r=".6" fill="currentColor" stroke="none"/></svg>'},
+  {key:'parking',label:'Parkir',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.75" y="3.75" width="16.5" height="16.5" rx="2.5"/><path d="M9.5 16.5v-9h3.25a2.75 2.75 0 1 1 0 5.5H9.5"/></svg>'},
+  {key:'beauty',label:'Kecantikan',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="2.25"/><circle cx="6.5" cy="17.5" r="2.25"/><path d="M20.25 5.25 8.5 12l11.75 6.75M8.5 12 4.5 9.75M8.5 12l-4 2.25"/></svg>'},
+  {key:'subscription',label:'Langganan',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.25" width="18" height="13.5" rx="2"/><path d="M3 9.75h18"/><path d="M7 14.25h4"/></svg>'},
+  {key:'donation',label:'Donasi',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-4-9-8.3C1.3 9.8 2.8 6.5 6 6.5c1.8 0 3.1 1.1 3.9 2.3M12 21s6.5-4 9-8.3c1.7-2.9.2-6.2-3-6.2-1.8 0-3.1 1.1-3.9 2.3"/><path d="M9 6.5V3.75M9 3.75h-1.5a1.5 1.5 0 0 0 0 3H10a1.5 1.5 0 0 1 0 3H7.5"/></svg>'},
+  {key:'tax',label:'Pajak',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4.5 4.5V21H6V3Z"/><path d="M15 3v4.5h4.5"/><path d="m9.5 17 5-5.5"/><circle cx="9.75" cy="12" r=".9"/><circle cx="14.25" cy="16.25" r=".9"/></svg>'},
+  {key:'repair',label:'Servis/Reparasi',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.6 5l-6.6 6.6a1.5 1.5 0 0 0 2.1 2.1l6.6-6.6a4 4 0 0 0 5-5.6l-2.5 2.5-2-2 2.5-2.5Z"/></svg>'},
+  {key:'furniture',label:'Perabotan',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.25 11.25v-3a3 3 0 0 1 3-3h7.5a3 3 0 0 1 3 3v3"/><path d="M3.75 11.25h16.5v4.5a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-4.5Z"/><path d="M5.25 17.25 4.5 21m14.25-3.75.75 3.75"/></svg>'},
+  {key:'baby',label:'Anak/Bayi',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.75h6v3a3 3 0 0 1-.5 1.66l-.2.34H9.7l-.2-.34A3 3 0 0 1 9 6.75v-3Z"/><path d="M8.25 8.75h7.5l1 8.5a2.5 2.5 0 0 1-2.48 2.75H9.73a2.5 2.5 0 0 1-2.48-2.75l1-8.5Z"/><path d="M10 14c.5.5 1 .75 2 .75s1.5-.25 2-.75"/></svg>'},
+  {key:'books',label:'Buku',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5c2.5-1 5.5-1 8 0v15c-2.5-1-5.5-1-8 0v-15Z"/><path d="M12 4.5c2.5-1 5.5-1 8 0v15c-2.5-1-5.5-1-8 0"/></svg>'},
+  {key:'music',label:'Musik',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5.25L20 3v12.75"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="15.75" r="2.5"/></svg>'},
+  {key:'fashion',label:'Pakaian',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5 12 6l3-1.5 4.5 3-2.25 3-2.25-1.2V21h-6V9.3L6.75 10.5 4.5 7.5 9 4.5Z"/></svg>'},
+  {key:'electronics',label:'Elektronik',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8.25 20.25h7.5M12 16.5v3.75"/></svg>'},
+  {key:'restaurant',label:'Makan di Luar',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 3v6.5a2.5 2.5 0 0 0 5 0V3M10 9.5V21M16.5 3c-1.2 0-2 1.5-2 4s.8 5 2 5v9"/></svg>'},
+  {key:'toll',label:'Tol',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 21V9L12 3l7.5 6v12"/><path d="M8.25 21v-6a1.5 1.5 0 0 1 1.5-1.5h4.5a1.5 1.5 0 0 1 1.5 1.5v6"/><path d="M4.5 12h15"/></svg>'},
+  {key:'fee',label:'Biaya Admin',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 15V9l3 3 3-3v6"/></svg>'},
   {key:'other',label:'Lainnya',svg:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6.75h.008v.008H6V6.75Z"/><path d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/></svg>'}
 ];
 const KAT_ICON_MAP={};
@@ -136,7 +163,13 @@ const KAT_ICON_DEFAULT_MAP={
   'bensin':'fuel','belanja':'shopping','makanan':'food','bayar kos':'home','kos':'home','lain lain':'other',
   'transportasi':'transport','bulanan':'bills','listrik':'electricity','listrik rumah':'electricity',
   'piutang':'debt','tabungan':'savings','internet':'internet','air':'water','pdam':'water','tf rumah':'home',
-  'kesehatan':'health','pendidikan':'education','hiburan':'entertainment','hadiah':'gift','pulsa':'phone','asuransi':'insurance'
+  'kesehatan':'health','pendidikan':'education','hiburan':'entertainment','hadiah':'gift','pulsa':'phone','asuransi':'insurance',
+  'kopi':'coffee','cafe':'coffee','ngopi':'coffee','laundry':'laundry','cuci baju':'laundry','parkir':'parking',
+  'kecantikan':'beauty','salon':'beauty','skincare':'beauty','langganan':'subscription','subscription':'subscription',
+  'donasi':'donation','sedekah':'donation','pajak':'tax','servis':'repair','reparasi':'repair','bengkel':'repair',
+  'perabotan':'furniture','furniture':'furniture','anak':'baby','bayi':'baby','buku':'books','musik':'music',
+  'pakaian':'fashion','baju':'fashion','elektronik':'electronics','gadget':'electronics','makan diluar':'restaurant',
+  'restoran':'restaurant','tol':'toll','biaya admin':'fee','admin':'fee'
 };
 
 // Map runtime: nama kategori (lowercase) -> icon key, dibangun dari mm_custom_kats
