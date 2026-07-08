@@ -706,11 +706,26 @@ function openBankColorPicker(mode,name){
   const panel=document.getElementById('bankColorPopupPanel');
   const bd=document.getElementById('bankColorPopupBackdrop');
   if(!panel||!bd)return;
-  const curColor=(mode==='edit'?(getBankColor(name)||'#38bdf8'):(selectedNewBankColor||'#38bdf8')).toLowerCase();
-  panel.innerHTML=BANK_COLOR_PALETTE.map(c=>`<button type="button" onclick="chooseBankColorPopup('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${c.toLowerCase()===curColor?'#fff':'transparent'};box-shadow:0 0 0 1px var(--bdr2)"></button>`).join('');
+  const curColor=(mode==='edit'?(getBankColor(name)||''):(selectedNewBankColor||'#38bdf8')).toLowerCase();
+  const resetBtn=mode==='edit'?`<button type="button" onclick="resetBankColorPopup()" title="Pakai warna default" style="width:32px;height:32px;border-radius:50%;background:var(--glass);border:2px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:0.65rem">✕</button>`:'';
+  panel.innerHTML=resetBtn+BANK_COLOR_PALETTE.map(c=>`<button type="button" onclick="chooseBankColorPopup('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${c.toLowerCase()===curColor?'#fff':'transparent'};box-shadow:0 0 0 1px var(--bdr2)"></button>`).join('');
   panel.style.display='grid';
   panel.classList.add('open');
   bd.classList.add('open');
+}
+function resetBankColorPopup(){
+  if(_bankColorPickerMode!=='edit')return;
+  const name=_bankColorPickerTarget;
+  const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+  // Hapus entry kalau bank ini nggak punya alasan lain buat ada di custom list
+  const filtered=banks.filter(b=>b.name!==name);
+  localStorage.setItem('mm_custom_banks',JSON.stringify(filtered));
+  rebuildBankColorMap();
+  closeBankColorPicker();
+  fetchDBOptions();
+  openSettModal('rekening');
+  toast('Kembali ke warna default ✓','ok');
+  pushSettings();
 }
 function closeBankColorPicker(){
   const panel=document.getElementById('bankColorPopupPanel');
