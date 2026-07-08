@@ -15,10 +15,24 @@
 <script>
   // Register Service Worker untuk offline support
   if ('serviceWorker' in navigator) {
+    let swRefreshing = false;
+
+    // Reload otomatis SEKALI saat SW baru ambil alih kontrol
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swRefreshing) return;
+      swRefreshing = true;
+      console.log('[SW] Controller berubah — reload halaman');
+      window.location.reload();
+    });
+
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./service-worker.js')
         .then(reg => {
           console.log('[SW] Registered:', reg.scope);
+
+          // Cek update tiap kali app dibuka
+          reg.update();
+
           // Cek update SW
           reg.addEventListener('updatefound', () => {
             const newSW = reg.installing;
