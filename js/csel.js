@@ -63,7 +63,7 @@ function cselSetOptions(id,options,selectedVal,placeholder){
           ${o.icon?`<span class="csel-opt-ico">${o.icon}</span>`:(o.color?`<span class="csel-opt-dot" style="background:${o.color}"></span>`:'')}
           <span class="csel-opt-lbl">${o.label}</span>
         </span>
-        <svg class="csel-opt-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        <svg class="csel-opt-check" width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M5 13l4 4L19 7"/></svg>
       </div>`).join('');
   }
   const valid=options.some(o=>String(o.value)===String(selectedVal));
