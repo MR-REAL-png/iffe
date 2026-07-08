@@ -101,21 +101,16 @@ function updatePeriodUI(){
 
 // Navigasi bulan (mode otomatis)
 function resetCharts(){
-  // Destroy semua chart instance dan reset container sebelum ganti bulan
-  // Ini mencegah Chart.js reference ke canvas yang sudah detached
+  // Destroy instance Chart.js saja — JANGAN hapus innerHTML container,
+  // karena canvas #chartKat/#chartHarian dipakai lagi oleh renderChartKat/renderChartHarian
+  // (mereka sudah punya logic sendiri untuk reset & bikin ulang canvas-nya).
   if(typeof chartKat!=='undefined'&&chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
   if(typeof chartHarian!=='undefined'&&chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
-  // Reset container ke kosong
-  const wk=document.getElementById('chartKat')?.parentElement;
-  if(wk)wk.innerHTML='';
-  const wh=document.getElementById('chartHarian')?.parentElement;
-  if(wh)wh.innerHTML='';
-  const leg=document.getElementById('chartLegend');
-  if(leg)leg.innerHTML='';
 }
 
 function prevBulan(){
   if(isManualPeriode())return;
+  dashUserNavigated=true;
   resetCharts();
   if(dashActiveBulan===0){dashActiveBulan=11;dashActiveYear--;}
   else dashActiveBulan--;
@@ -125,19 +120,46 @@ function nextBulan(){
   if(isManualPeriode())return;
   const now=new Date();
   if(dashActiveYear===now.getFullYear()&&dashActiveBulan===now.getMonth())return;
+  dashUserNavigated=true;
   resetCharts();
   if(dashActiveBulan===11){dashActiveBulan=0;dashActiveYear++;}
   else dashActiveBulan++;
   allRows=[];loadDashboard();
 }
 
+// ── Auto-sync bulan aktif ke "hari ini" tiap kali app kembali aktif ──
+// (PWA di iOS sering di-resume dari background tanpa full reload,
+// jadi dashActiveBulan yang di-set sekali saat load pertama bisa nyangkut ke bulan lama)
+let dashUserNavigated=false;
+function syncDashBulanKeHariIni(){
+  if(dashUserNavigated)return; // user sengaja lihat bulan lain, jangan timpa
+  const now=new Date();
+  if(dashActiveYear!==now.getFullYear()||dashActiveBulan!==now.getMonth()){
+    dashActiveYear=now.getFullYear();
+    dashActiveBulan=now.getMonth();
+    const pg=document.getElementById('pg-dashboard');
+    if(pg&&pg.classList.contains('on')){allRows=[];loadDashboard();}
+  }
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')syncDashBulanKeHariIni();
+});
+window.addEventListener('pageshow',()=>syncDashBulanKeHariIni());
+
 // ═══ LOGO ═══
 function initLogo(){
+  const fitStyle={
+    brandIco:'width:70%;height:70%;object-fit:contain;display:block;margin:auto;border-radius:inherit;', // logo di header, dibuat lebih kecil & proporsional
+    settAvatar:'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;'            // avatar di Settings, penuh isi lingkaran
+  };
   ['brandIco','settAvatar'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const img=document.createElement('img');
-    img.src=LOGO_URL;img.alt='logo';
+    img.alt='logo';
+    img.style.cssText=fitStyle[id]||'width:100%;height:100%;object-fit:contain;display:block;';
     img.onerror=()=>{el.innerHTML=IC.chart;};
+    img.src=LOGO_URL;
+    el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';
     el.innerHTML='';el.appendChild(img);
   });
 }
