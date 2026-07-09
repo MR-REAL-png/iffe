@@ -325,14 +325,14 @@ async function openPiutangList(){
         <button class="btn-ok" style="padding:8px 14px;font-size:0.75rem" onclick="openAddPiutang()">+ Tambah</button>
       </div>
       ${!list.length?`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem"><div style="margin-bottom:4px">${IC.ok}</div>Tidak ada piutang aktif</div>`:''}
-      ${list.map(p=>`<div class="bmon-item" style="margin-bottom:8px">
+      ${list.map(p=>`<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="openPiutangDetail(${p.id},'${String(p.nama).replace(/'/g,"\\'")}',${p.nominal},'${p.tanggal||''}','${String(p.catatan||'').replace(/'/g,"\\'")}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div><div style="font-weight:600;font-size:0.88rem">${p.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${p.tanggal||''}${p.catatan?' · '+p.catatan:''}</div></div>
           <div style="font-weight:700;color:var(--red)">${rp(p.nominal)}</div>
         </div>
         <div style="display:flex;gap:6px;margin-top:8px">
-          <button class="btn-sm-sec" onclick="tandaiLunas(${p.id},${p.nominal},'${String(p.nama).replace(/'/g,"\\'")}')">✓ Lunas</button>
-          <button class="btn-sm-del" onclick="hapusPiutang(${p.id})">Hapus</button>
+          <button class="btn-sm-sec" onclick="event.stopPropagation();tandaiLunas(${p.id},${p.nominal},'${String(p.nama).replace(/'/g,"\\'")}')">✓ Lunas</button>
+          <button class="btn-sm-del" onclick="event.stopPropagation();hapusPiutang(${p.id})">Hapus</button>
         </div>
       </div>`).join('')}
       ${lunas.length?`<div style="font-size:0.72rem;color:var(--tx3);margin-top:12px;margin-bottom:6px">Sudah lunas (${lunas.length})</div>
@@ -437,4 +437,139 @@ async function hapusPiutang(id){
     if(!res.ok||!json.success){toast('Gagal hapus piutang: '+(json.error||`HTTP ${res.status}`),'err');return}
     toast('Piutang dihapus','ok');openPiutangList();
   }catch(e){toast('Gagal hapus: '+e.message,'err')}
+}
+
+// ═══ DETAIL PIUTANG + RIWAYAT CICILAN ═══
+async function openPiutangDetail(id,nama,nominal,tanggal,catatan){
+  openBs('Piutang',`<div class="ldrow"><div class="spin"></div>Memuat riwayat...</div>`);
+  try{
+    const hid=getHouseholdId();
+    const res=await fetch(`${API_URL}/api/sheets?action=get-piutang-history&household_id=${hid}&piutang_id=${id}`);
+    const json=await res.json();
+    const hist=json.data||[];
+    const html=`
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-size:0.78rem;color:var(--tx3)">Piutang dari</div>
+        <div style="font-size:1rem;font-weight:700">${nama}</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--red);margin-top:4px">${rp(nominal)}</div>
+        <div style="font-size:0.68rem;color:var(--tx3);margin-top:2px">${tanggal||''}${catatan?' · '+catatan:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="btn-sm-sec" style="flex:1" onclick="openTambahPiutang(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal},'${tanggal||''}','${String(catatan||'').replace(/'/g,"\\'")}')">+ Tambah Nominal</button>
+        <button class="btn-ok" style="flex:1;padding:9px" onclick="openBayarPiutang(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal})">− Bayar Sebagian</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--tx3);margin-bottom:6px">Riwayat (${hist.length})</div>
+      ${!hist.length?`<div style="text-align:center;color:var(--tx3);padding:12px;font-size:0.78rem">Belum ada riwayat</div>`:
+        hist.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdr2)">
+          <div><div style="font-size:0.8rem">${h.keterangan||(h.tipe==='bayar'?'Bayar sebagian':'Tambah piutang')}</div><div style="font-size:0.65rem;color:var(--tx3)">${h.tanggal||''}</div></div>
+          <div style="font-weight:700;font-size:0.85rem;color:${h.tipe==='bayar'?'var(--grn)':'var(--red)'}">${h.tipe==='bayar'?'−':'+'}${rp(h.nominal)}</div>
+        </div>`).join('')
+      }
+      <div style="display:flex;gap:6px;margin-top:14px">
+        <button class="btn-sm-sec" style="flex:1" onclick="tandaiLunas(${id},${nominal},'${String(nama).replace(/'/g,"\\'")}')">✓ Lunas Semua</button>
+        <button class="btn-sm-del" style="flex:1" onclick="hapusPiutang(${id})">Hapus</button>
+      </div>
+      <button class="btn-cx" style="width:100%;margin-top:8px" onclick="openPiutangList()">← Kembali</button>
+    `;
+    document.getElementById('bsBody').innerHTML=html;
+  }catch(e){document.getElementById('bsBody').innerHTML=`<div class="empty">${IC.warn}<p>Gagal memuat riwayat piutang</p></div>`;}
+}
+
+function openTambahPiutang(id,nama,nominal,tanggal,catatan){
+  document.getElementById('bsBody').innerHTML=`
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:0.78rem;color:var(--tx3)">Tambah piutang untuk</div>
+      <div style="font-size:1rem;font-weight:700">${nama}</div>
+    </div>
+    <div class="inp-row"><label class="inp-lbl">Jumlah tambahan</label><input type="text" id="tambahPiutNom" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
+    <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="tambahPiutTgl" class="inp" value="${getLocalDate()}"></div>
+    <div class="inp-row"><label class="inp-lbl">Sumber Dana (opsional)</label><select id="tambahPiutSumber" class="inp"></select>
+      <p style="font-size:0.68rem;color:var(--tx3);margin-top:4px">Kalau dipilih, jumlah ini otomatis tercatat sebagai pengeluaran kategori "Piutang" dari rekening ini.</p>
+    </div>
+    <button class="btn-ok" style="width:100%;margin-top:8px" onclick="submitTambahPiutang(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal},'${tanggal||''}','${String(catatan||'').replace(/'/g,"\\'")}')">Tambah</button>
+    <button class="btn-cx" style="width:100%;margin-top:6px" onclick="openPiutangDetail(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal},'${tanggal||''}','${String(catatan||'').replace(/'/g,"\\'")}')">← Kembali</button>
+  `;
+  fillBank('tambahPiutSumber','');
+}
+
+async function submitTambahPiutang(id,nama,oldNominal,tglAwal,catatan){
+  const tambah=getNomVal('tambahPiutNom');
+  const tgl=document.getElementById('tambahPiutTgl')?.value||getLocalDate();
+  const sumber=document.getElementById('tambahPiutSumber')?.value;
+  if(!tambah){toast('Isi jumlah tambahan','err');return}
+  if(!lockBusy('tambahPiutang'))return;
+  try{
+    const hid=getHouseholdId();
+    const newNominal=Number(oldNominal)+tambah;
+    const upd=await fetch(`${API_URL}/api/sheets?action=update-piutang`,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id,household_id:hid,nominal:newNominal})
+    });
+    const updJson=await upd.json().catch(()=>({success:false}));
+    if(!upd.ok||!updJson.success){toast('Gagal update piutang','err');return}
+    await fetch(`${API_URL}/api/sheets?action=append-piutang-history`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({household_id:hid,piutang_id:id,nominal:tambah,tipe:'tambah',tanggal:tgl,keterangan:'Tambah piutang'})
+    });
+    if(sumber){
+      await sheetsAppend({
+        tanggal:tgl,bulan:MOS[new Date(tgl).getMonth()],
+        kategori:'Piutang',nominal:tambah,pembayaran:sumber,
+        detail:`Piutang: ${nama}`,metode:'Transfer',jenis:'Pengeluaran'
+      });
+      allRows=[];loadDashboard();
+    }
+    toast('Piutang ditambah ✓','ok');
+    openPiutangDetail(id,nama,newNominal,tglAwal,catatan);
+  }catch(e){toast('Gagal: '+e.message,'err')}
+  finally{unlockBusy('tambahPiutang')}
+}
+
+function openBayarPiutang(id,nama,nominal){
+  document.getElementById('bsBody').innerHTML=`
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:0.78rem;color:var(--tx3)">Bayar sebagian piutang</div>
+      <div style="font-size:1rem;font-weight:700">${nama}</div>
+      <div style="font-size:0.7rem;color:var(--tx3);margin-top:2px">Sisa: ${rp(nominal)}</div>
+    </div>
+    <div class="inp-row"><label class="inp-lbl">Jumlah dibayar</label><input type="text" id="bayarPiutNom" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
+    <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="bayarPiutTgl" class="inp" value="${getLocalDate()}"></div>
+    <div class="inp-row"><label class="inp-lbl">Uang masuk ke rekening</label><select id="bayarPiutTujuan" class="inp"></select></div>
+    <button class="btn-ok" style="width:100%;margin-top:8px" onclick="submitBayarPiutang(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal})">Konfirmasi Bayar</button>
+    <button class="btn-cx" style="width:100%;margin-top:6px" onclick="openPiutangDetail(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal},'','')">← Kembali</button>
+  `;
+  fillBank('bayarPiutTujuan','Cash');
+}
+
+async function submitBayarPiutang(id,nama,oldNominal){
+  const bayar=getNomVal('bayarPiutNom');
+  const tgl=document.getElementById('bayarPiutTgl')?.value||getLocalDate();
+  const tujuan=document.getElementById('bayarPiutTujuan')?.value||'Cash';
+  if(!bayar){toast('Isi jumlah yang dibayar','err');return}
+  if(bayar>oldNominal){toast('Jumlah bayar melebihi sisa piutang','err');return}
+  if(!lockBusy('bayarPiutang'))return;
+  try{
+    const hid=getHouseholdId();
+    const sisa=Number(oldNominal)-bayar;
+    const lunas=sisa<=0;
+    const upd=await fetch(`${API_URL}/api/sheets?action=update-piutang`,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id,household_id:hid,nominal:sisa,...(lunas?{lunas:true}:{})})
+    });
+    const updJson=await upd.json().catch(()=>({success:false}));
+    if(!upd.ok||!updJson.success){toast('Gagal update piutang','err');return}
+    await fetch(`${API_URL}/api/sheets?action=append-piutang-history`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({household_id:hid,piutang_id:id,nominal:bayar,tipe:'bayar',tanggal:tgl,keterangan:lunas?'Pelunasan':'Bayar sebagian'})
+    });
+    await sheetsAppend({
+      tanggal:tgl,bulan:MOS[new Date(tgl).getMonth()],
+      kategori:'Piutang',nominal:bayar,pembayaran:tujuan,
+      detail:`${lunas?'Piutang lunas':'Cicilan piutang'}: ${nama}`,metode:'Transfer',jenis:'Pemasukan'
+    });
+    allRows=[];loadDashboard();
+    toast(lunas?'Piutang lunas ✓':'Cicilan tercatat ✓','ok');
+    openPiutangList();
+  }catch(e){toast('Gagal: '+e.message,'err')}
+  finally{unlockBusy('bayarPiutang')}
 }
