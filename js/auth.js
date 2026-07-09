@@ -294,7 +294,7 @@ async function pinSubmit() {
       });
       const json = await res.json();
       if (json.success) {
-        setSession({ username: json.username, household_id: json.household_id, color: json.color || USER_COLORS.default1 });
+        setSession({ username: json.username, household_id: json.household_id, color: json.color });
         // Refresh members dari server
         await refreshMembers(json.household_id);
         hidePinOverlay();
@@ -321,11 +321,7 @@ async function pinSubmit() {
       });
       const json = await res.json();
       if (json.success) {
-        // Ambil warna dari members list
-        const members = getHouseholdMembers();
-        const member = members.find(m => m.username === json.username);
-        const color = member?.color || json.color || USER_COLORS.default1;
-        setSession({ username: json.username, household_id: json.household_id, color });
+        setSession({ username: json.username, household_id: json.household_id, color: json.color });
         await refreshMembers(json.household_id);
         hidePinOverlay();
         updateProfileUI();
@@ -538,6 +534,7 @@ function applySettings(data) {
   if (s.notifEnabled !== undefined) notifEnabled = s.notifEnabled;
   if (s.alertPct)    alertPct    = s.alertPct;
   if (s.adminPassword) adminPassword = s.adminPassword;
+  if (s.app_logo && typeof refreshLogoFromSettings === 'function') refreshLogoFromSettings(s.app_logo);
   if (data.mm_t) setTheme(data.mm_t, false);
 }
 
