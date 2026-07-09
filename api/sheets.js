@@ -389,7 +389,17 @@ export default async function handler(req, res) {
         tanggal, catatan, lunas: false
       });
       if (!result.ok) return res.json({ success: false, error: 'Gagal simpan piutang' });
-      return res.json({ success: true, data: result.data?.[0] });
+      const piutang = result.data?.[0];
+      // Catat entry riwayat pertama otomatis
+      if (piutang?.id) {
+        await sb('/piutang_history', 'POST', {
+          household_id, piutang_id: piutang.id,
+          nominal: Number(nominal) || 0,
+          tipe: 'tambah', tanggal,
+          keterangan: 'Piutang awal'
+        });
+      }
+      return res.json({ success: true, data: piutang });
     }
 
     // ═══════════════════════════════════════
@@ -410,6 +420,31 @@ export default async function handler(req, res) {
       const result = await sb(`/piutang?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
       if (!result.ok) return res.json({ success: false, error: 'Gagal hapus piutang' });
       return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // PIUTANG HISTORY — GET (riwayat cicilan/tambah per piutang)
+    // ═══════════════════════════════════════
+    if (action === 'get-piutang-history' && req.method === 'GET') {
+      const { household_id, piutang_id } = req.query;
+      const result = await sb(`/piutang_history?household_id=eq.${household_id}&piutang_id=eq.${piutang_id}&order=tanggal.desc,id.desc`);
+      return res.json({ success: true, data: result.data || [] });
+    }
+
+    // ═══════════════════════════════════════
+    // PIUTANG HISTORY — APPEND (nambah utang baru / catat cicilan)
+    // ═══════════════════════════════════════
+    if (action === 'append-piutang-history' && req.method === 'POST') {
+      const { household_id, piutang_id, nominal, tipe, tanggal, keterangan, transaksi_id } = req.body;
+      const result = await sb('/piutang_history', 'POST', {
+        household_id, piutang_id,
+        nominal: Number(nominal) || 0,
+        tipe: tipe || 'tambah',
+        tanggal, keterangan: keterangan || null,
+        transaksi_id: transaksi_id || null
+      });
+      if (!result.ok) return res.json({ success: false, error: 'Gagal simpan riwayat piutang' });
+      return res.json({ success: true, data: result.data?.[0] });
     }
 
     // ═══════════════════════════════════════
