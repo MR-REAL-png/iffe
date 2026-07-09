@@ -39,11 +39,14 @@
   max-height: 100vh; overflow-y: auto;
 }
 
-/* Logo */
+/* Logo — diisi via JS (initLogo() di helpers_4.js), bukan background CSS lagi.
+   Ini menghindari dependency ke GitHub raw yang sering 404/hilang.
+   Kotak ini cuma frame kosong sebelum JS mengisi <img>. */
 .pin-logo {
   width: 72px; height: 72px; border-radius: 20px;
-  background: url('https://raw.githubusercontent.com/MR-REAL-png/iffe/main/logo.png') center/contain no-repeat;
   margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--glass, rgba(255,255,255,0.06));
 }
 
 /* App name */
