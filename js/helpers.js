@@ -147,22 +147,55 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pageshow',()=>syncDashBulanKeHariIni());
 
 // ═══ LOGO ═══
+// Sumber logo, urut prioritas:
+//   1) cache lokal (localStorage 'shif_logo_cache') → render instan, tanpa nunggu network
+//   2) Supabase (mm_settings.app_logo, sudah disinkron applySettings()) → sumber kebenaran
+//   3) LOGO_URL (GitHub raw) → fallback terakhir kalau device belum pernah sync sama sekali
+const LOGO_CACHE_KEY='shif_logo_cache';
+
+function getCachedLogo(){
+  try{ return localStorage.getItem(LOGO_CACHE_KEY)||null; }catch{ return null; }
+}
+function setCachedLogo(dataUri){
+  if(!dataUri)return;
+  try{ localStorage.setItem(LOGO_CACHE_KEY,dataUri); }catch{}
+}
+
+function renderLogoInto(el,fitStyle,src){
+  if(!el)return;
+  const img=document.createElement('img');
+  img.alt='logo';
+  img.style.cssText=fitStyle;
+  img.onerror=()=>{
+    // src ini gagal (mis. GitHub raw hilang) → coba fallback berikutnya, baru icon kalau semua gagal
+    if(src!==LOGO_URL){ renderLogoInto(el,fitStyle,LOGO_URL); }
+    else { el.innerHTML=IC.chart; }
+  };
+  img.src=src;
+  el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';
+  el.innerHTML='';el.appendChild(img);
+}
+
 function initLogo(){
   const fitStyle={
     brandIco:'width:70%;height:70%;object-fit:contain;display:block;margin:auto;border-radius:inherit;', // logo di header, dibuat lebih kecil & proporsional
     settAvatar:'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;',            // avatar di Settings, penuh isi lingkaran
     pinLogo:'width:80%;height:80%;object-fit:contain;display:block;margin:auto;'                          // logo di halaman PIN/menu awal
   };
+  // sumber terbaik yang sudah kita punya SEKARANG (cache lokal biasanya sudah ada sejak sync pertama)
+  const source = getCachedLogo() || LOGO_URL;
   ['brandIco','settAvatar','pinLogo'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
-    const img=document.createElement('img');
-    img.alt='logo';
-    img.style.cssText=fitStyle[id]||'width:100%;height:100%;object-fit:contain;display:block;';
-    img.onerror=()=>{el.innerHTML=IC.chart;};
-    img.src=LOGO_URL;
-    el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';
-    el.innerHTML='';el.appendChild(img);
+    renderLogoInto(el, fitStyle[id]||'width:100%;height:100%;object-fit:contain;display:block;', source);
   });
+}
+
+// Dipanggil dari applySettings() saat ada logo baru dari Supabase (device lain upload logo baru, dst)
+function refreshLogoFromSettings(app_logo){
+  if(!app_logo) return;
+  if(app_logo === getCachedLogo()) return; // sudah sama, tidak perlu re-render
+  setCachedLogo(app_logo);
+  initLogo();
 }
 
 // ═══ PARTICLES ═══
