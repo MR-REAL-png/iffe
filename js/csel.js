@@ -237,3 +237,15 @@ function lightenColor(hex,pct){
   r=Math.min(255,Math.max(0,r));g=Math.min(255,Math.max(0,g));b=Math.min(255,Math.max(0,b));
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
 }
+// Buat teks/dot warna bank di atas card GELAP: kalau warnanya sendiri gelap
+// (contoh navy BCA/BRI), terangkan dulu biar nggak nyatu sama background.
+function ensureReadableOnDark(hex){
+  if(!hex)return hex;
+  let h=hex.replace('#','');
+  if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  const num=parseInt(h,16);
+  if(isNaN(num))return hex;
+  const r=(num>>16)&0xff,g=(num>>8)&0xff,b=num&0xff;
+  const luminance=(0.299*r+0.587*g+0.114*b)/255;
+  return luminance<0.45?lightenColor(hex,32):hex;
+}
