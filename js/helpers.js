@@ -150,9 +150,10 @@ window.addEventListener('pageshow',()=>syncDashBulanKeHariIni());
 function initLogo(){
   const fitStyle={
     brandIco:'width:70%;height:70%;object-fit:contain;display:block;margin:auto;border-radius:inherit;', // logo di header, dibuat lebih kecil & proporsional
-    settAvatar:'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;'            // avatar di Settings, penuh isi lingkaran
+    settAvatar:'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;',            // avatar di Settings, penuh isi lingkaran
+    pinLogo:'width:80%;height:80%;object-fit:contain;display:block;margin:auto;'                          // logo di halaman PIN/menu awal
   };
-  ['brandIco','settAvatar'].forEach(id=>{
+  ['brandIco','settAvatar','pinLogo'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const img=document.createElement('img');
     img.alt='logo';
@@ -322,7 +323,17 @@ function fillBank(id,val,excludeCash){
   const banks=dbOpts.banks||[];
   const list=excludeCash?banks:['Cash',...banks];
   const opts=list.map(b=>({value:b,label:b,color:getBankDisplayColor(b)}));
-  cselSetOptions(id,opts,val,'— Pilih Rekening —');
+  // Elemen "csel" (inBank/eBank dkk) punya panel sibling #idPanel — pakai cselSetOptions.
+  // Elemen <select> native biasa (piutSumber/lunasTujuan dkk) — isi <option> langsung.
+  const panel=document.getElementById(id+'Panel');
+  if(panel){
+    cselSetOptions(id,opts,val,'— Pilih Rekening —');
+  }else{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.innerHTML=list.map(b=>`<option value="${b.replace(/"/g,'&quot;')}">${b}</option>`).join('');
+    el.value=val||'';
+  }
 }
 
 // ═══ SYNC METODE → REKENING ═══
