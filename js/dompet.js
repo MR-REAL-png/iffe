@@ -233,6 +233,8 @@ async function submitTransfer(){
   if(!dari||!ke||!nom){toast('Lengkapi data transfer','err');return}
   if(dari===ke){toast('Rekening sama!','err');return}
   if(!lockBusy('transfer'))return;
+  const btn=document.querySelector('#ovSett .modal-ft .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-transfer`,{
@@ -246,7 +248,7 @@ async function submitTransfer(){
     }
     closeOv(null,'ovSett');toast('Transfer disimpan ✓','ok');loadDompet();
   }catch(e){toast('Gagal transfer: '+e.message,'err')}
-  finally{unlockBusy('transfer')}
+  finally{unlockBusy('transfer');setBtnBusy(btn,false);}
 }
 
 function openEditTransfer(encodedT){
@@ -279,6 +281,8 @@ async function submitEditTransfer(){
   const cat =document.getElementById('etCatatan')?.value.trim();
   const tgl =document.getElementById('etTanggal')?.value;
   if(!lockBusy('editTransfer'))return;
+  const btn=document.querySelector('#ovSett .modal-ft .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=update-transfer`,{
@@ -292,7 +296,7 @@ async function submitEditTransfer(){
     }
     closeOv(null,'ovSett');toast('Transfer diperbarui ✓','ok');loadDompet();
   }catch(e){toast('Gagal update transfer: '+e.message,'err')}
-  finally{unlockBusy('editTransfer')}
+  finally{unlockBusy('editTransfer');setBtnBusy(btn,false);}
 }
 
 async function deleteTransfer(id){
@@ -371,6 +375,8 @@ async function submitAddPiutang(){
   const sumber=document.getElementById('piutSumber')?.value;
   if(!nama||!nom){toast('Lengkapi data piutang','err');return}
   if(!lockBusy('addPiutang'))return;
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-piutang`,{
@@ -389,7 +395,7 @@ async function submitAddPiutang(){
     }
     toast('Piutang ditambahkan ✓','ok');openPiutangList();
   }catch(e){toast('Gagal simpan piutang: '+e.message,'err')}
-  finally{unlockBusy('addPiutang')}
+  finally{unlockBusy('addPiutang');setBtnBusy(btn,false);}
 }
 
 function tandaiLunas(id,nominal,nama){
@@ -409,6 +415,8 @@ function tandaiLunas(id,nominal,nama){
 async function submitTandaiLunas(id,nominal,nama){
   const tujuan=document.getElementById('lunasTujuan')?.value||'Cash';
   if(!lockBusy('tandaiLunas'))return;
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=update-piutang`,{
@@ -425,7 +433,7 @@ async function submitTandaiLunas(id,nominal,nama){
     allRows=[];
     toast('Piutang lunas ✓','ok');openPiutangList();loadDashboard();
   }catch(e){toast('Gagal update: '+e.message,'err')}
-  finally{unlockBusy('tandaiLunas')}
+  finally{unlockBusy('tandaiLunas');setBtnBusy(btn,false);}
 }
 
 async function hapusPiutang(id){
@@ -498,6 +506,8 @@ async function submitTambahPiutang(id,nama,oldNominal,tglAwal,catatan){
   const sumber=document.getElementById('tambahPiutSumber')?.value;
   if(!tambah){toast('Isi jumlah tambahan','err');return}
   if(!lockBusy('tambahPiutang'))return;
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const newNominal=Number(oldNominal)+tambah;
@@ -522,7 +532,7 @@ async function submitTambahPiutang(id,nama,oldNominal,tglAwal,catatan){
     toast('Piutang ditambah ✓','ok');
     openPiutangDetail(id,nama,newNominal,tglAwal,catatan);
   }catch(e){toast('Gagal: '+e.message,'err')}
-  finally{unlockBusy('tambahPiutang')}
+  finally{unlockBusy('tambahPiutang');setBtnBusy(btn,false);}
 }
 
 function openBayarPiutang(id,nama,nominal){
@@ -548,6 +558,8 @@ async function submitBayarPiutang(id,nama,oldNominal){
   if(!bayar){toast('Isi jumlah yang dibayar','err');return}
   if(bayar>oldNominal){toast('Jumlah bayar melebihi sisa piutang','err');return}
   if(!lockBusy('bayarPiutang'))return;
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const sisa=Number(oldNominal)-bayar;
@@ -571,5 +583,5 @@ async function submitBayarPiutang(id,nama,oldNominal){
     toast(lunas?'Piutang lunas ✓':'Cicilan tercatat ✓','ok');
     openPiutangList();
   }catch(e){toast('Gagal: '+e.message,'err')}
-  finally{unlockBusy('bayarPiutang')}
+  finally{unlockBusy('bayarPiutang');setBtnBusy(btn,false);}
 }
