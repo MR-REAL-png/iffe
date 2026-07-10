@@ -413,7 +413,7 @@ function renderCards(rows){
       const isOceanTheme=document.documentElement.getAttribute('data-theme')==='ocean';
       // Ocean/light: pill tinted lembut (bg tipis, teks warna bank).
       // Dark: pill solid 90% warna + teks putih biar gak transparan/nyatu ke background gelap.
-      const pillBg=bankColor?(isOceanTheme?bankColor+'20':bankColor+'E6'):null;
+      const pillBg=bankColor?(isOceanTheme?bankColor+'20':bankColor+'99'):null;
       const pillBorder=bankColor?(isOceanTheme?bankColor+'40':bankColor):null;
       const pillText=bankColor?(isOceanTheme?bankColor:'#ffffff'):null;
       const dotColor=bankColor?(isOceanTheme?bankColor:'rgba(255,255,255,0.85)'):null;
@@ -423,8 +423,8 @@ function renderCards(rows){
       }).join('');
       const ketHtml=r.detail?`<span class="dc-ket-inline">${r.detail}</span>`:'';
       // Badge dicatat oleh
-      const recColor=colorMap[r.recorded_by]||'var(--tx3)';
-      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recColor}15;color:${recColor}">${r.recorded_by.charAt(0).toUpperCase()}</span>`:'';
+      const recColor=colorMap[r.recorded_by]||'var(--tx3)';const recBg=isOceanTheme?recColor+'22':recColor+'99';const recText=isOceanTheme?recColor:'#ffffff';
+      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recBg};color:${recText}">${r.recorded_by.charAt(0).toUpperCase()}</span>`:'';
       const editBtn=editMode?`<button class="edit-btn" onclick="event.stopPropagation();openEdit(${r.rowIndex})">${IC.edit} Edit</button>`:'';
       const editHtml=editBtn?`<div class="dc-edit-row">${editBtn}</div>`:'';
       return`<div class="dc ${cls}" style="animation-delay:${(gi*0.05)+(ri*0.03)}s" onclick="event.stopPropagation();openStrukDetail(${r.rowIndex})">
@@ -651,13 +651,14 @@ function showKalDetail(tgl){
   if(!rows.length)return;
   const members=getHouseholdMembers();
   const colorMap={};members.forEach(m=>colorMap[m.username]=m.color);
+  const isOceanTheme=document.documentElement.getAttribute('data-theme')==='ocean';
   const totK=rows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
   const totM=rows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
   const html=`<div style="margin-bottom:12px"><span style="color:var(--grn)">↓ ${rp(totM)}</span> &nbsp; <span style="color:var(--red)">↑ ${rp(totK)}</span></div>`+
     rows.map(r=>{
       const isIn=r.jenis==='Pemasukan';
-      const recColor=colorMap[r.recorded_by]||'var(--tx3)';
-      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recColor}15;color:${recColor}">${r.recorded_by}</span>`:'';
+      const recColor=colorMap[r.recorded_by]||'var(--tx3)';const recBg=isOceanTheme?recColor+'22':recColor+'99';const recText=isOceanTheme?recColor:'#ffffff';
+      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recBg};color:${recText}">${r.recorded_by}</span>`:'';
       return`<div class="dc ${isIn?'inc':'spd'}" style="margin-bottom:8px">
         <div class="dc-row1"><div class="dc-left"><span class="dc-kat">${typeof katIconInline==='function'?katIconInline(r.kategori,14):''}${r.kategori}</span>${recBadge}</div><div class="dc-right"><span class="dc-nom ${isIn?'inc':'spd'}">${isIn?'↓':'↑'} ${rp(r.nominal)}</span></div></div>
         ${r.detail?`<div style="font-size:0.72rem;color:var(--tx3);padding:4px 0 0">${r.detail}</div>`:''}
@@ -886,13 +887,14 @@ function openBudItemDetail(kat){
   const total=rows.reduce((s,r)=>s+r.nominal,0);
   const members=getHouseholdMembers();
   const colorMap={};members.forEach(m=>colorMap[m.username]=m.color);
+  const isOceanTheme=document.documentElement.getAttribute('data-theme')==='ocean';
   const html=`
     <div style="text-align:center;margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin:0 auto 6px;color:var(--ac)">${getKatIconSVG(kat)}</div>
       <div style="font-size:1.3rem;font-weight:700;color:var(--ac)">${rp(total)}</div><div style="font-size:0.75rem;color:var(--tx3)">${rows.length} transaksi</div></div>
     ${rows.map(r=>{
-      const recColor=colorMap[r.recorded_by]||'var(--tx3)';
-      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recColor}15;color:${recColor}">${r.recorded_by}</span>`:'';
+      const recColor=colorMap[r.recorded_by]||'var(--tx3)';const recBg=isOceanTheme?recColor+'22':recColor+'99';const recText=isOceanTheme?recColor:'#ffffff';
+      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recBg};color:${recText}">${r.recorded_by}</span>`:'';
       return`<div class="dc spd" style="margin-bottom:6px">
         <div class="dc-row1"><div class="dc-left">${recBadge} <span style="font-size:0.72rem;color:var(--tx3)">${formatTgl(r.tanggal)}</span></div><div class="dc-right"><span class="dc-nom spd">↑ ${rp(r.nominal)}</span></div></div>
         ${r.detail?`<div style="font-size:0.72rem;color:var(--tx3);padding:2px 0">${r.detail}</div>`:''}
@@ -908,7 +910,8 @@ function openStrukDetail(id){
   const isIn=r.jenis==='Pemasukan';
   const members=getHouseholdMembers();
   const colorMap={};members.forEach(m=>colorMap[m.username]=m.color);
-  const recColor=colorMap[r.recorded_by]||'var(--tx3)';
+  const isOceanTheme=document.documentElement.getAttribute('data-theme')==='ocean';
+  const recColor=colorMap[r.recorded_by]||'var(--tx3)';const recBg=isOceanTheme?recColor+'22':recColor+'99';const recText=isOceanTheme?recColor:'#ffffff';
   const html=`
     <div class="struk">
       <div class="struk-nom ${isIn?'inc':'spd'}">${isIn?'↓':'↑'} ${rp(r.nominal)}</div>
