@@ -405,6 +405,9 @@ function syncMetodeBank(metodeId,bankId){
 // Kategori Pemasukan — hardcode, tidak campur dengan pengeluaran
 const KAT_PEMASUKAN = ['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
 
+// Kategori yang dikelola lewat shortcut khusus (modal Input Transaksi), bukan dipilih manual
+const KAT_TERSEMBUNYI = ['Tabungan','Piutang','Hutang'];
+
 // Kategori Pengeluaran — dari data + custom, tidak include kategori pemasukan
 function getKatPengeluaran(){
   const customKats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]')).map(k=>k.name);
@@ -412,9 +415,9 @@ function getKatPengeluaran(){
     allRows
       .filter(r=>r.jenis==='Pengeluaran')
       .map(r=>r.kategori)
-      .filter(k=>k&&!KAT_PEMASUKAN.includes(k))
+      .filter(k=>k&&!KAT_PEMASUKAN.includes(k)&&!KAT_TERSEMBUNYI.includes(k))
   )];
-  return [...new Set([...fromData,...customKats.filter(k=>!KAT_PEMASUKAN.includes(k))])].sort();
+  return [...new Set([...fromData,...customKats.filter(k=>!KAT_PEMASUKAN.includes(k)&&!KAT_TERSEMBUNYI.includes(k))])].sort();
 }
 
 function fillKat(jenisId,katId){
@@ -440,7 +443,7 @@ function renderQuickKat(){
       .filter(r=>r.jenis===jenis)
       .slice(0,50)
       .map(r=>r.kategori)
-      .filter(k=>k&&(jenis==='Pemasukan'?KAT_PMS.includes(k):!KAT_PMS.includes(k)))
+      .filter(k=>k&&!KAT_TERSEMBUNYI.includes(k)&&(jenis==='Pemasukan'?KAT_PMS.includes(k):!KAT_PMS.includes(k)))
   )].slice(0,6);
   el.innerHTML=recent.map(k=>`<button class="qk-btn" onclick="document.getElementById('inKat').value='${k.replace(/'/g,"\\'")}'">${katIconInline(k,14)}${k}</button>`).join('');
 }
