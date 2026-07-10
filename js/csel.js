@@ -211,6 +211,27 @@ function rebuildBankColorMap(){
 function getBankColor(name){
   return bankColorMap[(name||'').toLowerCase()]||null;
 }
+// ═══════════════════════════════════════════════════
+// WARNA PILL (badge kecil di list transaksi/struk) — TERPISAH dari BANK_THEMES
+// Supaya kartu ATM di Dompet tetap pakai warna aslinya, tapi pill di list
+// tetap gampang dibedain (BRI/BCA/Dana/OVO/Mandiri/Jago semua mirip biru/oranye di BANK_THEMES)
+// ═══════════════════════════════════════════════════
+const PILL_COLORS={
+  'bri':'#1e3a8a',      // navy
+  'bca':'#0e7490',      // teal/cyan
+  'dana':'#a21caf',     // magenta/fuchsia
+  'ovo':'#6d28d9',      // ungu
+  'mandiri':'#b45309',  // amber
+  'jago':'#be123c',     // rose
+};
+function getBankPillColor(name){
+  const custom=getBankColor(name);
+  if(custom)return custom;
+  const key=Object.keys(PILL_COLORS).find(k=>name&&name.toLowerCase().includes(k));
+  if(key)return PILL_COLORS[key];
+  return getBankDisplayColor(name); // fallback: bank lain tetap ikut warna kartu
+}
+
 // Warna yang ditampilkan di manapun (list Kelola Rekening, dropdown Bank input transaksi, dst):
 // custom kalau ada, kalau nggak pakai warna tema bawaan dari BANK_THEMES (dompet.js)
 // — biar SELALU konsisten sama warna kartu ATM di halaman Dompet.
@@ -236,16 +257,4 @@ function lightenColor(hex,pct){
   let b=(num&0xff)+Math.round(255*pct/100);
   r=Math.min(255,Math.max(0,r));g=Math.min(255,Math.max(0,g));b=Math.min(255,Math.max(0,b));
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
-}
-// Buat teks/dot warna bank di atas card GELAP: kalau warnanya sendiri gelap
-// (contoh navy BCA/BRI), terangkan dulu biar nggak nyatu sama background.
-function ensureReadableOnDark(hex){
-  if(!hex)return hex;
-  let h=hex.replace('#','');
-  if(h.length===3)h=h.split('').map(c=>c+c).join('');
-  const num=parseInt(h,16);
-  if(isNaN(num))return hex;
-  const r=(num>>16)&0xff,g=(num>>8)&0xff,b=num&0xff;
-  const luminance=(0.299*r+0.587*g+0.114*b)/255;
-  return luminance<0.45?lightenColor(hex,32):hex;
 }
