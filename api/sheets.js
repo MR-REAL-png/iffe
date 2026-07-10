@@ -390,15 +390,10 @@ export default async function handler(req, res) {
       });
       if (!result.ok) return res.json({ success: false, error: 'Gagal simpan piutang' });
       const piutang = result.data?.[0];
-      // Catat entry riwayat pertama otomatis
-      if (piutang?.id) {
-        await sb('/piutang_history', 'POST', {
-          household_id, piutang_id: piutang.id,
-          nominal: Number(nominal) || 0,
-          tipe: 'tambah', tanggal,
-          keterangan: 'Piutang awal'
-        });
-      }
+      // NOTE: entry riwayat pertama TIDAK dibuat otomatis di sini lagi.
+      // Frontend yang bertanggung jawab memanggil append-piutang-history
+      // setelah tahu transaksi_id (kalau sumber dana dipilih), supaya
+      // riwayat selalu bisa disinkron balik saat transaksi diedit/dihapus.
       return res.json({ success: true, data: piutang });
     }
 
@@ -445,6 +440,192 @@ export default async function handler(req, res) {
       });
       if (!result.ok) return res.json({ success: false, error: 'Gagal simpan riwayat piutang' });
       return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // PIUTANG HISTORY — UPDATE nominal by transaksi_id
+    // (dipanggil saat transaksi kategori "Piutang" diedit)
+    // ═══════════════════════════════════════
+    if (action === 'update-piutang-history-by-transaksi' && req.method === 'PUT') {
+      const { transaksi_id, household_id, nominal } = req.body;
+      if (!transaksi_id || !household_id) return res.json({ success: false, error: 'transaksi_id dan household_id wajib' });
+
+      const histData = await sb(`/piutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}&select=piutang_id`);
+
+      const histResult = await sb(
+        `/piutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}`,
+        'PATCH',
+        { nominal: Number(nominal) || 0 }
+      );
+      if (!histResult.ok) return res.json({ success: false, error: 'Gagal update riwayat piutang' });
+
+      if (histData.ok && histData.data?.length > 0) {
+        const piutang_id = histData.data[0].piutang_id;
+        const sumResult = await sb(`/piutang_history?piutang_id=eq.${piutang_id}&household_id=eq.${household_id}&select=nominal,tipe`);
+        if (sumResult.ok) {
+          const sisa = (sumResult.data || []).reduce((s, h) =>
+            s + (h.tipe === 'bayar' ? -Number(h.nominal || 0) : Number(h.nominal || 0)), 0);
+          await sb(`/piutang?id=eq.${piutang_id}&household_id=eq.${household_id}`, 'PATCH',
+            { nominal: sisa, lunas: sisa <= 0 });
+        }
+      }
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // PIUTANG HISTORY — DELETE by transaksi_id
+    // (dipanggil saat transaksi kategori "Piutang" dihapus)
+    // ═══════════════════════════════════════
+    if (action === 'delete-piutang-history-by-transaksi' && req.method === 'DELETE') {
+      const { transaksi_id, household_id } = req.query;
+      if (!transaksi_id || !household_id) return res.json({ success: false, error: 'transaksi_id dan household_id wajib' });
+
+      const histData = await sb(`/piutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}&select=piutang_id`);
+      const affected = histData.data || [];
+
+      const delResult = await sb(
+        `/piutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}`,
+        'DELETE'
+      );
+      if (!delResult.ok) return res.json({ success: false, error: 'Gagal hapus riwayat piutang' });
+
+      const piutIds = [...new Set(affected.map(h => h.piutang_id))];
+      for (const piutang_id of piutIds) {
+        const sumResult = await sb(`/piutang_history?piutang_id=eq.${piutang_id}&household_id=eq.${household_id}&select=nominal,tipe`);
+        if (sumResult.ok) {
+          const sisa = (sumResult.data || []).reduce((s, h) =>
+            s + (h.tipe === 'bayar' ? -Number(h.nominal || 0) : Number(h.nominal || 0)), 0);
+          await sb(`/piutang?id=eq.${piutang_id}&household_id=eq.${household_id}`, 'PATCH',
+            { nominal: sisa, lunas: sisa <= 0 });
+        }
+      }
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG — GET (kebalikan Piutang: kita yang berutang)
+    // ═══════════════════════════════════════
+    if (action === 'get-hutang' && req.method === 'GET') {
+      const { household_id } = req.query;
+      const result = await sb(`/hutang?household_id=eq.${household_id}&order=tanggal.desc`);
+      return res.json({ success: true, data: result.data || [] });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG — APPEND
+    // ═══════════════════════════════════════
+    if (action === 'append-hutang' && req.method === 'POST') {
+      const { household_id, nama, nominal, tanggal, catatan } = req.body;
+      const result = await sb('/hutang', 'POST', {
+        household_id, nama,
+        nominal: Number(nominal) || 0,
+        tanggal, catatan, lunas: false
+      });
+      if (!result.ok) return res.json({ success: false, error: 'Gagal simpan hutang' });
+      return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG — UPDATE (termasuk tandai lunas)
+    // ═══════════════════════════════════════
+    if (action === 'update-hutang' && req.method === 'PUT') {
+      const { id, household_id, ...fields } = req.body;
+      const result = await sb(`/hutang?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
+      if (!result.ok) return res.json({ success: false, error: 'Gagal update hutang' });
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG — DELETE
+    // ═══════════════════════════════════════
+    if (action === 'delete-hutang' && req.method === 'DELETE') {
+      const { id, household_id } = req.query;
+      const result = await sb(`/hutang?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
+      if (!result.ok) return res.json({ success: false, error: 'Gagal hapus hutang' });
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG HISTORY — GET
+    // ═══════════════════════════════════════
+    if (action === 'get-hutang-history' && req.method === 'GET') {
+      const { household_id, hutang_id } = req.query;
+      const result = await sb(`/hutang_history?household_id=eq.${household_id}&hutang_id=eq.${hutang_id}&order=tanggal.desc,id.desc`);
+      return res.json({ success: true, data: result.data || [] });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG HISTORY — APPEND (nambah hutang baru / catat cicilan bayar)
+    // ═══════════════════════════════════════
+    if (action === 'append-hutang-history' && req.method === 'POST') {
+      const { household_id, hutang_id, nominal, tipe, tanggal, keterangan, transaksi_id } = req.body;
+      const result = await sb('/hutang_history', 'POST', {
+        household_id, hutang_id,
+        nominal: Number(nominal) || 0,
+        tipe: tipe || 'tambah',
+        tanggal, keterangan: keterangan || null,
+        transaksi_id: transaksi_id || null
+      });
+      if (!result.ok) return res.json({ success: false, error: 'Gagal simpan riwayat hutang' });
+      return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG HISTORY — UPDATE nominal by transaksi_id
+    // ═══════════════════════════════════════
+    if (action === 'update-hutang-history-by-transaksi' && req.method === 'PUT') {
+      const { transaksi_id, household_id, nominal } = req.body;
+      if (!transaksi_id || !household_id) return res.json({ success: false, error: 'transaksi_id dan household_id wajib' });
+
+      const histData = await sb(`/hutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}&select=hutang_id`);
+
+      const histResult = await sb(
+        `/hutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}`,
+        'PATCH',
+        { nominal: Number(nominal) || 0 }
+      );
+      if (!histResult.ok) return res.json({ success: false, error: 'Gagal update riwayat hutang' });
+
+      if (histData.ok && histData.data?.length > 0) {
+        const hutang_id = histData.data[0].hutang_id;
+        const sumResult = await sb(`/hutang_history?hutang_id=eq.${hutang_id}&household_id=eq.${household_id}&select=nominal,tipe`);
+        if (sumResult.ok) {
+          const sisa = (sumResult.data || []).reduce((s, h) =>
+            s + (h.tipe === 'bayar' ? -Number(h.nominal || 0) : Number(h.nominal || 0)), 0);
+          await sb(`/hutang?id=eq.${hutang_id}&household_id=eq.${household_id}`, 'PATCH',
+            { nominal: sisa, lunas: sisa <= 0 });
+        }
+      }
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // HUTANG HISTORY — DELETE by transaksi_id
+    // ═══════════════════════════════════════
+    if (action === 'delete-hutang-history-by-transaksi' && req.method === 'DELETE') {
+      const { transaksi_id, household_id } = req.query;
+      if (!transaksi_id || !household_id) return res.json({ success: false, error: 'transaksi_id dan household_id wajib' });
+
+      const histData = await sb(`/hutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}&select=hutang_id`);
+      const affected = histData.data || [];
+
+      const delResult = await sb(
+        `/hutang_history?transaksi_id=eq.${transaksi_id}&household_id=eq.${household_id}`,
+        'DELETE'
+      );
+      if (!delResult.ok) return res.json({ success: false, error: 'Gagal hapus riwayat hutang' });
+
+      const hutIds = [...new Set(affected.map(h => h.hutang_id))];
+      for (const hutang_id of hutIds) {
+        const sumResult = await sb(`/hutang_history?hutang_id=eq.${hutang_id}&household_id=eq.${household_id}&select=nominal,tipe`);
+        if (sumResult.ok) {
+          const sisa = (sumResult.data || []).reduce((s, h) =>
+            s + (h.tipe === 'bayar' ? -Number(h.nominal || 0) : Number(h.nominal || 0)), 0);
+          await sb(`/hutang?id=eq.${hutang_id}&household_id=eq.${household_id}`, 'PATCH',
+            { nominal: sisa, lunas: sisa <= 0 });
+        }
+      }
+      return res.json({ success: true });
     }
 
     // ═══════════════════════════════════════
