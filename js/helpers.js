@@ -229,6 +229,20 @@ function lockBusy(key){
 }
 function unlockBusy(key){_busyActions.delete(key);}
 
+// ═══ FEEDBACK VISUAL TOMBOL "MENYIMPAN..." (dipakai bareng lockBusy) ═══
+// Panggil setBtnBusy(btn,true) pas mulai proses, setBtnBusy(btn,false) di finally.
+// btn boleh berupa element langsung (biasanya dari `document.querySelector('#bsBody .btn-ok')` dkk).
+function setBtnBusy(btn,busy,busyText){
+  if(!btn)return;
+  if(busy){
+    if(btn.dataset.origLabel===undefined)btn.dataset.origLabel=btn.textContent;
+    btn.disabled=true;btn.style.opacity='0.7';btn.textContent=busyText||'Menyimpan...';
+  }else{
+    btn.disabled=false;btn.style.opacity='';
+    if(btn.dataset.origLabel!==undefined)btn.textContent=btn.dataset.origLabel;
+  }
+}
+
 function openBs(title,html){
   document.getElementById('bsTitle').textContent=title;
   document.getElementById('bsBody').innerHTML=html;
