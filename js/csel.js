@@ -217,7 +217,7 @@ function getBankColor(name){
 // tetap gampang dibedain (BRI/BCA/Dana/OVO/Mandiri/Jago semua mirip biru/oranye di BANK_THEMES)
 // ═══════════════════════════════════════════════════
 const PILL_COLORS={
-  'bri':'#15803d',      // hijau (keluar dari keluarga biru sepenuhnya)
+  'bri':'#db2777',      // merah muda/pink (beda dari Dana-magenta & Jago-rose)
   'bca':'#0e7490',      // teal/cyan
   'dana':'#a21caf',     // magenta/fuchsia
   'ovo':'#6d28d9',      // ungu
