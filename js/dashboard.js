@@ -300,7 +300,8 @@ function renderBudgetMonitor(byCat){
       <div class="bmon-bar"><div class="bmon-fill ${cls}" style="width:0%" data-w="${barW}"></div></div>
       <div class="bmon-amts"><span class="${over?'over':''}">${rpShort(k.nominal)} terpakai</span><span>dari ${rpShort(budget)}</span></div>
     </div>`).join('');
-  if(bmonRingkas&&allItems.length>5)el.innerHTML+=`<div style="text-align:center;font-size:0.72rem;color:var(--tx3);padding:6px 0">+${allItems.length-5} kategori lainnya</div>`;
+  if(bmonRingkas&&allItems.length>5)el.innerHTML+=`<div class="tap-card" style="text-align:center;font-size:0.72rem;color:var(--ac);padding:8px 0;cursor:pointer;font-weight:600" onclick="toggleBmonView()">+${allItems.length-5} kategori lainnya ▾</div>`;
+  else if(!bmonRingkas&&allItems.length>5)el.innerHTML+=`<div class="tap-card" style="text-align:center;font-size:0.72rem;color:var(--ac);padding:8px 0;cursor:pointer;font-weight:600" onclick="toggleBmonView()">Tampilkan lebih sedikit ▴</div>`;
   setTimeout(()=>{el.querySelectorAll('.bmon-fill').forEach(e=>e.style.width=e.dataset.w+'%')},100);
 }
 
