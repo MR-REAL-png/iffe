@@ -422,9 +422,10 @@ function openSettModal(type){
   }
   else if(type==='kategori'){
     title.textContent='Kelola Kategori';
+    const HIDDEN_KATS=typeof KAT_TERSEMBUNYI!=='undefined'?KAT_TERSEMBUNYI:['Tabungan','Piutang','Hutang']; // kategori ini dikelola lewat shortcut khusus, bukan manual
     const customKats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]'));
     const customNames=customKats.map(k=>k.name);
-    const allNames=[...new Set([...allRows.map(r=>r.kategori).filter(Boolean),...customNames])].sort();
+    const allNames=[...new Set([...allRows.map(r=>r.kategori).filter(Boolean),...customNames])].filter(n=>!HIDDEN_KATS.includes(n)).sort();
     selectedNewKatIcon='other';
     body.innerHTML=`
       <div style="margin-bottom:8px;display:flex;gap:8px">
