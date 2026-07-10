@@ -799,8 +799,8 @@ select.inp { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.
 .dc-tags-left { display: flex; gap: 4px; flex-wrap: wrap; }
 .dtag {
   padding: 2px 7px; border-radius: 6px;
-  background: rgba(148,163,184,0.15); border: 1px solid rgba(148,163,184,0.32);
-  font-size: 0.6rem; font-weight: 600; color: #94a3b8;
+  background: rgba(148,163,184,0.4); border: 1px solid rgba(148,163,184,0.5);
+  font-size: 0.6rem; font-weight: 600; color: #f1f5f9;
 }
 .dc-ket-inline { font-size: 0.65rem; color: var(--tx3); font-style: italic; }
 .dc-edit-row { margin-top: 8px; border-top: 1px solid var(--bdr); padding-top: 6px; }
