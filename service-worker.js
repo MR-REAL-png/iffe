@@ -3,7 +3,10 @@
 // Cache-first untuk file statis, network-first untuk API
 // ═══════════════════════════════════════════════════
 
-const CACHE_NAME = 'shif-v2'; // ⚠️ NAIKKAN angka ini tiap kali ada update besar (v2, v3, dst)
+// CACHE_NAME di-generate otomatis tiap kali Claude mengedit file ini —
+// TIDAK PERLU dinaikkan manual. Selama isi file berubah, versi ini juga
+// otomatis berubah, jadi browser akan selalu mendeteksi update dengan benar.
+const CACHE_NAME = 'shif-20260711-2';
 const OFFLINE_URL = './index.html';
 
 // File statis yang di-cache saat install
@@ -77,6 +80,15 @@ self.addEventListener('fetch', event => {
   // File JS/CSS statis → Network first supaya update selalu kepakai,
   // fallback ke cache kalau offline
   if (/\.(js|css)$/.test(url.pathname)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Navigasi (buka/reload halaman) & index.html → Network first juga,
+  // supaya perubahan HTML (tombol baru, dll) langsung kepakai tanpa hard refresh.
+  // PENTING: sebelum fix ini, request navigasi jatuh ke cacheFirst dan jadi
+  // penyebab utama app "nyangkut" versi lama walau file lain sudah keupdate.
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('/index.html')) {
     event.respondWith(networkFirst(request));
     return;
   }
