@@ -1,16 +1,16 @@
 // ═══ BANK THEMES ═══
 const BANK_THEMES={
-  'Jago':      {grad:'linear-gradient(135deg,#be123c,#fb7185)',motif:'waves',    logo:'jago.png'},
+  'Jago':      {grad:'linear-gradient(135deg,#d97706,#fbbf24)',motif:'waves',    logo:'jago.png'},
   'Cash':      {grad:'linear-gradient(135deg,#059669,#34d399)',motif:'cash',     logo:'cash.png'},
-  'BCA':       {grad:'linear-gradient(135deg,#0e7490,#22d3ee)',motif:'lines',    logo:'bca.png'},
+  'BCA':       {grad:'linear-gradient(135deg,#1e40af,#3b82f6)',motif:'lines',    logo:'bca.png'},
   'Seabank':   {grad:'linear-gradient(135deg,#ea580c,#f97316)',motif:'triangles',logo:'seabank.png'},
-  'Dana':      {grad:'linear-gradient(135deg,#a21caf,#e879f9)',motif:'wavesthick',logo:'dana.png'},
+  'Dana':      {grad:'linear-gradient(135deg,#1d4ed8,#60a5fa)',motif:'wavesthick',logo:'dana.png'},
   'Shopeepay': {grad:'linear-gradient(135deg,#dc2626,#f97316)',motif:'dots',     logo:'shopeepay.png'},
   'GoPay':     {grad:'linear-gradient(135deg,#047857,#10b981)',motif:'waves',    logo:'gopay.png'},
   'OVO':       {grad:'linear-gradient(135deg,#6d28d9,#8b5cf6)',motif:'circles',  logo:'ovo.png'},
   'Mandiri':   {grad:'linear-gradient(135deg,#b45309,#f59e0b)',motif:'lines',    logo:'mandiri.png'},
   'BNI':       {grad:'linear-gradient(135deg,#1d4ed8,#3b82f6)',motif:'dots',     logo:'bni.png'},
-  'BRI':       {grad:'linear-gradient(135deg,#1e3a8a,#3b82f6)',motif:'wavesthick',logo:'bri.png'},
+  'BRI':       {grad:'linear-gradient(135deg,#1e3a8a,#1d4ed8)',motif:'wavesthick',logo:'bri.png'},
   'default':   {grad:'linear-gradient(135deg,#0ea5e9,#f472b6)',motif:'dots',     logo:null},
 };
 
