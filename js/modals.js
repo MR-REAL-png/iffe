@@ -916,17 +916,64 @@ function openInputModal(){
 // tanpa mengganggu/reset form transaksi yang sedang diisi.
 function quickAddTabungan(){
   closeInputModal();
-  openAddTabungan();
+  quickPicker('tabungan');
 }
 function quickAddPiutang(){
   closeInputModal();
-  openBs('Piutang','<div class="ldrow"><div class="spin"></div>Memuat...</div>');
-  openAddPiutang();
+  quickPicker('piutang');
 }
 function quickAddHutang(){
   closeInputModal();
-  openBs('Hutang','<div class="ldrow"><div class="spin"></div>Memuat...</div>');
-  openAddHutang();
+  quickPicker('hutang');
+}
+
+// Picker: pilih "Buat Baru" atau item Tabungan/Piutang/Hutang yang sudah ada
+async function quickPicker(jenis){
+  const cfg={
+    tabungan:{title:'Tabungan',action:'get-tabungan',addFn:'openAddTabungan()'},
+    piutang:{title:'Piutang',action:'get-piutang',addFn:'openAddPiutang()'},
+    hutang:{title:'Hutang',action:'get-hutang',addFn:'openAddHutang()'}
+  }[jenis];
+  openBs(cfg.title,'<div class="ldrow"><div class="spin"></div>Memuat...</div>');
+  try{
+    const hid=getHouseholdId();
+    const res=await fetch(`${API_URL}/api/sheets?action=${cfg.action}&household_id=${hid}`);
+    const json=await res.json();
+    let list=json.data||[];
+    if(jenis!=='tabungan')list=list.filter(x=>!x.lunas);
+    const html=`
+      <button class="btn-ok" style="width:100%;margin-bottom:12px" onclick="${cfg.addFn}">+ Buat ${cfg.title} Baru</button>
+      ${list.length?`<div style="font-size:0.72rem;color:var(--tx3);margin-bottom:8px">atau pilih yang sudah ada:</div>`:''}
+      ${!list.length?`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem">Belum ada ${cfg.title.toLowerCase()} aktif</div>`:''}
+      ${list.map(x=>quickPickerItem(jenis,x)).join('')}
+    `;
+    document.getElementById('bsBody').innerHTML=html;
+  }catch(e){
+    document.getElementById('bsBody').innerHTML=`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem">Gagal memuat ${cfg.title.toLowerCase()}</div>`;
+  }
+}
+
+function quickPickerItem(jenis,x){
+  const nama=String(x.nama).replace(/'/g,"\\'");
+  if(jenis==='tabungan'){
+    const pct=Number(x.target)>0?Math.min(Math.round(Number(x.terkumpul)/Number(x.target)*100),100):0;
+    return `<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="openTopupTabungan(${x.id},'${nama}',${x.terkumpul},${x.target})">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:600;font-size:0.88rem">${x.nama}</div>
+        <div style="font-size:0.75rem;color:var(--tx3)">${pct}%</div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--tx3);margin-top:2px">${rp(x.terkumpul)} dari ${rp(x.target)}</div>
+    </div>`;
+  }
+  const detailFn=jenis==='piutang'?'openPiutangDetail':'openHutangDetail';
+  const tanggal=x.tanggal||'';
+  const catatan=String(x.catatan||'').replace(/'/g,"\\'");
+  return `<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="${detailFn}(${x.id},'${nama}',${x.nominal},'${tanggal}','${catatan}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-weight:600;font-size:0.88rem">${x.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${x.tanggal||''}${x.catatan?' · '+x.catatan:''}</div></div>
+      <div style="font-weight:700;color:var(--red)">${rp(x.nominal)}</div>
+    </div>
+  </div>`;
 }
 
 // ═══════════════════════════════════════════
