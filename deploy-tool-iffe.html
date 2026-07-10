@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Deploy Tool — IFFE</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;
+  --bg2:#111118;
+  --bg3:#1a1a25;
+  --bdr:rgba(255,255,255,0.08);
+  --bdr2:rgba(255,255,255,0.14);
+  --tx:#f0f0ff;
+  --tx2:#8888aa;
+  --tx3:#555570;
+  --ac:#00ff88;
+  --ac2:#00cc66;
+  --ac-glow:rgba(0,255,136,0.2);
+  --red:#ff4466;
+  --red-glow:rgba(255,68,102,0.2);
+  --yellow:#ffcc00;
+  --blue:#4488ff;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Syne',sans-serif;
+  --r:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--mono)}
+body{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 16px 48px;overflow-x:hidden}
+
+/* BG GRID */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(0,255,136,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.03) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none;
+}
+
+.wrap{width:100%;max-width:480px;position:relative;z-index:1;display:flex;flex-direction:column;gap:16px}
+
+/* HEADER */
+.header{text-align:center;padding:20px 0 8px}
+.header-badge{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bdr2);border-radius:999px;padding:4px 12px;font-size:0.62rem;color:var(--tx2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px}
+.header-badge span{width:6px;height:6px;border-radius:50%;background:var(--ac);box-shadow:0 0 8px var(--ac);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.header h1{font-family:var(--sans);font-size:1.6rem;font-weight:800;color:var(--tx);letter-spacing:-0.02em;line-height:1.1}
+.header h1 span{color:var(--ac)}
+.header p{font-size:0.65rem;color:var(--tx3);margin-top:6px;letter-spacing:0.05em}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:8px}
+.card-head-icon{font-size:0.85rem}
+.card-head-title{font-family:var(--sans);font-size:0.75rem;font-weight:700;color:var(--tx);letter-spacing:0.05em;text-transform:uppercase}
+.card-head-sub{margin-left:auto;font-size:0.6rem;color:var(--tx3)}
+.card-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* INPUTS */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:0.6rem;color:var(--tx2);letter-spacing:0.1em;text-transform:uppercase}
+.field input,.field select{
+  background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;
+  padding:10px 12px;color:var(--tx);font-family:var(--mono);font-size:0.78rem;
+  outline:none;transition:border-color .2s,box-shadow .2s;width:100%;
+}
+.field input:focus,.field select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-glow)}
+.field input::placeholder{color:var(--tx3)}
+.field select option{background:var(--bg3)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* TOKEN ROW */
+.token-wrap{position:relative}
+.token-wrap input{padding-right:40px}
+.token-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--tx3);cursor:pointer;font-size:0.85rem;padding:4px}
+.token-eye:hover{color:var(--tx2)}
+
+/* REPO INFO */
+.repo-info{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.repo-dot{width:8px;height:8px;border-radius:50%;background:var(--ac);box-shadow:0 0 6px var(--ac);flex-shrink:0}
+.repo-text{font-size:0.72rem;color:var(--tx2)}
+.repo-text strong{color:var(--tx)}
+
+/* DROP ZONE */
+.dropzone{
+  border:2px dashed var(--bdr2);border-radius:var(--r);padding:28px 16px;
+  text-align:center;cursor:pointer;transition:all .2s;position:relative;
+  background:var(--bg3);
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--ac);background:rgba(0,255,136,0.04)}
+.dropzone-icon{font-size:1.8rem;margin-bottom:8px}
+.dropzone-title{font-family:var(--sans);font-size:0.82rem;font-weight:700;color:var(--tx);margin-bottom:4px}
+.dropzone-sub{font-size:0.62rem;color:var(--tx3)}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* FILE LIST */
+.file-list{display:flex;flex-direction:column;gap:6px}
+.file-item{
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;
+  padding:10px 12px;display:flex;align-items:center;gap:10px;
+}
+.file-item-icon{font-size:1rem;flex-shrink:0}
+.file-item-info{flex:1;min-width:0}
+.file-item-name{font-size:0.72rem;color:var(--tx);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-item-size{font-size:0.58rem;color:var(--tx3);margin-top:2px}
+.file-item-remove{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:0.9rem;padding:4px;flex-shrink:0;border-radius:4px;transition:color .2s}
+.file-item-remove:hover{color:var(--red)}
+
+/* COMMIT MSG */
+.commit-preview{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px}
+.commit-lbl{font-size:0.58rem;color:var(--tx3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px}
+.commit-val{font-size:0.72rem;color:var(--ac);font-style:italic}
+
+/* PUSH BTN */
+.push-btn{
+  width:100%;padding:14px;border-radius:var(--r);border:none;cursor:pointer;
+  background:var(--ac);color:#000;font-family:var(--sans);font-size:0.85rem;font-weight:800;
+  letter-spacing:0.05em;text-transform:uppercase;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 20px var(--ac-glow);
+}
+.push-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 28px var(--ac-glow)}
+.push-btn:active:not(:disabled){transform:translateY(0)}
+.push-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.push-btn.loading{background:var(--bg3);color:var(--ac);border:1px solid var(--ac)}
+
+/* LOG */
+.log{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.log-head{padding:10px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:6px}
+.log-head-title{font-size:0.65rem;color:var(--tx2);letter-spacing:0.1em;text-transform:uppercase;font-weight:600}
+.log-clear{margin-left:auto;font-size:0.6rem;color:var(--tx3);background:none;border:none;cursor:pointer;font-family:var(--mono);padding:2px 6px;border-radius:4px}
+.log-clear:hover{color:var(--tx2);background:var(--bg3)}
+.log-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;min-height:60px}
+.log-body::-webkit-scrollbar{width:4px}
+.log-body::-webkit-scrollbar-track{background:transparent}
+.log-body::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:4px}
+.log-entry{display:flex;align-items:flex-start;gap:8px;font-size:0.68rem;line-height:1.5}
+.log-entry .ts{color:var(--tx3);flex-shrink:0;font-size:0.6rem}
+.log-entry .msg{color:var(--tx2)}
+.log-entry.ok .msg{color:var(--ac)}
+.log-entry.err .msg{color:var(--red)}
+.log-entry.warn .msg{color:var(--yellow)}
+.log-entry.info .msg{color:var(--blue)}
+.log-empty{font-size:0.65rem;color:var(--tx3);text-align:center;padding:8px 0}
+
+/* STATUS CARD */
+.status-card{border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;border:1px solid;display:none}
+.status-card.show{display:flex}
+.status-card.ok{background:rgba(0,255,136,0.06);border-color:rgba(0,255,136,0.2)}
+.status-card.err{background:var(--red-glow);border-color:rgba(255,68,102,0.2)}
+.status-card.loading{background:rgba(68,136,255,0.06);border-color:rgba(68,136,255,0.2)}
+.status-icon{font-size:1.2rem;flex-shrink:0}
+.status-body{flex:1;min-width:0}
+.status-title{font-family:var(--sans);font-size:0.78rem;font-weight:700;margin-bottom:2px}
+.status-card.ok .status-title{color:var(--ac)}
+.status-card.err .status-title{color:var(--red)}
+.status-card.loading .status-title{color:var(--blue)}
+.status-sub{font-size:0.62rem;color:var(--tx2)}
+.status-link{font-size:0.62rem;color:var(--ac);text-decoration:none;display:inline-block;margin-top:4px}
+.status-link:hover{text-decoration:underline}
+
+/* VERCEL STATUS */
+.vercel-status{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.vercel-step{display:flex;align-items:center;gap:8px;font-size:0.62rem;color:var(--tx2)}
+.vercel-step .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--tx3)}
+.vercel-step.done .dot{background:var(--ac);box-shadow:0 0 6px var(--ac)}
+.vercel-step.active .dot{background:var(--blue);box-shadow:0 0 6px var(--blue);animation:pulse 1s infinite}
+.vercel-step.fail .dot{background:var(--red)}
+
+/* SPINNER */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite}
+
+/* SAVE TOKEN */
+.save-token-row{display:flex;align-items:center;gap:8px;font-size:0.62rem;color:var(--tx3)}
+.save-token-row input[type=checkbox]{accent-color:var(--ac);width:14px;height:14px;cursor:pointer}
+.save-token-row label{cursor:pointer;user-select:none}
+
+/* RENAME */
+.file-item-name-wrap{flex:1;min-width:0}
+.file-item-name{font-size:0.72rem;color:var(--tx);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-item-renamed{font-size:0.58rem;color:var(--ac);margin-top:1px}
+.file-item-size{font-size:0.58rem;color:var(--tx3);margin-top:2px}
+.rename-input-wrap{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.rename-hint{font-size:0.56rem;color:var(--yellow);display:flex;align-items:center;gap:3px}
+.rename-input{background:var(--bg);border:1px solid var(--ac);border-radius:6px;padding:5px 8px;color:var(--tx);font-family:var(--mono);font-size:0.72rem;outline:none;width:100%}
+.rename-input:focus{box-shadow:0 0 0 2px var(--ac-glow)}
+.rename-actions{display:flex;gap:4px;flex-shrink:0}
+.btn-rename-confirm{background:var(--ac);color:#000;border:none;border-radius:5px;padding:5px 8px;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:var(--mono)}
+.btn-rename-cancel{background:none;color:var(--tx3);border:1px solid var(--bdr2);border-radius:5px;padding:5px 8px;font-size:0.7rem;cursor:pointer;font-family:var(--mono)}
+.file-item-edit{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:0.8rem;padding:4px;flex-shrink:0;border-radius:4px;transition:color .2s}
+.file-item-edit:hover{color:var(--ac)}
+
+/* FOOTER */
+.footer{text-align:center;font-size:0.58rem;color:var(--tx3);margin-top:8px;letter-spacing:0.05em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge"><span></span>GitHub Deploy Tool</div>
+    <h1>Push <span>→</span> Deploy</h1>
+    <p>IFFE · Upload file · auto commit ke GitHub · Vercel auto deploy</p>
+  </div>
+
+  <!-- TOKEN CONFIG -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-icon">🔑</span>
+      <span class="card-head-title">API Tokens</span>
+      <span class="card-head-sub">disimpan lokal</span>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <div class="token-wrap">
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+          <button class="token-eye" onclick="toggleVis('ghToken',this)">👁</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Vercel API Token</label>
+        <div class="token-wrap">
+          <input type="password" id="vcToken" placeholder="vcp_xxxxxxxxxxxx">
+          <button class="token-eye" onclick="toggleVis('vcToken',this)">👁</button>
+        </div>
+      </div>
+      <div class="save-token-row">
+        <input type="checkbox" id="saveTokens" checked>
+        <label for="saveTokens">Simpan token di browser (localStorage)</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPO CONFIG -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-icon">📦</span>
+      <span class="card-head-title">Repository</span>
+      <span class="card-head-sub">auto-filled</span>
+    </div>
+    <div class="card-body">
+      <div class="repo-info">
+        <div class="repo-dot"></div>
+        <div class="repo-text">
+          <strong>MR-REAL-png / iffe</strong> · branch <strong>main</strong>
+        </div>
+      </div>
+      <div class="field">
+        <label>Commit Message (opsional)</label>
+        <input type="text" id="commitMsg" placeholder="Update file via Deploy Tool">
+      </div>
+      <div class="commit-preview">
+        <div class="commit-lbl">Preview commit</div>
+        <div class="commit-val" id="commitPreview">⚡ Update file via Deploy Tool</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-icon">📁</span>
+      <span class="card-head-title">Upload File</span>
+      <span class="card-head-sub" id="fileCount">0 file dipilih</span>
+    </div>
+    <div class="card-body">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" multiple>
+        <div class="dropzone-icon">⬆️</div>
+        <div class="dropzone-title">Drop file di sini</div>
+        <div class="dropzone-sub">atau klik untuk pilih · semua tipe file diterima</div>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-card" id="statusCard">
+    <div class="status-icon" id="statusIcon"></div>
+    <div class="status-body">
+      <div class="status-title" id="statusTitle"></div>
+      <div class="status-sub" id="statusSub"></div>
+      <div class="vercel-status" id="vercelSteps" style="display:none">
+        <div class="vercel-step" id="vstep1"><div class="dot"></div><span>GitHub push</span></div>
+        <div class="vercel-step" id="vstep2"><div class="dot"></div><span>Vercel mendeteksi perubahan</span></div>
+        <div class="vercel-step" id="vstep3"><div class="dot"></div><span>Building...</span></div>
+        <div class="vercel-step" id="vstep4"><div class="dot"></div><span>Deploy selesai</span></div>
+      </div>
+      <a class="status-link" id="statusLink" href="#" target="_blank" style="display:none"></a>
+    </div>
+  </div>
+
+  <!-- PUSH BUTTON -->
+  <button class="push-btn" id="pushBtn" onclick="doPush()">
+    <span>🚀</span> Push ke GitHub
+  </button>
+
+  <!-- DEPLOY HOOK BUTTON -->
+  <button onclick="triggerDeployHook()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(0,255,136,0.3);background:rgba(0,255,136,0.06);color:#00ff88;font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:all .2s" id="deployHookBtn">
+    ⚡ Trigger Deploy Vercel
+  </button>
+
+  <!-- LOG -->
+  <div class="log">
+    <div class="log-head">
+      <span class="log-head-title">📋 Activity Log</span>
+      <button class="log-clear" onclick="clearLog()">clear</button>
+    </div>
+    <div class="log-body" id="logBody">
+      <div class="log-empty">Belum ada aktivitas</div>
+    </div>
+  </div>
+
+  <div class="footer">Deploy Tool · MR-REAL-png/iffe · main</div>
+</div>
+
+<script>
+// ═══ CONFIG ═══
+const REPO_OWNER = 'MR-REAL-png';
+const REPO_NAME  = 'iffe';
+const REPO_BRANCH = 'main';
+const VERCEL_PROJECT_ID = 'prj_NaKmnvXEhvQGhDUShOVCJV5oJJcE';
+const VERCEL_DEPLOY_HOOK = 'https://api.vercel.com/v1/integrations/deploy/prj_NaKmnvXEhvQGhDUShOVCJV5oJJcE/EIqE1BJuUu';
+
+// ═══ STATE ═══
+let files = [];
+let pushing = false;
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', () => {
+  loadTokens();
+  setupDrop();
+  setupCommitPreview();
+  log('info', 'Deploy Tool siap digunakan');
+  log('info', `Target: ${REPO_OWNER}/${REPO_NAME} [${REPO_BRANCH}]`);
+});
+
+// ═══ TOKEN STORAGE ═══
+function loadTokens() {
+  const gh = localStorage.getItem('dt_gh_token');
+  const vc = localStorage.getItem('dt_vc_token');
+  if (gh) document.getElementById('ghToken').value = gh;
+  if (vc) document.getElementById('vcToken').value = vc;
+  if (gh || vc) log('ok', 'Token dimuat dari storage');
+}
+
+function saveTokensIfNeeded() {
+  if (!document.getElementById('saveTokens').checked) return;
+  const gh = document.getElementById('ghToken').value.trim();
+  const vc = document.getElementById('vcToken').value.trim();
+  if (gh) localStorage.setItem('dt_gh_token', gh);
+  if (vc) localStorage.setItem('dt_vc_token', vc);
+}
+
+// ═══ TOGGLE PASSWORD ═══
+function toggleVis(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+  else { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+// ═══ COMMIT PREVIEW ═══
+function setupCommitPreview() {
+  const inp = document.getElementById('commitMsg');
+  inp.addEventListener('input', updateCommitPreview);
+}
+function updateCommitPreview() {
+  const msg = document.getElementById('commitMsg').value.trim() || 'Update file via Deploy Tool';
+  const now = new Date();
+  const ts = `${now.getDate()}/${now.getMonth()+1} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('commitPreview').textContent = `⚡ ${msg} [${ts}]`;
+}
+
+// ═══ DROP ZONE ═══
+function setupDrop() {
+  const dz = document.getElementById('dropzone');
+  const fi = document.getElementById('fileInput');
+
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    addFiles([...e.dataTransfer.files]);
+  });
+  fi.addEventListener('change', () => { addFiles([...fi.files]); fi.value = ''; });
+}
+
+function autoRename(fileName) {
+  const lastDot = fileName.lastIndexOf('.');
+  // File tanpa ekstensi → biarkan apa adanya
+  if (lastDot === -1) return fileName;
+
+  const ext = fileName.substring(lastDot + 1).toLowerCase();
+  const base = fileName.substring(0, lastDot);
+
+  // Kalau nama ada spasi, ambil kata pertama doang + ekstensi asli
+  // contoh: "sheet update fix.js" -> "sheet.js"
+  let name = fileName;
+  if (base.includes(' ')) {
+    const firstWord = base.split(' ')[0];
+    name = `${firstWord}.${ext}`;
+  }
+
+  // HTML & gambar & json & dokumen → root
+  if (['html', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'json', 'pdf'].includes(ext)) {
+    return name;
+  }
+  // Pengecualian khusus: service-worker.js WAJIB tetap di root.
+  // Scope Service Worker default = folder tempat file itu berada, dan
+  // registrasi di index.html pakai register('./service-worker.js') dari
+  // root, jadi kalau ini masuk js/ maka SW akan gagal ter-register/expired.
+  if (name === 'service-worker.js') return name;
+  // JS → js/
+  if (ext === 'js') return `js/${name}`;
+  // CSS → css/
+  if (ext === 'css') return `css/${name}`;
+  // Default → root
+  return name;
+}
+
+function addFiles(newFiles) {
+  newFiles.forEach(f => {
+    if (!files.find(x => x.name === f.name)) {
+      const autoName = autoRename(f.name);
+      if (autoName !== f.name) f._rename = autoName;
+      files.push(f);
+    }
+  });
+  renderFiles();
+}
+
+function removeFile(name) {
+  files = files.filter(f => f.name !== name);
+  renderFiles();
+}
+
+// ═══ RENAME STATE ═══
+let renamingIndex = -1;
+
+function startRename(index) {
+  renamingIndex = index;
+  renderFiles();
+  setTimeout(() => {
+    const inp = document.getElementById(`renameInp_${index}`);
+    if (inp) { inp.focus(); inp.select(); }
+  }, 50);
+}
+
+function confirmRename(index) {
+  const inp = document.getElementById(`renameInp_${index}`);
+  if (!inp) return;
+  const newName = inp.value.trim();
+  if (newName && newName !== files[index].name) {
+    files[index]._rename = newName;
+  }
+  renamingIndex = -1;
+  renderFiles();
+}
+
+function cancelRename(index) {
+  renamingIndex = -1;
+  renderFiles();
+}
+
+function renderFiles() {
+  const list = document.getElementById('fileList');
+  const count = document.getElementById('fileCount');
+  count.textContent = `${files.length} file dipilih`;
+
+  if (!files.length) { list.innerHTML = ''; return; }
+
+  const icons = { html:'🌐', css:'🎨', js:'⚙️', jsx:'⚛️', ts:'🔷', tsx:'🔷', json:'📋', md:'📝', txt:'📄', png:'🖼️', jpg:'🖼️', jpeg:'🖼️', gif:'🖼️', webp:'🖼️', svg:'🖼️', mp4:'🎬', pdf:'📕' };
+
+  list.innerHTML = files.map((f, i) => {
+    const displayName = f._rename || f.name;
+    const ext = displayName.split('.').pop().toLowerCase();
+    const icon = icons[ext] || '📄';
+    const size = f.size > 1024 ? `${(f.size/1024).toFixed(1)} KB` : `${f.size} B`;
+    const isRenamed = f._rename && f._rename !== f.name;
+
+    if (renamingIndex === i) {
+      return `<div class="file-item" style="flex-wrap:wrap;align-items:flex-start">
+        <span class="file-item-icon" style="margin-top:4px">${icon}</span>
+        <div class="rename-input-wrap">
+          <div class="rename-hint">⚠️ Sertakan ekstensi: .html .css .js .png .jpg dll</div>
+          <input class="rename-input" id="renameInp_${i}" value="${displayName}"
+            onkeydown="if(event.key==='Enter')confirmRename(${i});if(event.key==='Escape')cancelRename(${i})">
+        </div>
+        <div class="rename-actions">
+          <button class="btn-rename-confirm" onclick="confirmRename(${i})">✓</button>
+          <button class="btn-rename-cancel" onclick="cancelRename(${i})">✕</button>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="file-item">
+      <span class="file-item-icon">${icon}</span>
+      <div class="file-item-name-wrap">
+        <div class="file-item-name">${displayName}</div>
+        ${isRenamed ? `<div class="file-item-renamed">✏️ dari: ${f.name}</div>` : `<div class="file-item-size">${size}</div>`}
+      </div>
+      <button class="file-item-edit" onclick="startRename(${i})" title="Rename">✏️</button>
+      <button class="file-item-remove" onclick="removeFile('${f.name}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══ PUSH ═══
+async function doPush() {
+  if (pushing) return;
+
+  const ghToken = document.getElementById('ghToken').value.trim();
+  const vcToken = document.getElementById('vcToken').value.trim();
+
+  if (!ghToken) { showStatus('err', '⚠️ Token GitHub diperlukan', 'Masukkan GitHub Personal Access Token'); return; }
+  if (!files.length) { showStatus('err', '⚠️ Pilih file dulu', 'Belum ada file yang dipilih untuk di-push'); return; }
+
+  pushing = true;
+  saveTokensIfNeeded();
+  updateCommitPreview();
+
+  const msg = document.getElementById('commitMsg').value.trim() || 'Update file via Deploy Tool';
+  const now = new Date();
+  const ts = `${now.getDate()}/${now.getMonth()+1} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const commitMessage = `⚡ ${msg} [${ts}]`;
+
+  const btn = document.getElementById('pushBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span> Pushing...';
+
+  showStatus('loading', '🔄 Menghubungi GitHub...', 'Membaca file dan mempersiapkan commit', true);
+  log('info', `Memulai push ${files.length} file...`);
+
+  try {
+    // Push semua file
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = file._rename || file.name;
+      btn.innerHTML = `<span class="spinner"></span> Push ${i+1}/${files.length}: ${fileName}`;
+      log('info', `📤 Uploading: ${fileName}${file._rename ? ` (dari ${file.name})` : ''}`);
+
+      // Read file
+      const content = await readFileAsBase64(file);
+
+      // Get current SHA (jika file sudah ada)
+      let sha = null;
+      try {
+        const checkRes = await fetch(
+          `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${fileName}?ref=${REPO_BRANCH}`,
+          { headers: { Authorization: `Bearer ${ghToken}`, Accept: 'application/vnd.github.v3+json' } }
+        );
+        if (checkRes.ok) {
+          const data = await checkRes.json();
+          sha = data.sha;
+          log('info', `📝 Update: ${fileName} (existing)`);
+        } else {
+          log('info', `✨ Baru: ${fileName}`);
+        }
+      } catch {}
+
+      // Push file
+      const pushRes = await fetch(
+        `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${fileName}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${ghToken}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: commitMessage,
+            content: content,
+            branch: REPO_BRANCH,
+            ...(sha ? { sha } : {})
+          })
+        }
+      );
+
+      if (!pushRes.ok) {
+        const err = await pushRes.json();
+        throw new Error(`GitHub error pada ${file.name}: ${err.message}`);
+      }
+
+      log('ok', `✅ ${file.name} berhasil di-push`);
+    }
+
+    log('ok', `🎉 Semua file berhasil di-push! Commit: "${commitMessage}"`);
+    showStatus('ok', '✅ Push ke GitHub Berhasil!', `${files.length} file berhasil di-commit`, true);
+    setVercelStep(1, 'done');
+    // Auto-clear file list setelah push berhasil
+    files = [];
+    renderFiles();
+    document.getElementById('commitMsg').value = '';
+    updateCommitPreview();
+
+    // Auto trigger deploy hook
+    log('info', '🚀 Trigger Vercel Deploy Hook...');
+    setVercelStep(2, 'active');
+    try {
+      await fetch(VERCEL_DEPLOY_HOOK, { method: 'POST' });
+      log('ok', '✅ Deploy Hook triggered! Vercel sedang build...');
+      setVercelStep(2, 'done');
+      setVercelStep(3, 'active');
+    } catch(e) {
+      log('warn', '⚠️ Deploy Hook gagal: ' + e.message);
+    }
+
+    // Monitor Vercel jika ada token
+    if (vcToken) {
+      await monitorVercel(vcToken, commitMessage);
+    } else {
+      log('warn', '⚠️ Vercel token tidak ada — tidak bisa pantau deploy');
+      document.getElementById('statusSub').textContent = 'Push berhasil! Deploy Hook sudah ditrigger. Tunggu ~30 detik.';
+      const link = document.getElementById('statusLink');
+      link.href = 'https://iffe-eight.vercel.app';
+      link.textContent = '→ Buka SHIFA';
+      link.style.display = 'inline-block';
+    }
+
+  } catch (err) {
+    log('err', `❌ Error: ${err.message}`);
+    showStatus('err', '❌ Push Gagal', err.message);
+  } finally {
+    pushing = false;
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.innerHTML = '<span>🚀</span> Push ke GitHub';
+  }
+}
+
+// ═══ TRIGGER DEPLOY HOOK ═══
+async function triggerDeployHook() {
+  const btn = document.getElementById('deployHookBtn');
+  btn.textContent = '⏳ Deploying...';
+  btn.disabled = true;
+  try {
+    await fetch(VERCEL_DEPLOY_HOOK, { method: 'POST' });
+    btn.textContent = '✅ Deploy triggered!';
+    btn.style.color = '#00ff88';
+    log('ok', '✅ Deploy Hook triggered! Vercel sedang build (~30 detik)');
+  } catch(e) {
+    btn.textContent = '❌ Gagal';
+    btn.style.color = '#ff4466';
+    log('err', '❌ Deploy Hook gagal: ' + e.message);
+  }
+  setTimeout(() => {
+    btn.textContent = '⚡ Trigger Deploy Vercel';
+    btn.disabled = false;
+    btn.style.color = '#00ff88';
+  }, 3000);
+}
+
+// ═══ READ FILE ═══
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ═══ VERCEL MONITOR ═══
+async function monitorVercel(token, commitMsg) {
+  const maxWait = 120000; // 2 menit
+  const interval = 4000;
+  const start = Date.now();
+
+  setVercelStep(2, 'done');
+  setVercelStep(3, 'active');
+
+  while (Date.now() - start < maxWait) {
+    await sleep(interval);
+    try {
+      const res = await fetch(
+        `https://api.vercel.com/v6/deployments?projectId=${VERCEL_PROJECT_ID}&limit=5`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!res.ok) {
+        log('warn', `Vercel API: ${res.status}`);
+        break;
+      }
+
+      const data = await res.json();
+      const deployments = data.deployments || [];
+      const latest = deployments[0];
+
+      if (!latest) continue;
+
+      const state = latest.state || latest.readyState;
+      log('info', `Vercel status: ${state}`);
+
+      if (state === 'READY') {
+        setVercelStep(3, 'done');
+        setVercelStep(4, 'done');
+        const url = `https://${latest.url}`;
+        log('ok', `🚀 Deploy sukses! → ${url}`);
+        showStatus('ok', '🚀 Deploy Vercel Berhasil!', 'Web kamu sudah live dan ter-update!', true);
+        const link = document.getElementById('statusLink');
+        link.href = url;
+        link.textContent = `→ Buka: ${url}`;
+        link.style.display = 'inline-block';
+        return;
+      } else if (state === 'ERROR' || state === 'CANCELED') {
+        setVercelStep(3, 'fail');
+        log('err', `Deploy Vercel gagal: ${state}`);
+        showStatus('err', '❌ Deploy Vercel Gagal', `Status: ${state}. Cek Vercel dashboard.`);
+        return;
+      } else if (state === 'BUILDING' || state === 'QUEUED') {
+        log('info', `🔨 Vercel sedang ${state}...`);
+      }
+    } catch (e) {
+      log('warn', `Vercel check error: ${e.message}`);
+    }
+  }
+
+  log('warn', '⏰ Timeout memantau Vercel — cek dashboard manual');
+  setVercelStep(3, 'fail');
+  document.getElementById('statusSub').textContent = 'GitHub push berhasil. Cek Vercel dashboard untuk status deploy.';
+  const link = document.getElementById('statusLink');
+  link.href = 'https://vercel.com/dashboard';
+  link.textContent = '→ Buka Vercel Dashboard';
+  link.style.display = 'inline-block';
+}
+
+function setVercelStep(num, state) {
+  const el = document.getElementById(`vstep${num}`);
+  if (!el) return;
+  el.className = `vercel-step ${state}`;
+}
+
+// ═══ STATUS ═══
+function showStatus(type, title, sub, showSteps) {
+  const card = document.getElementById('statusCard');
+  card.className = `status-card show ${type}`;
+  document.getElementById('statusIcon').textContent = type === 'ok' ? '✅' : type === 'err' ? '❌' : '🔄';
+  document.getElementById('statusTitle').textContent = title;
+  document.getElementById('statusSub').textContent = sub;
+  const steps = document.getElementById('vercelSteps');
+  steps.style.display = showSteps ? 'flex' : 'none';
+  document.getElementById('statusLink').style.display = 'none';
+}
+
+// ═══ LOG ═══
+function log(type, msg) {
+  const body = document.getElementById('logBody');
+  const empty = body.querySelector('.log-empty');
+  if (empty) empty.remove();
+
+  const now = new Date();
+  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.innerHTML = `<span class="ts">${ts}</span><span class="msg">${msg}</span>`;
+  body.appendChild(entry);
+  body.scrollTop = body.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('logBody').innerHTML = '<div class="log-empty">Log dibersihkan</div>';
+}
+
+// ═══ UTILS ═══
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
