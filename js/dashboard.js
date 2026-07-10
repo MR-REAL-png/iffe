@@ -740,15 +740,17 @@ async function submitAddTabungan(){
     const json=await res.json().catch(()=>({success:false}));
     const tabId=json.data?.id;
     if(terkumpul>0){
-      if(tabId)await fetch(`${API_URL}/api/sheets?action=append-tabungan-history`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,tabungan_id:tabId,nominal:terkumpul,sumber:sumber||null,tanggal:getLocalDate()})});
+      let transaksi_id=null;
       if(sumber){
-        await sheetsAppend({
+        const txJson=await sheetsAppend({
           tanggal:getLocalDate(),bulan:MOS[new Date().getMonth()],
           kategori:'Tabungan',nominal:terkumpul,pembayaran:sumber,
           detail:`Tabungan: ${nama}`,metode:'Transfer',jenis:'Pengeluaran'
         });
+        transaksi_id=txJson?.data?.id||null;
         allRows=[];
       }
+      if(tabId)await fetch(`${API_URL}/api/sheets?action=append-tabungan-history`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,tabungan_id:tabId,nominal:terkumpul,sumber:sumber||null,tanggal:getLocalDate(),transaksi_id})});
     }
     closeBs();toast('Tabungan ditambahkan ✓','ok');loadTabungan();
     if(sumber&&terkumpul>0)loadDashboard();
