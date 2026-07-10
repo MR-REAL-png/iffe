@@ -276,11 +276,18 @@ function renderBudgetMonitor(byCat){
   const el=document.getElementById('budgetMonitor');
   const secLbl=document.getElementById('bmonSecLbl');
   if(!el||!secLbl)return;
-  const now=new Date();
-  const bKey=getBudgetMonthKey(now.getFullYear(),now.getMonth());
+  // Pakai bulan yang SEDANG DITAMPILKAN di dashboard (bukan selalu "hari ini")
+  const bKey=getBudgetMonthKey(dashActiveYear,dashActiveBulan);
   const budgets=getBudgetsForMonth(bKey);
-  const allItems=byCat.filter(k=>budgets[k.kategori]>0).map(k=>{
-    const budget=budgets[k.kategori];
+  // Normalisasi nama kategori (trim + lowercase) biar cocok walau beda kapitalisasi/spasi
+  const budgetNorm={};
+  Object.keys(budgets).forEach(k=>{budgetNorm[k.trim().toLowerCase()]=budgets[k];});
+  const allItems=byCat.filter(k=>{
+    const nk=(k.kategori||'').trim().toLowerCase();
+    return budgetNorm[nk]>0;
+  }).map(k=>{
+    const nk=(k.kategori||'').trim().toLowerCase();
+    const budget=budgetNorm[nk];
     const pct=Math.min(Math.round(k.nominal/budget*100),999);
     const cls=pct>100?'bmon-over':pct>=alertPct?'bmon-warn':'bmon-ok';
     const barW=Math.min(pct,100);
@@ -724,6 +731,8 @@ async function submitAddTabungan(){
   const sumber=document.getElementById('tabSumber')?.value;
   if(!nama||!target){toast('Lengkapi data tabungan','err');return}
   if(!lockBusy('addTabungan'))return;
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-tabungan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({household_id:hid,nama,target,terkumpul})});
@@ -743,7 +752,7 @@ async function submitAddTabungan(){
     closeBs();toast('Tabungan ditambahkan ✓','ok');loadTabungan();
     if(sumber&&terkumpul>0)loadDashboard();
   }catch(e){toast('Gagal simpan: '+e.message,'err')}
-  finally{unlockBusy('addTabungan')}
+  finally{unlockBusy('addTabungan');setBtnBusy(btn,false);}
 }
 
 function openTopupTabungan(id,nama,terkumpul,target){
@@ -762,6 +771,8 @@ async function submitTopup(id,current,nama){
   const tambah=getNomVal('topupNom');if(!tambah){toast('Isi jumlah topup','err');return}
   const sumber=document.getElementById('topupSumber')?.value;
   if(!lockBusy('topupTab'))return;
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
   try{
     const hid=getHouseholdId();
     const session=getSession();
@@ -790,7 +801,7 @@ async function submitTopup(id,current,nama){
     closeBs();toast('Topup berhasil ✓','ok');loadTabungan();
     if(sumber)loadDashboard();
   }catch(e){toast('Gagal topup: '+e.message,'err')}
-  finally{unlockBusy('topupTab')}
+  finally{unlockBusy('topupTab');setBtnBusy(btn,false);}
 }
 
 function openRiwayatTabungan(id,nama){
