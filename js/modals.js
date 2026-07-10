@@ -88,16 +88,17 @@ async function submitEdit(){
   try{
     await sheetsUpdate(id,{tanggal:tgl,bulan,kategori:kat,nominal:nom,pembayaran:bank||'Cash',detail:ket,metode:met,jenis});
 
-    // Sinkron tabungan_history jika kategori Tabungan dan nominal berubah
-    if(kat==='Tabungan'){
+    // Sinkron history jika kategori Tabungan/Piutang/Hutang dan nominal berubah
+    const syncActionByKat={Tabungan:'update-tabungan-history-by-transaksi',Piutang:'update-piutang-history-by-transaksi',Hutang:'update-hutang-history-by-transaksi'};
+    if(syncActionByKat[kat]){
       const hid=getHouseholdId();
       try{
-        await fetch(`${API_URL}/api/sheets?action=update-tabungan-history-by-transaksi`,{
+        await fetch(`${API_URL}/api/sheets?action=${syncActionByKat[kat]}`,{
           method:'PUT',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({transaksi_id:String(id),household_id:hid,nominal:nom})
         });
-      }catch(e2){console.warn('Sinkron tabungan gagal:',e2);}
+      }catch(e2){console.warn('Sinkron '+kat+' gagal:',e2);}
     }
 
     closeOv(null,'ovEdit');
@@ -132,13 +133,14 @@ async function doDelete(id){
 
     await sheetsDelete(id);
 
-    // Sinkron tabungan_history jika kategori Tabungan
-    if(r?.kategori==='Tabungan'){
+    // Sinkron history jika kategori Tabungan/Piutang/Hutang
+    const delSyncActionByKat={Tabungan:'delete-tabungan-history-by-transaksi',Piutang:'delete-piutang-history-by-transaksi',Hutang:'delete-hutang-history-by-transaksi'};
+    if(r?.kategori&&delSyncActionByKat[r.kategori]){
       try{
-        await fetch(`${API_URL}/api/sheets?action=delete-tabungan-history-by-transaksi&transaksi_id=${encodeURIComponent(String(id))}&household_id=${hid}`,{
+        await fetch(`${API_URL}/api/sheets?action=${delSyncActionByKat[r.kategori]}&transaksi_id=${encodeURIComponent(String(id))}&household_id=${hid}`,{
           method:'DELETE'
         });
-      }catch(e2){console.warn('Sinkron hapus tabungan gagal:',e2);}
+      }catch(e2){console.warn('Sinkron hapus '+r.kategori+' gagal:',e2);}
     }
 
     closeOv(null,'ovConfirm');
@@ -907,6 +909,24 @@ function openInputModal(){
   openOv('ovInput');
   // Init AI scan countdown
   initAiScanUI();
+}
+
+// ═══ SHORTCUT: Tabungan/Piutang/Hutang dari Modal Input utama ═══
+// Menutup modal input transaksi biasa, lalu buka form khusus (bottom sheet)
+// tanpa mengganggu/reset form transaksi yang sedang diisi.
+function quickAddTabungan(){
+  closeInputModal();
+  openAddTabungan();
+}
+function quickAddPiutang(){
+  closeInputModal();
+  openBs('Piutang','<div class="ldrow"><div class="spin"></div>Memuat...</div>');
+  openAddPiutang();
+}
+function quickAddHutang(){
+  closeInputModal();
+  openBs('Hutang','<div class="ldrow"><div class="spin"></div>Memuat...</div>');
+  openAddHutang();
 }
 
 // ═══════════════════════════════════════════
