@@ -282,7 +282,7 @@ function renderChartHarian(rows){
       responsive:true,animation:{duration:1000,easing:'easeInOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`,title:t=>t[0].label},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#f472b6',borderColor:'rgba(244,114,182,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
       scales:{
-        y:{ticks:{callback:v=>rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
         x:{ticks:{color:tc,font:{size:9},maxRotation:45},grid:{display:false},border:{display:false}}
       }
     }
@@ -318,12 +318,25 @@ function renderChartTren(){
       responsive:true,animation:{duration:800,easing:'easeInOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#38bdf8',borderColor:'rgba(56,189,248,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
       scales:{
-        y:{ticks:{callback:v=>rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
         x:{ticks:{color:tc,font:{size:9}},grid:{display:false},border:{display:false}}
       }
     }
   });
   }); // end requestAnimationFrame
+  // ── Stat ringkas di bawah chart, biar gak banyak ruang kosong ──
+  const withData=buckets.map((b,i)=>({...b,v:totals[i]})).filter(b=>b.v>0);
+  const avg=Math.round(totals.reduce((a,b)=>a+b,0)/buckets.length);
+  const maxB=withData.reduce((a,b)=>b.v>a.v?b:a,withData[0]);
+  const minB=withData.reduce((a,b)=>b.v<a.v?b:a,withData[0]);
+  const statsEl=document.createElement('div');
+  statsEl.className='bs-kas-pills';
+  statsEl.style.marginTop='12px';
+  statsEl.innerHTML=`
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² / Bulan</div><div class="bs-kas-pill-val">Rp ${rpShort(avg)}</div></div>
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Tertinggi</div><div class="bs-kas-pill-val" style="color:var(--red)">${maxB.label}</div></div>
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Terendah</div><div class="bs-kas-pill-val" style="color:var(--grn)">${minB.label}</div></div>`;
+  wrap.appendChild(statsEl);
 }
 
 // ═══ CHART PERBANDINGAN USER (Sheril vs Ifaa, periode aktif) ═══
@@ -349,12 +362,22 @@ function renderChartUser(rows){
       responsive:true,animation:{duration:800,easing:'easeInOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#f472b6',borderColor:'rgba(244,114,182,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
       scales:{
-        x:{ticks:{callback:v=>rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        x:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
         y:{ticks:{color:tc,font:{size:11,weight:'600'}},grid:{display:false},border:{display:false}}
       }
     }
   });
   }); // end requestAnimationFrame
+  // ── Stat ringkas: total gabungan + porsi masing-masing, biar gak banyak ruang kosong ──
+  const total=totals.reduce((a,b)=>a+b,0);
+  const pct=totals.map(v=>total>0?Math.round(v/total*100):0);
+  const statsEl=document.createElement('div');
+  statsEl.className='bs-kas-pills';
+  statsEl.style.marginTop='12px';
+  statsEl.innerHTML=members.map((m,i)=>
+    `<div class="bs-kas-pill"><div class="bs-kas-pill-lbl">${m.username}</div><div class="bs-kas-pill-val" style="color:${m.color||'var(--ac)'}">${pct[i]}%</div></div>`
+  ).join('')+`<div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Total</div><div class="bs-kas-pill-val">Rp ${rpShort(total)}</div></div>`;
+  wrap.appendChild(statsEl);
 }
 function renderBudget(byCat){
   const el=document.getElementById('budgetList');
