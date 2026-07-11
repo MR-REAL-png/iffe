@@ -552,11 +552,11 @@ async function loadPesanBadge(){
 }
 
 function pesanCard(p){
-  const jenisLabel={hutang:'Hutang',piutang:'Piutang',tabungan:'Tabungan',transfer:'Transfer'}[p.jenis]||'';
-  const clickable=p.jenis&&p.target_id&&['hutang','piutang','tabungan'].includes(p.jenis);
+  const jenisLabel={hutang:'Hutang',piutang:'Piutang',tabungan:'Tabungan',transaksi:'Transaksi',transfer:'Transfer',kategori:'Kategori'}[p.jenis]||'';
+  const clickable=(p.jenis&&p.target_id&&['hutang','piutang','tabungan','transaksi','transfer'].includes(p.jenis))||(p.jenis==='kategori'&&p.target_text);
   const isiSafe=String(p.isi||'').replace(/</g,'&lt;');
   return `
-    <div class="notif-card pesan"${clickable?` onclick="openPesanTarget('${p.jenis}',${p.target_id})" style="cursor:pointer"`:''}>
+    <div class="notif-card pesan"${clickable?` onclick="openPesanTarget('${p.jenis}',${p.target_id||'null'},'${String(p.target_text||'').replace(/'/g,"\\'")}')" style="cursor:pointer"`:''}>
       <div class="nc-ico">${ICON_PESAN}</div>
       <div class="nc-body">
         <div class="nc-title">${p.dari} → ${p.untuk||'Semua'}${jenisLabel?` · ${jenisLabel}`:''}</div>
@@ -567,8 +567,8 @@ function pesanCard(p){
   `;
 }
 
-// Navigasi ke item terkait (hutang/piutang/tabungan) saat pesan di-tap
-async function openPesanTarget(jenis,targetId){
+// Navigasi ke item terkait saat pesan di-tap
+async function openPesanTarget(jenis,targetId,targetText){
   const hid=getHouseholdId();
   try{
     if(jenis==='hutang'){
@@ -589,6 +589,22 @@ async function openPesanTarget(jenis,targetId){
       const item=(await res.json()).data?.find(x=>String(x.id)===String(targetId));
       if(item)openTopupTabungan(item.id,item.nama,item.terkumpul,item.target);
       else toast('Item sudah tidak ada (mungkin sudah dihapus)','err');
+    }else if(jenis==='transaksi'){
+      goPage('data');
+      if(typeof loadData==='function')await loadData();
+      const row=allRows.find(r=>String(r.id)===String(targetId)||String(r.rowIndex)===String(targetId));
+      if(row)openEdit(row.id||row.rowIndex);
+      else toast('Transaksi sudah tidak ada (mungkin sudah dihapus)','err');
+    }else if(jenis==='transfer'){
+      goPage('dompet');
+      const res=await fetch(`${API_URL}/api/sheets?action=get-transfers&household_id=${hid}`);
+      const item=(await res.json()).data?.find(x=>String(x.id)===String(targetId));
+      if(item)openEditTransfer(encodeURIComponent(JSON.stringify(item)));
+      else toast('Transfer sudah tidak ada (mungkin sudah dihapus)','err');
+    }else if(jenis==='kategori'&&targetText){
+      goPage('dashboard');
+      if(typeof loadDashboard==='function')await loadDashboard();
+      openBudItemDetail(targetText);
     }
   }catch(e){toast('Gagal buka detail: '+e.message,'err');}
 }
@@ -614,6 +630,9 @@ function openTambahPesan(){
         <option value="hutang">Hutang</option>
         <option value="piutang">Piutang</option>
         <option value="tabungan">Tabungan</option>
+        <option value="transaksi">Transaksi</option>
+        <option value="transfer">Transfer</option>
+        <option value="kategori">Kategori</option>
       </select>
     </div>
     <div id="pesanTargetWrap"></div>
@@ -628,12 +647,28 @@ async function onPesanJenisChange(){
   if(!jenis){wrap.innerHTML='';return;}
   wrap.innerHTML='<div class="ldrow"><div class="spin"></div>Memuat...</div>';
   const hid=getHouseholdId();
-  const action={hutang:'get-hutang',piutang:'get-piutang',tabungan:'get-tabungan'}[jenis];
   try{
+    if(jenis==='kategori'){
+      // Tidak perlu fetch — ambil dari daftar kategori yang sudah ada di client
+      const kats=[...KAT_PEMASUKAN,...(typeof getKatPengeluaran==='function'?getKatPengeluaran():[])];
+      wrap.innerHTML=`<div class="inp-row"><label class="inp-lbl">Pilih Kategori</label><select id="pesanTargetSel" class="inp"><option value="">— Pilih —</option>${kats.map(k=>`<option value="${k}">${k}</option>`).join('')}</select></div>`;
+      return;
+    }
+    if(jenis==='transaksi'){
+      const res=await fetch(`${API_URL}/api/sheets?action=get&household_id=${hid}`);
+      const json=await res.json();
+      const recent=(json.data||[]).sort((a,b)=>String(b.tanggal).localeCompare(String(a.tanggal))).slice(0,30);
+      wrap.innerHTML=`<div class="inp-row"><label class="inp-lbl">Pilih Transaksi</label><select id="pesanTargetSel" class="inp"><option value="">— Pilih —</option>${recent.map(r=>`<option value="${r.id}">${formatTgl(r.tanggal)} · ${r.kategori} · ${rp(Number(r.nominal)||0)}</option>`).join('')}</select></div>`;
+      return;
+    }
+    const action={hutang:'get-hutang',piutang:'get-piutang',tabungan:'get-tabungan',transfer:'get-transfers'}[jenis];
     const res=await fetch(`${API_URL}/api/sheets?action=${action}&household_id=${hid}`);
     let list=(await res.json()).data||[];
-    if(jenis!=='tabungan')list=list.filter(x=>!x.lunas);
-    wrap.innerHTML=`<div class="inp-row"><label class="inp-lbl">Pilih Item</label><select id="pesanTargetId" class="inp"><option value="">— Pilih —</option>${list.map(x=>`<option value="${x.id}">${x.nama}</option>`).join('')}</select></div>`;
+    if(jenis==='hutang'||jenis==='piutang')list=list.filter(x=>!x.lunas);
+    const optHtml=jenis==='transfer'
+      ?list.map(x=>`<option value="${x.id}">${x.dari} → ${x.ke} · ${rp(x.nominal)}</option>`).join('')
+      :list.map(x=>`<option value="${x.id}">${x.nama}</option>`).join('');
+    wrap.innerHTML=`<div class="inp-row"><label class="inp-lbl">Pilih Item</label><select id="pesanTargetSel" class="inp"><option value="">— Pilih —</option>${optHtml}</select></div>`;
   }catch(e){wrap.innerHTML=`<div style="color:var(--tx3);font-size:0.72rem">Gagal memuat: ${e.message}</div>`;}
 }
 
@@ -642,9 +677,10 @@ async function submitPesan(){
   const hid=getHouseholdId();
   const untuk=document.getElementById('pesanUntuk')?.value||'';
   const jenis=document.getElementById('pesanJenis')?.value||'';
-  const targetId=document.getElementById('pesanTargetId')?.value||'';
+  const targetVal=document.getElementById('pesanTargetSel')?.value||'';
   const isi=document.getElementById('pesanIsi')?.value.trim();
   if(!isi){toast('Isi pesan tidak boleh kosong','err');return}
+  const isTextTarget=jenis==='kategori';
   const btn=document.querySelector('#bsBody .btn-ok');
   setBtnBusy(btn,true);
   try{
@@ -653,7 +689,8 @@ async function submitPesan(){
       dari:session?.username||'',
       untuk:untuk||null,
       jenis:jenis||null,
-      target_id:targetId?Number(targetId):null,
+      target_id:(!isTextTarget&&targetVal)?Number(targetVal):null,
+      target_text:(isTextTarget&&targetVal)?targetVal:null,
       isi
     });
     toast('Pesan terkirim ✓','ok');
