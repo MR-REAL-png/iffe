@@ -180,7 +180,12 @@ img { max-width: 100%; }
   color: #0c2a3d;
 }
 [data-theme="ocean"] .hdr-menu-btn span { background: #0c2a3d; }
-.hdr-left  { display: flex; align-items: center; gap: 6px; }
+.hdr-left  { display: flex; align-items: center; gap: 2px; }
+/* Crop wordmark image: hide the round icon baked into the PNG, show only the "ShiF" text.
+   Tweak: brand-name-wrap width = visible window size; img margin-left = how far to shift image left (crop amount).
+   Increase margin-left (more negative) if icon still peeks out; decrease width to pull text closer to menu button. */
+.brand-name-wrap { width: 100px; height: 34px; overflow: hidden; display: flex; align-items: center; flex-shrink: 0; }
+.brand-name-wrap img { height: 34px; width: auto; object-fit: contain; margin-left: -38px; }
 .hdr-right { display: flex; align-items: center; gap: 8px; }
 .hdr-menu-btn {
   width: 36px; height: 36px; border-radius: 10px;
