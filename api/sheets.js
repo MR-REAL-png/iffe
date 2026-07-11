@@ -676,6 +676,57 @@ export default async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // ═══════════════════════════════════════
+    // PESAN — GET (reminder antar user)
+    // ═══════════════════════════════════════
+    if (action === 'get-pesan' && req.method === 'GET') {
+      const { household_id } = req.query;
+      if (!household_id) return res.json({ success: false, error: 'household_id wajib' });
+      const result = await sb(`/pesan?household_id=eq.${household_id}&order=created_at.desc`);
+      return res.json({ success: true, data: result.data || [] });
+    }
+
+    // ═══════════════════════════════════════
+    // PESAN — APPEND
+    // ═══════════════════════════════════════
+    if (action === 'append-pesan' && req.method === 'POST') {
+      const { household_id, dari, untuk, jenis, target_id, target_text, isi } = req.body;
+      if (!household_id || !dari || !isi) return res.json({ success: false, error: 'Data tidak lengkap' });
+      const result = await sb('/pesan', 'POST', {
+        household_id, dari,
+        untuk: untuk || null,
+        jenis: jenis || null,
+        target_id: target_id || null,
+        target_text: target_text || null,
+        isi,
+        status: 'pending'
+      });
+      if (!result.ok) return res.json({ success: false, error: 'Gagal simpan pesan' });
+      return res.json({ success: true, data: result.data?.[0] });
+    }
+
+    // ═══════════════════════════════════════
+    // PESAN — UPDATE (tandai selesai)
+    // ═══════════════════════════════════════
+    if (action === 'update-pesan' && req.method === 'PUT') {
+      const { id, ...fields } = req.body;
+      if (!id) return res.json({ success: false, error: 'id wajib' });
+      const result = await sb(`/pesan?id=eq.${id}`, 'PATCH', fields);
+      if (!result.ok) return res.json({ success: false, error: 'Gagal update pesan' });
+      return res.json({ success: true });
+    }
+
+    // ═══════════════════════════════════════
+    // PESAN — DELETE
+    // ═══════════════════════════════════════
+    if (action === 'delete-pesan' && req.method === 'DELETE') {
+      const { id, household_id } = req.query;
+      if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
+      const result = await sb(`/pesan?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
+      if (!result.ok) return res.json({ success: false, error: 'Gagal hapus pesan' });
+      return res.json({ success: true });
+    }
+
     return res.status(400).json({ success: false, error: `Action tidak dikenal: ${action}` });
 
   } catch (e) {
