@@ -405,9 +405,6 @@ function syncMetodeBank(metodeId,bankId){
 // Kategori Pemasukan — hardcode, tidak campur dengan pengeluaran
 const KAT_PEMASUKAN = ['Gaji','Bonus','Freelance','Transfer Masuk','Investasi','Lainnya'];
 
-// Kategori yang dikelola lewat shortcut khusus (modal Input Transaksi), bukan dipilih manual
-const KAT_TERSEMBUNYI = ['Tabungan','Piutang','Hutang'];
-
 // Kategori Pengeluaran — dari data + custom, tidak include kategori pemasukan
 function getKatPengeluaran(){
   const customKats=normalizeKatList(JSON.parse(localStorage.getItem('mm_custom_kats')||'[]')).map(k=>k.name);
@@ -415,9 +412,9 @@ function getKatPengeluaran(){
     allRows
       .filter(r=>r.jenis==='Pengeluaran')
       .map(r=>r.kategori)
-      .filter(k=>k&&!KAT_PEMASUKAN.includes(k)&&!KAT_TERSEMBUNYI.includes(k))
+      .filter(k=>k&&!KAT_PEMASUKAN.includes(k))
   )];
-  return [...new Set([...fromData,...customKats.filter(k=>!KAT_PEMASUKAN.includes(k)&&!KAT_TERSEMBUNYI.includes(k))])].sort();
+  return [...new Set([...fromData,...customKats.filter(k=>!KAT_PEMASUKAN.includes(k))])].sort();
 }
 
 function fillKat(jenisId,katId){
@@ -443,7 +440,7 @@ function renderQuickKat(){
       .filter(r=>r.jenis===jenis)
       .slice(0,50)
       .map(r=>r.kategori)
-      .filter(k=>k&&!KAT_TERSEMBUNYI.includes(k)&&(jenis==='Pemasukan'?KAT_PMS.includes(k):!KAT_PMS.includes(k)))
+      .filter(k=>k&&(jenis==='Pemasukan'?KAT_PMS.includes(k):!KAT_PMS.includes(k)))
   )].slice(0,6);
   el.innerHTML=recent.map(k=>`<button class="qk-btn" onclick="document.getElementById('inKat').value='${k.replace(/'/g,"\\'")}'">${katIconInline(k,14)}${k}</button>`).join('');
 }
@@ -533,10 +530,147 @@ function checkBudgetAlerts(byCat){
   if(badge)badge.style.display=notifications.length?'flex':'none';
 }
 
-function loadNotif(){
+// ═══ PESAN (reminder antar user) ═══
+let pesanPendingList=[];
+
+const ICON_PESAN=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>`;
+
+// Ambil pesan pending buat user yang login, update badge titik di header
+async function loadPesanBadge(){
+  try{
+    const hid=getHouseholdId();
+    const session=getSession();
+    if(!hid||!session)return;
+    const res=await fetch(`${API_URL}/api/sheets?action=get-pesan&household_id=${hid}`);
+    if(!res.ok)return; // diam-diam kalau action belum ada di backend, jangan ganggu UX
+    const json=await res.json();
+    const all=json.data||[];
+    pesanPendingList=all.filter(p=>p.status==='pending'&&(!p.untuk||p.untuk===session.username));
+    const badge=document.getElementById('pesanBadge');
+    if(badge)badge.style.display=pesanPendingList.length?'block':'none';
+  }catch(e){/* silent — jangan ganggu app kalau network gagal */}
+}
+
+function pesanCard(p){
+  const jenisLabel={hutang:'Hutang',piutang:'Piutang',tabungan:'Tabungan',transfer:'Transfer'}[p.jenis]||'';
+  const clickable=p.jenis&&p.target_id&&['hutang','piutang','tabungan'].includes(p.jenis);
+  const isiSafe=String(p.isi||'').replace(/</g,'&lt;');
+  return `
+    <div class="notif-card pesan"${clickable?` onclick="openPesanTarget('${p.jenis}',${p.target_id})" style="cursor:pointer"`:''}>
+      <div class="nc-ico">${ICON_PESAN}</div>
+      <div class="nc-body">
+        <div class="nc-title">${p.dari} → ${p.untuk||'Semua'}${jenisLabel?` · ${jenisLabel}`:''}</div>
+        <div class="nc-sub">${isiSafe}</div>
+      </div>
+      <button onclick="event.stopPropagation();markPesanSelesai(${p.id})" style="flex-shrink:0;background:none;border:1px solid var(--bdr2);border-radius:8px;padding:4px 8px;font-size:0.65rem;color:var(--tx2);white-space:nowrap;align-self:center">✓ Selesai</button>
+    </div>
+  `;
+}
+
+// Navigasi ke item terkait (hutang/piutang/tabungan) saat pesan di-tap
+async function openPesanTarget(jenis,targetId){
+  const hid=getHouseholdId();
+  try{
+    if(jenis==='hutang'){
+      goPage('dompet');
+      const res=await fetch(`${API_URL}/api/sheets?action=get-hutang&household_id=${hid}`);
+      const item=(await res.json()).data?.find(x=>String(x.id)===String(targetId));
+      if(item)openHutangDetail(item.id,item.nama,item.nominal,item.tanggal,item.catatan);
+      else toast('Item sudah tidak ada (mungkin sudah dihapus)','err');
+    }else if(jenis==='piutang'){
+      goPage('dompet');
+      const res=await fetch(`${API_URL}/api/sheets?action=get-piutang&household_id=${hid}`);
+      const item=(await res.json()).data?.find(x=>String(x.id)===String(targetId));
+      if(item)openPiutangDetail(item.id,item.nama,item.nominal,item.tanggal,item.catatan);
+      else toast('Item sudah tidak ada (mungkin sudah dihapus)','err');
+    }else if(jenis==='tabungan'){
+      goPage('tabungan');
+      const res=await fetch(`${API_URL}/api/sheets?action=get-tabungan&household_id=${hid}`);
+      const item=(await res.json()).data?.find(x=>String(x.id)===String(targetId));
+      if(item)openTopupTabungan(item.id,item.nama,item.terkumpul,item.target);
+      else toast('Item sudah tidak ada (mungkin sudah dihapus)','err');
+    }
+  }catch(e){toast('Gagal buka detail: '+e.message,'err');}
+}
+
+async function markPesanSelesai(id){
+  try{
+    await apiPut('update-pesan',{id,status:'selesai',done_at:new Date().toISOString()});
+    toast('Pesan ditandai selesai ✓','ok');
+    await loadNotif();
+  }catch(e){toast('Gagal update: '+e.message,'err');}
+}
+
+// Form bikin pesan baru
+function openTambahPesan(){
+  const session=getSession();
+  const members=(typeof getHouseholdMembers==='function'?getHouseholdMembers():[]).filter(m=>m.username!==session?.username);
+  const untukOpts=members.map(m=>`<option value="${m.username}">${m.username}</option>`).join('')||'<option value="">Semua</option>';
+  openBs('Pesan Baru',`
+    <div class="inp-row"><label class="inp-lbl">Untuk</label><select id="pesanUntuk" class="inp">${untukOpts}</select></div>
+    <div class="inp-row"><label class="inp-lbl">Terkait (opsional)</label>
+      <select id="pesanJenis" class="inp" onchange="onPesanJenisChange()">
+        <option value="">Tidak terkait item tertentu</option>
+        <option value="hutang">Hutang</option>
+        <option value="piutang">Piutang</option>
+        <option value="tabungan">Tabungan</option>
+      </select>
+    </div>
+    <div id="pesanTargetWrap"></div>
+    <div class="inp-row"><label class="inp-lbl">Pesan</label><textarea id="pesanIsi" class="inp" rows="3" placeholder="Tolong dilakukan ya..."></textarea></div>
+    <button class="btn-ok" style="width:100%;margin-top:8px" onclick="submitPesan()">Kirim Pesan</button>
+  `);
+}
+
+async function onPesanJenisChange(){
+  const jenis=document.getElementById('pesanJenis').value;
+  const wrap=document.getElementById('pesanTargetWrap');
+  if(!jenis){wrap.innerHTML='';return;}
+  wrap.innerHTML='<div class="ldrow"><div class="spin"></div>Memuat...</div>';
+  const hid=getHouseholdId();
+  const action={hutang:'get-hutang',piutang:'get-piutang',tabungan:'get-tabungan'}[jenis];
+  try{
+    const res=await fetch(`${API_URL}/api/sheets?action=${action}&household_id=${hid}`);
+    let list=(await res.json()).data||[];
+    if(jenis!=='tabungan')list=list.filter(x=>!x.lunas);
+    wrap.innerHTML=`<div class="inp-row"><label class="inp-lbl">Pilih Item</label><select id="pesanTargetId" class="inp"><option value="">— Pilih —</option>${list.map(x=>`<option value="${x.id}">${x.nama}</option>`).join('')}</select></div>`;
+  }catch(e){wrap.innerHTML=`<div style="color:var(--tx3);font-size:0.72rem">Gagal memuat: ${e.message}</div>`;}
+}
+
+async function submitPesan(){
+  const session=getSession();
+  const hid=getHouseholdId();
+  const untuk=document.getElementById('pesanUntuk')?.value||'';
+  const jenis=document.getElementById('pesanJenis')?.value||'';
+  const targetId=document.getElementById('pesanTargetId')?.value||'';
+  const isi=document.getElementById('pesanIsi')?.value.trim();
+  if(!isi){toast('Isi pesan tidak boleh kosong','err');return}
+  const btn=document.querySelector('#bsBody .btn-ok');
+  setBtnBusy(btn,true);
+  try{
+    await apiPost('append-pesan',{
+      household_id:hid,
+      dari:session?.username||'',
+      untuk:untuk||null,
+      jenis:jenis||null,
+      target_id:targetId?Number(targetId):null,
+      isi
+    });
+    toast('Pesan terkirim ✓','ok');
+    closeBs();
+    await loadPesanBadge();
+    const notifPage=document.getElementById('pg-notif');
+    if(notifPage?.classList.contains('on'))await loadNotif();
+  }catch(e){toast('Gagal kirim: '+e.message,'err');}
+  setBtnBusy(btn,false);
+}
+
+async function loadNotif(){
+  await loadPesanBadge();
   const el=document.getElementById('notifList');if(!el)return;
-  if(!notifications.length){el.innerHTML=`<div class="empty"><div class="ei">${IC.ok}</div><p>Tidak ada peringatan</p></div>`;return;}
-  el.innerHTML=notifications.map(n=>`
+  if(!notifications.length&&!pesanPendingList.length){el.innerHTML=`<div class="empty"><div class="ei">${IC.ok}</div><p>Tidak ada peringatan</p></div>`;return;}
+  const pesanHtml=pesanPendingList.map(p=>pesanCard(p)).join('');
+  const budgetHtml=notifications.map(n=>`
     <div class="notif-card ${n.over?'over':'warn'}">
       <div class="nc-ico">${n.over?IC.warn:IC.notif}</div>
       <div class="nc-body">
@@ -545,6 +679,7 @@ function loadNotif(){
       </div>
     </div>
   `).join('');
+  el.innerHTML=pesanHtml+budgetHtml;
 }
 
 // ═══ AI SCAN ═══
@@ -606,6 +741,7 @@ function updateClock(){
   if(e2)e2.textContent=`${HARI[n.getDay()]}, ${n.getDate()} ${MOS[n.getMonth()]}`;
 }
 setInterval(updateClock,1000);
+setInterval(loadPesanBadge,45000); // cek pesan baru tiap 45 detik
 
 // ═══ THEME ═══
 function setTheme(t,save=true){
