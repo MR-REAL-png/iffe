@@ -24,6 +24,32 @@ function countUp(id,target,prefix=''){
   const timer=setInterval(()=>{cur+=target/steps;if(cur>=target){cur=target;clearInterval(timer)}el.textContent=prefix+rp(Math.round(cur))},step);
 }
 
+// ═══ HOME SCREEN ICON (light/dark picker) ═══
+// Ganti link apple-touch-icon & manifest SEBELUM user tap "Tambah ke Layar Utama".
+// Ini pilihan manual sekali di awal — iOS/Android nggak bisa auto-switch ikon
+// yang udah keinstall ngikutin dark/light mode HP, jadi kalau user ganti pikiran
+// setelah nge-add, ikon lama harus dihapus & add ulang biar kepakai versi baru.
+function setHomeScreenIcon(mode){
+  const isDark=mode==='dark';
+  const touchIcon=document.querySelector('link[rel="apple-touch-icon"]');
+  if(touchIcon)touchIcon.href=isDark?'./apple-touch-icon-dark.png':'./apple-touch-icon.png';
+  const favIcon=document.querySelector('link[rel="icon"]');
+  if(favIcon)favIcon.href=isDark?'./apple-touch-icon-dark.png':'./apple-touch-icon.png';
+  const manifestLink=document.querySelector('link[rel="manifest"]');
+  if(manifestLink)manifestLink.href=isDark?'manifest-dark.json':'manifest.json';
+  localStorage.setItem('shifHomeIconMode',mode);
+  const lightBtn=document.getElementById('homeIconLightBtn');
+  const darkBtn=document.getElementById('homeIconDarkBtn');
+  if(lightBtn)lightBtn.classList.toggle('on',!isDark);
+  if(darkBtn)darkBtn.classList.toggle('on',isDark);
+  toast(isDark?'Ikon Gelap dipilih — lanjut tap Tambah ke Layar Utama':'Ikon Terang dipilih — lanjut tap Tambah ke Layar Utama');
+}
+// Restore pilihan terakhir tiap buka Settings, biar link-nya ikut ke-set dari awal
+(function initHomeScreenIconPref(){
+  const saved=localStorage.getItem('shifHomeIconMode');
+  if(saved==='dark')setHomeScreenIcon('dark');
+})();
+
 // ═══ TOAST ═══
 function toast(msg,type=''){
   const el=document.getElementById('toast');
