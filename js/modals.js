@@ -863,6 +863,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadTheme();
   loadSettings();
   renderDrawerMembers();
+  loadPesanBadge();
   initFilterWho();
   document.getElementById('filterBulan')?.addEventListener('change',loadData);
   document.getElementById('filterJenis')?.addEventListener('change',loadData);
