@@ -219,16 +219,16 @@ function renderChartKat(byCat){
       borderWidth:1.5,borderColor:bdrCol,hoverOffset:6,spacing:2
     }]},
     options:{
-      responsive:true,cutout:'52%',
+      responsive:true,cutout:'52%',aspectRatio:1.55,
       animation:{animateRotate:true,duration:1000,easing:'easeOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}
     }
   });
   // Legend — top 5 kategori terbesar + sisanya digabung "lainnya" (biar nggak kepanjangan)
   const legEl=document.getElementById('chartLegend');
+  const sortedCat=[...byCat].sort((a,b)=>b.nominal-a.nominal);
   if(legEl){
     const TOPN=5;
-    const sortedCat=[...byCat].sort((a,b)=>b.nominal-a.nominal);
     const top=sortedCat.slice(0,TOPN);
     const rest=sortedCat.slice(TOPN);
     let items=top.map(k=>{
@@ -245,6 +245,16 @@ function renderChartKat(byCat){
     }
     legEl.innerHTML=items.join('');
   }
+  // ── Stat ringkas, biar tinggi slide ini konsisten sama 3 slide lainnya ──
+  const teratas=sortedCat[0];
+  const statsEl=document.createElement('div');
+  statsEl.className='bs-kas-pills';
+  statsEl.style.marginTop='12px';
+  statsEl.innerHTML=`
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Kategori Teratas</div><div class="bs-kas-pill-val">${teratas.kategori.length>10?teratas.kategori.slice(0,9)+'…':teratas.kategori}</div></div>
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Total</div><div class="bs-kas-pill-val">Rp ${rpShort(total)}</div></div>
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Jml Kategori</div><div class="bs-kas-pill-val">${byCat.length}</div></div>`;
+  wrap.appendChild(statsEl);
   }); // end requestAnimationFrame
 }
 
