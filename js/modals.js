@@ -813,6 +813,7 @@ function loadSettings(){
     const ulEl=document.getElementById('settUserLogin');
     if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:14px;width:auto;object-fit:contain">';
   }
+  if(typeof initLogo==='function')initLogo(); // pastikan settAvatar selalu ke-render ulang tiap Settings dibuka
   updateSettAvatar();
 }
 
