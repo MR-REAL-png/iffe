@@ -178,7 +178,7 @@ function renderLogoInto(el,fitStyle,src){
 
 function initLogo(){
   const fitStyle={
-    brandIco:'width:70%;height:70%;object-fit:contain;display:block;margin:auto;border-radius:inherit;', // logo di header, dibuat lebih kecil & proporsional
+    brandIco:'width:88%;height:88%;object-fit:contain;display:block;margin:auto;border-radius:inherit;', // logo di header, diperbesar biar tidak kekecilan
     settAvatar:'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;',            // avatar di Settings, penuh isi lingkaran
     pinLogo:'width:80%;height:80%;object-fit:contain;display:block;margin:auto;'                          // logo di halaman PIN/menu awal
   };
