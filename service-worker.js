@@ -6,7 +6,7 @@
 // CACHE_NAME di-generate otomatis tiap kali Claude mengedit file ini —
 // TIDAK PERLU dinaikkan manual. Selama isi file berubah, versi ini juga
 // otomatis berubah, jadi browser akan selalu mendeteksi update dengan benar.
-const CACHE_NAME = 'shif-20260711-10';
+const CACHE_NAME = 'shif-20260711-11';
 const OFFLINE_URL = './index.html';
 
 // File statis yang di-cache saat install
