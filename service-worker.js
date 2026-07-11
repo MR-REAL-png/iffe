@@ -6,7 +6,7 @@
 // CACHE_NAME di-generate otomatis tiap kali Claude mengedit file ini —
 // TIDAK PERLU dinaikkan manual. Selama isi file berubah, versi ini juga
 // otomatis berubah, jadi browser akan selalu mendeteksi update dengan benar.
-const CACHE_NAME = 'shif-20260711-2';
+const CACHE_NAME = 'shif-20260711-3';
 const OFFLINE_URL = './index.html';
 
 // File statis yang di-cache saat install
@@ -15,6 +15,11 @@ const STATIC_ASSETS = [
   './index.html',
   './manifest.json',
   './logo.png',
+  './apple-touch-icon.png',
+  './logo-192.png',
+  './logo-512.png',
+  './logo-maskable-192.png',
+  './logo-maskable-512.png',
   './css/base.css',
   './css/components.css',
   './css/pin.css',
