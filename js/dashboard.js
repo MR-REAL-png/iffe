@@ -9,7 +9,9 @@ function goPage(p){
   window.scrollTo(0,0);
   if(p==='settings'){
     loadSettings();
-    updateSettAvatar();
+    // updateSettAvatar() TIDAK dipanggil lagi di sini — fungsi itu (di settings.js) masih pakai
+    // logika lama (inisial berwarna) dan nimpa balik logo yang sudah di-render loadSettings(),
+    // itu penyebab avatar Settings "hilang-hilangan" tiap halaman ini dibuka.
   }
   else if(p==='data'){
     const el=document.getElementById('dataList');
