@@ -9,16 +9,14 @@ function initSettingsPage(){
 }
 
 // ═══ SETT AVATAR UPDATE ═══
+// Avatar Settings sekarang pakai logo brand (lingkaran, di-render initLogo() dari helpers.js),
+// bukan lagi kotak inisial berwarna per-user — jangan dikembalikan ke logika lama di sini.
 function updateSettAvatar(){
   const session=getSession();if(!session)return;
-  const{username,color}=session;
-  const av=document.getElementById('settAvatar');
-  if(av){
-    av.style.cssText=`width:64px;height:64px;border-radius:20px;background:${color}20;border:2px solid ${color};display:flex;align-items:center;justify-content:center;margin:0 auto 8px`;
-    av.innerHTML=`<span style="color:${color};font-size:1.8rem;font-weight:800">${username.charAt(0).toUpperCase()}</span>`;
-  }
+  const{username}=session;
+  if(typeof initLogo==='function')initLogo();
   const unEl=document.getElementById('settUsername');
   if(unEl)unEl.textContent=username;
   const ulEl=document.getElementById('settUserLogin');
-  if(ulEl){ulEl.textContent=APP_NAME;ulEl.style.color=color;}
+  if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:14px;width:auto;object-fit:contain">';
 }
