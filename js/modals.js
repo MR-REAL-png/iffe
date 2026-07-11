@@ -809,12 +809,17 @@ function loadSettings(){
   if(session){
     // settAvatar TIDAK ditimpa lagi di sini — biarkan logo dari initLogo() (helpers.js) yang tampil,
     // supaya kotak avatar Settings konsisten pakai logo brand, bukan inisial per-user.
+    // Border lingkaran-nya aja yang dikasih warna sesuai user yang login.
+    const avEl=document.getElementById('settAvatar');
+    if(avEl)avEl.style.borderColor=session.color;
     const unEl=document.getElementById('settUsername');if(unEl)unEl.textContent=session.username;
     const ulEl=document.getElementById('settUserLogin');
-    if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:14px;width:auto;object-fit:contain">';
+    if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:16px;width:auto;object-fit:contain">';
   }
   if(typeof initLogo==='function')initLogo(); // pastikan settAvatar selalu ke-render ulang tiap Settings dibuka
-  updateSettAvatar();
+  // updateSettAvatar() SENGAJA tidak dipanggil di sini — fungsi itu (di settings.js) masih pakai
+  // logika lama (kotak inisial berwarna + teks APP_NAME polos) dan nimpa balik semua yang baru saja
+  // di-set di atas. Ini penyebab avatar & teks "SHIF" di Settings suka balik/hilang-hilangan.
 }
 
 // ═══ LOAD THEME ═══
