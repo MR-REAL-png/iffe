@@ -181,7 +181,7 @@ function renderLogoInto(el,fitStyle,src){
 function initLogo(){
   const fitStyle={
     brandIco:'width:88%;height:88%;object-fit:contain;display:block;margin:auto;border-radius:inherit;', // logo di header, diperbesar biar tidak kekecilan
-    settAvatar:'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;',            // avatar di Settings, penuh isi lingkaran
+    settAvatar:'width:78%;height:78%;object-fit:contain;display:block;margin:auto;',            // avatar di Settings — lingkaran, logo utuh & center (bukan cover biar wordmark yg lebar tidak kepotong)
     pinLogo:'width:80%;height:80%;object-fit:contain;display:block;margin:auto;'                          // logo di halaman PIN/menu awal
   };
   // sumber terbaik yang sudah kita punya SEKARANG (cache lokal biasanya sudah ada sejak sync pertama)
