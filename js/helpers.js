@@ -848,9 +848,9 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(session?.username&&session?.household_id){
     updateProfileUI();
     initFilterWho();
+    loadPesanBadge(); // jalan duluan, tidak nunggu dashboard/fetchDBOptions selesai
     await fetchDBOptions();
     await loadDashboard();
-    loadPesanBadge(); // cek titik indikator pesan langsung pas app dibuka — jangan nunggu interval 45 detik
     initRealtimeSync();
     // Simpan invite code jika baru register
     if(!localStorage.getItem('shifa_invite_code')){
