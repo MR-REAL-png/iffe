@@ -151,7 +151,7 @@ function renderMemberActivity(rows){
 
 // ═══ CHART KOMPOSISI ═══
 function renderChartKat(byCat){
-  const wrap=document.getElementById('chartKat')?.parentElement;if(!wrap)return;
+  const wrap=document.getElementById('chartKatWrap');if(!wrap)return;
   // Destroy dulu sebelum apapun
   if(chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
   // Selalu reset container supaya canvas benar-benar fresh
@@ -209,7 +209,7 @@ function renderChartKat(byCat){
 
 // ═══ CHART HARIAN ═══
 function renderChartHarian(rows){
-  const wrap=document.getElementById('chartHarian')?.parentElement;if(!wrap)return;
+  const wrap=document.getElementById('chartHarianWrap');if(!wrap)return;
   if(chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
   // Selalu reset container dulu
   wrap.innerHTML='';
