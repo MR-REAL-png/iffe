@@ -186,6 +186,10 @@
       <div class="hdr-clock-time" id="hdrTime">--:--</div>
       <div class="hdr-clock-date" id="hdrDate">Memuat...</div>
     </div>
+    <button class="hdr-pesan-btn" onclick="goPage('notif')" style="position:relative;background:none;border:none;padding:4px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>
+      <span id="pesanBadge" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--ac);border:1.5px solid var(--bg,#0a0e1a)"></span>
+    </button>
   </div>
 </header>
 </div>
@@ -422,7 +426,7 @@
 
 <!-- NOTIF -->
 <div id="pg-notif" class="page">
-  <div class="pg-hd"><div><div class="pg-title">Notifikasi</div><div class="pg-sub">Alert & Peringatan</div></div><button class="refresh-btn" onclick="loadNotif()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button></div>
+  <div class="pg-hd"><div><div class="pg-title">Notifikasi</div><div class="pg-sub">Alert & Peringatan</div></div><div style="display:flex;gap:6px"><button class="refresh-btn" onclick="openTambahPesan()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg></button><button class="refresh-btn" onclick="loadNotif()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg></button></div></div>
   <div id="notifList"><div class="ldrow"><div class="spin"></div>Memuat...</div></div>
 </div>
 
