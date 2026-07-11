@@ -435,10 +435,10 @@
   <div class="pg-hd"><div><div class="pg-title">Pengaturan</div><div class="pg-sub">Konfigurasi App</div></div></div>
   <div class="sec-lbl">Profil</div>
   <div class="sett-group">
-    <div class="sett-profile">
-      <div class="sett-avatar" id="settAvatar" style="width:64px;height:64px;border-radius:50%;margin:0 auto 8px;overflow:hidden;display:flex;align-items:center;justify-content:center"></div>
+    <div class="sett-profile" style="position:relative">
+      <div id="settUserLogin" style="position:absolute;top:14px;right:14px"></div>
+      <div class="sett-avatar" id="settAvatar" style="width:64px;height:64px;border-radius:50%;margin:0 auto 8px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:3px solid var(--bdr2);box-sizing:border-box"></div>
       <div class="sett-username" id="settUsername">SHIF</div>
-      <div id="settUserLogin" style="margin-top:2px"></div>
     </div>
     <!-- Household info -->
     <div class="sett-item" onclick="showHouseholdInfo()">
