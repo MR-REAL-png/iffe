@@ -20,5 +20,5 @@ function updateSettAvatar(){
   const unEl=document.getElementById('settUsername');
   if(unEl)unEl.textContent=username;
   const ulEl=document.getElementById('settUserLogin');
-  if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:16px;width:auto;object-fit:contain">';
+  if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:16px;width:auto;object-fit:contain;display:block;margin-top:-2px">';
 }
