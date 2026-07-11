@@ -1,3 +1,7 @@
+// Chart instance untuk 2 slide baru (Tren Bulanan & Perbandingan User) — dideklarasi di sini
+// supaya file ini tetap jalan tanpa perlu edit config.js juga.
+let chartTren=null, chartUser=null;
+
 // ═══ NAV ═══
 function goPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
@@ -123,6 +127,8 @@ async function loadDashboard(){
     setTimeout(()=>{
       renderChartKat(byKatArr);
       renderChartHarian(rows);
+      renderChartTren();
+      renderChartUser(rows);
     },100);
     renderBudget(byKatArr);
     updatePeriodUI();
@@ -149,8 +155,32 @@ function renderMemberActivity(rows){
   el.innerHTML=`<div class="activity-row">${IC.note} Hari ini: ${parts.join(' · ')}</div>`;
 }
 
+// ═══ CHART CAROUSEL (Komposisi <-> Harian <-> Tren <-> Perbandingan User, swipe) ═══
+function initChartCarousel(){
+  const car=document.getElementById('chartCarousel');
+  if(!car||car.dataset.init)return; // idempotent, cuma pasang listener sekali
+  car.dataset.init='1';
+  const lblEl=document.getElementById('chartCarouselLbl');
+  const dots=[...document.querySelectorAll('#chartCarouselDots .ccd')];
+  const slides=[...car.querySelectorAll('.chart-slide')];
+  const labels=['Komposisi Pengeluaran','Pengeluaran Harian','Tren Bulanan','Sheril vs Ifaa'];
+  // IntersectionObserver jauh lebih reliable daripada hitung scrollLeft/clientWidth manual —
+  // scroll event kadang gak fire konsisten pas momentum-scroll iOS, jadi titik indikator nyangkut.
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(!en.isIntersecting||en.intersectionRatio<0.6)return;
+      const i=slides.indexOf(en.target);
+      if(i<0)return;
+      if(lblEl&&labels[i]!==undefined)lblEl.textContent=labels[i];
+      dots.forEach((d,di)=>d.classList.toggle('on',di===i));
+    });
+  },{root:car,threshold:[0.6]});
+  slides.forEach(s=>io.observe(s));
+}
+
 // ═══ CHART KOMPOSISI ═══
 function renderChartKat(byCat){
+  initChartCarousel();
   const wrap=document.getElementById('chartKatWrap');if(!wrap)return;
   // Destroy dulu sebelum apapun
   if(chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
@@ -194,15 +224,26 @@ function renderChartKat(byCat){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}
     }
   });
-  // Legend
+  // Legend — top 5 kategori terbesar + sisanya digabung "lainnya" (biar nggak kepanjangan)
   const legEl=document.getElementById('chartLegend');
   if(legEl){
-    legEl.innerHTML=byCat.map((k,i)=>{
+    const TOPN=5;
+    const sortedCat=[...byCat].sort((a,b)=>b.nominal-a.nominal);
+    const top=sortedCat.slice(0,TOPN);
+    const rest=sortedCat.slice(TOPN);
+    let items=top.map(k=>{
+      const i=byCat.indexOf(k); // index asli buat cocokin warna sama slice chart
       const pct=Math.round(k.nominal/total*100);
       const lbl=k.kategori.length>12?k.kategori.slice(0,11)+'…':k.kategori;
       const col=CHART_COLORS[i%CHART_COLORS.length];
       return`<div class="cl-item"><div class="cl-dot" style="background:${col}"></div><span class="cl-txt" style="color:${legendColor}">${lbl} ${pct}%</span></div>`;
-    }).join('');
+    });
+    if(rest.length){
+      const restTotal=rest.reduce((s,k)=>s+k.nominal,0);
+      const pct=Math.round(restTotal/total*100);
+      items.push(`<div class="cl-item"><div class="cl-dot" style="background:var(--tx3)"></div><span class="cl-txt" style="color:${legendColor}">+${rest.length} lainnya ${pct}%</span></div>`);
+    }
+    legEl.innerHTML=items.join('');
   }
   }); // end requestAnimationFrame
 }
@@ -249,7 +290,72 @@ function renderChartHarian(rows){
   }); // end requestAnimationFrame
 }
 
-// ═══ BUDGET / KOMPOSISI ═══
+// ═══ CHART TREN BULANAN (6 bulan terakhir, Pengeluaran) ═══
+function renderChartTren(){
+  const wrap=document.getElementById('chartTrenWrap');if(!wrap)return;
+  if(chartTren){try{chartTren.destroy()}catch(e){}chartTren=null;}
+  wrap.innerHTML='';
+  // Bangun 6 bucket bulan terakhir (termasuk bulan aktif dashboard) dari allRows langsung,
+  // supaya gak tergantung format field r.bulan yang bisa ambigu lintas tahun.
+  const buckets=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(dashActiveYear,dashActiveBulan-i,1);
+    buckets.push({y:d.getFullYear(),m:d.getMonth(),key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,label:MOS[d.getMonth()].slice(0,3)});
+  }
+  const totals=buckets.map(b=>allRows.filter(r=>r.jenis==='Pengeluaran'&&r.tanggal&&r.tanggal.slice(0,7)===b.key).reduce((s,r)=>s+r.nominal,0));
+  if(!totals.some(v=>v>0)){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data tren</p></div>`;return}
+  wrap.innerHTML='<canvas id="chartTren"></canvas>';
+  requestAnimationFrame(()=>{
+  const canvas=document.getElementById('chartTren');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
+  const isActiveMonth=buckets.map(b=>b.y===dashActiveYear&&b.m===dashActiveBulan);
+  const barColors=isActiveMonth.map(on=>on?'#38bdf8':'rgba(129,140,248,0.35)');
+  chartTren=new Chart(ctx,{
+    type:'bar',
+    data:{labels:buckets.map(b=>b.label),datasets:[{label:'Pengeluaran',data:totals,backgroundColor:barColors,borderRadius:6,maxBarThickness:34}]},
+    options:{
+      responsive:true,animation:{duration:800,easing:'easeInOutQuart'},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#38bdf8',borderColor:'rgba(56,189,248,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
+      scales:{
+        y:{ticks:{callback:v=>rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        x:{ticks:{color:tc,font:{size:9}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+  }); // end requestAnimationFrame
+}
+
+// ═══ CHART PERBANDINGAN USER (Sheril vs Ifaa, periode aktif) ═══
+function renderChartUser(rows){
+  const wrap=document.getElementById('chartUserWrap');if(!wrap)return;
+  if(chartUser){try{chartUser.destroy()}catch(e){}chartUser=null;}
+  wrap.innerHTML='';
+  const members=getHouseholdMembers();
+  if(!members.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.users}</div><p>Data anggota belum tersedia</p></div>`;return}
+  const byWho=groupBy(rows.filter(r=>r.jenis==='Pengeluaran'),'recorded_by');
+  const totals=members.map(m=>(byWho[m.username]||[]).reduce((s,r)=>s+r.nominal,0));
+  if(!totals.some(v=>v>0)){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada pengeluaran periode ini</p></div>`;return}
+  wrap.innerHTML='<canvas id="chartUser"></canvas>';
+  requestAnimationFrame(()=>{
+  const canvas=document.getElementById('chartUser');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
+  chartUser=new Chart(ctx,{
+    type:'bar',
+    data:{labels:members.map(m=>m.username),datasets:[{label:'Pengeluaran',data:totals,backgroundColor:members.map(m=>m.color||'#38bdf8'),borderRadius:6,maxBarThickness:60}]},
+    options:{
+      indexAxis:'y',
+      responsive:true,animation:{duration:800,easing:'easeInOutQuart'},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#f472b6',borderColor:'rgba(244,114,182,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
+      scales:{
+        x:{ticks:{callback:v=>rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        y:{ticks:{color:tc,font:{size:11,weight:'600'}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+  }); // end requestAnimationFrame
+}
 function renderBudget(byCat){
   const el=document.getElementById('budgetList');
   if(!el)return;
