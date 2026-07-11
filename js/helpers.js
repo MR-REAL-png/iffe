@@ -1,4 +1,6 @@
 // ═══ FORMAT & UTILS ═══
+// (notifications sudah dideklarasikan sebagai global state di config.js — jangan dobel di sini,
+// karena "let" dobel di scope global antar <script> beda file bikin SyntaxError dan seluruh file ini gagal load)
 function rp(v){if(v===undefined||v===null||v==='')return'Rp 0';return'Rp '+Number(v).toLocaleString('id-ID')}
 function rpShort(v){v=Number(v)||0;if(v>=1e9)return(v/1e9).toFixed(1).replace(/\.0$/,'')+'M';if(v>=1e6)return(v/1e6).toFixed(2).replace(/\.?0+$/,'')+'jt';if(v>=1e3)return(v/1e3).toFixed(0)+'rb';return String(v)}
 function formatTgl(s){if(!s)return'—';const p=s.split('-');if(p.length!==3||Number(p[0])<1990)return'—';return`${p[2]}/${p[1]}/${p[0]}`}
