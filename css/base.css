@@ -367,6 +367,8 @@ img { max-width: 100%; }
   flex-shrink: 0; color: var(--tx2);
 }
 .refresh-btn:active { transform: scale(0.9); }
+.refresh-btn:disabled { opacity: 0.5; cursor: default; }
+.icon-spin { animation: spin .7s linear infinite; }
 
 /* ── BOTTOM NAV ── */
 .bnav {
