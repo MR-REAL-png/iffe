@@ -259,13 +259,13 @@ function renderChartHarian(rows){
   const sorted=Object.keys(byDay).sort();
   if(!sorted.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data harian</p></div>`;return}
   wrap.innerHTML='<canvas id="chartHarian"></canvas>';
+  const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
+  const values=sorted.map(d=>byDay[d]);
+  const maxVal=Math.max(...values);
   requestAnimationFrame(()=>{
   const canvas=document.getElementById('chartHarian');if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
-  const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
-  const values=sorted.map(d=>byDay[d]);
-  const maxVal=Math.max(...values);
   const gradient=ctx.createLinearGradient(0,0,0,230);
   gradient.addColorStop(0,'rgba(56,189,248,0.35)');
   gradient.addColorStop(0.5,'rgba(244,114,182,0.2)');
