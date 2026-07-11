@@ -307,7 +307,7 @@ function renderBudgetMonitor(byCat){
     <div class="bmon-item tap-card" style="animation-delay:${i*0.05}s;cursor:pointer" onclick="openBudItemDetail('${k.kategori.replace(/'/g,"\\'")}')">
       <div class="bmon-top"><span class="bmon-name" style="display:flex;align-items:center">${katIconInline(k.kategori,15)}${k.kategori}</span><span class="bmon-pct" style="color:${pct>100?'var(--red)':pct>=alertPct?'#fbbf24':'var(--grn)'}">${pct}%</span></div>
       <div class="bmon-bar"><div class="bmon-fill ${cls}" style="width:0%" data-w="${barW}"></div></div>
-      <div class="bmon-amts"><span class="${over?'over':''}">${rpShort(k.nominal)} terpakai</span><span>dari ${rpShort(budget)}</span></div>
+      <div class="bmon-amts"><span class="${over?'over':''}">Rp ${rpShort(k.nominal)} terpakai</span><span>dari Rp ${rpShort(budget)}</span></div>
     </div>`).join('');
   if(bmonRingkas&&allItems.length>5)el.innerHTML+=`<div class="tap-card" style="text-align:center;font-size:0.72rem;color:var(--ac);padding:8px 0;cursor:pointer;font-weight:600" onclick="toggleBmonView()">+${allItems.length-5} kategori lainnya ▾</div>`;
   else if(!bmonRingkas&&allItems.length>5)el.innerHTML+=`<div class="tap-card" style="text-align:center;font-size:0.72rem;color:var(--ac);padding:8px 0;cursor:pointer;font-weight:600" onclick="toggleBmonView()">Tampilkan lebih sedikit ▴</div>`;
