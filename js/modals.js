@@ -807,13 +807,11 @@ function loadSettings(){
 
   const session=getSession();
   if(session){
-    const av=document.getElementById('settAvatar');
-    if(av){
-      av.style.cssText=`width:64px;height:64px;border-radius:20px;background:${session.color}20;border:2px solid ${session.color};display:flex;align-items:center;justify-content:center;margin:0 auto 8px`;
-      av.innerHTML=`<span style="color:${session.color};font-size:1.8rem;font-weight:800">${session.username.charAt(0).toUpperCase()}</span>`;
-    }
+    // settAvatar TIDAK ditimpa lagi di sini — biarkan logo dari initLogo() (helpers.js) yang tampil,
+    // supaya kotak avatar Settings konsisten pakai logo brand, bukan inisial per-user.
     const unEl=document.getElementById('settUsername');if(unEl)unEl.textContent=session.username;
-    const ulEl=document.getElementById('settUserLogin');if(ulEl){ulEl.textContent='SHIF';ulEl.style.color=session.color;}
+    const ulEl=document.getElementById('settUserLogin');
+    if(ulEl)ulEl.innerHTML='<img src="shif-wordmark-outlined.png" alt="SHIF" style="height:14px;width:auto;object-fit:contain">';
   }
   updateSettAvatar();
 }
