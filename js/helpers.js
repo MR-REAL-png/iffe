@@ -721,6 +721,34 @@ async function loadNotif(){
   el.innerHTML=pesanHtml+budgetHtml;
 }
 
+// Refresh tombol di halaman Notifikasi: ambil data terbaru & hitung ulang alert budget
+// (loadNotif() saja cuma render ulang array `notifications` yang lama — tidak fetch data baru).
+// Dibungkus lockBusy + try/finally supaya kalau ada error, tombol TIDAK pernah kekunci permanen.
+async function refreshNotifPage(btn){
+  if(!lockBusy('refreshNotif'))return;
+  const svg=btn?.querySelector('svg');
+  if(svg)svg.classList.add('icon-spin');
+  if(btn)btn.disabled=true;
+  try{
+    allRows=await fetchAllData();
+    const{startDate,endDate}=getActivePeriodResolved();
+    const sd=new Date(startDate);sd.setHours(0,0,0,0);
+    const ed=new Date(endDate);ed.setHours(23,59,59,999);
+    const rows=allRows.filter(r=>{const d=new Date(r.tanggal);return d>=sd&&d<=ed});
+    const byKat=groupBy(rows.filter(r=>r.jenis==='Pengeluaran'),'kategori');
+    const byKatArr=Object.entries(byKat).map(([k,v])=>({kategori:k,nominal:v.reduce((s,r)=>s+r.nominal,0)}));
+    if(notifEnabled)checkBudgetAlerts(byKatArr);
+    await loadNotif();
+    toast('Notifikasi diperbarui ✓','ok');
+  }catch(e){
+    toast('Gagal refresh: '+e.message,'err');
+  }finally{
+    if(svg)svg.classList.remove('icon-spin');
+    if(btn)btn.disabled=false;
+    unlockBusy('refreshNotif');
+  }
+}
+
 // ═══ AI SCAN ═══
 function triggerAiScan(){document.getElementById('aiImgInput')?.click()}
 function updateAiScanBtn(){}
