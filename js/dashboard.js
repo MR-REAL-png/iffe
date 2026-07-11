@@ -288,6 +288,19 @@ function renderChartHarian(rows){
     }
   });
   }); // end requestAnimationFrame
+  // ── Stat ringkas di bawah chart, biar gak banyak ruang kosong ──
+  const avg=Math.round(values.reduce((a,b)=>a+b,0)/values.length);
+  const maxIdx=values.indexOf(maxVal);
+  const minVal=Math.min(...values);
+  const minIdx=values.indexOf(minVal);
+  const statsEl=document.createElement('div');
+  statsEl.className='bs-kas-pills';
+  statsEl.style.marginTop='12px';
+  statsEl.innerHTML=`
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² / Hari</div><div class="bs-kas-pill-val">Rp ${rpShort(avg)}</div></div>
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Tertinggi</div><div class="bs-kas-pill-val" style="color:var(--red)">${labels[maxIdx]}</div></div>
+    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Terendah</div><div class="bs-kas-pill-val" style="color:var(--grn)">${labels[minIdx]}</div></div>`;
+  wrap.appendChild(statsEl);
 }
 
 // ═══ CHART TREN BULANAN (6 bulan terakhir, Pengeluaran) ═══
