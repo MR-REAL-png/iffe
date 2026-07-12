@@ -414,9 +414,12 @@ function openSettModal(type){
   const hideFt=()=>{if(ft)ft.style.display='none'};
   const showFt=()=>{if(ft)ft.style.display='flex'};
   showFt();
+  const batalBtn=document.getElementById('ovSettBatalBtn');
+  if(batalBtn)batalBtn.style.display=''; // reset — disembunyikan lagi khusus type==='anggaran'
 
   if(type==='anggaran'){
     title.textContent='Anggaran per Kategori';
+    if(batalBtn)batalBtn.style.display='none'; // udah ada tombol X di header, Batal di footer jadi mubazir & bikin sempit
     const now=new Date();
     anggaranModalYear=now.getFullYear();anggaranModalMonth=now.getMonth();
     renderAnggaranModal(body);
