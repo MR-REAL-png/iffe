@@ -382,11 +382,11 @@ export default async function handler(req, res) {
     // PIUTANG — APPEND
     // ═══════════════════════════════════════
     if (action === 'append-piutang' && req.method === 'POST') {
-      const { household_id, nama, nominal, tanggal, catatan } = req.body;
+      const { household_id, nama, nominal, tanggal, catatan, jatuh_tempo } = req.body;
       const result = await sb('/piutang', 'POST', {
         household_id, nama,
         nominal: Number(nominal) || 0,
-        tanggal, catatan, lunas: false
+        tanggal, catatan, jatuh_tempo: jatuh_tempo || null, lunas: false
       });
       if (!result.ok) return res.json({ success: false, error: 'Gagal simpan piutang' });
       const piutang = result.data?.[0];
@@ -515,11 +515,11 @@ export default async function handler(req, res) {
     // HUTANG — APPEND
     // ═══════════════════════════════════════
     if (action === 'append-hutang' && req.method === 'POST') {
-      const { household_id, nama, nominal, tanggal, catatan } = req.body;
+      const { household_id, nama, nominal, tanggal, catatan, jatuh_tempo } = req.body;
       const result = await sb('/hutang', 'POST', {
         household_id, nama,
         nominal: Number(nominal) || 0,
-        tanggal, catatan, lunas: false
+        tanggal, catatan, jatuh_tempo: jatuh_tempo || null, lunas: false
       });
       if (!result.ok) return res.json({ success: false, error: 'Gagal simpan hutang' });
       return res.json({ success: true, data: result.data?.[0] });
