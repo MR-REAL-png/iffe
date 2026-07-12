@@ -1,7 +1,3 @@
-// Chart instance untuk 2 slide baru (Tren Bulanan & Perbandingan User) — dideklarasi di sini
-// supaya file ini tetap jalan tanpa perlu edit config.js juga.
-let chartTren=null, chartUser=null;
-
 // ═══ NAV ═══
 function goPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
@@ -88,10 +84,11 @@ async function loadDashboard(){
       ?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`
       :`${MOS[dashActiveBulan]} ${dashActiveYear}`;
     document.getElementById('hk-periode-lbl').textContent=periodeLabel;
+    document.getElementById('hk-periode-lbl').classList.remove('skel-pulse');
 
     // Update navigasi bulan
     const navLbl=document.getElementById('dashBulanLabel');
-    if(navLbl)navLbl.textContent=isManual?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`:periodeLabel;
+    if(navLbl){navLbl.textContent=isManual?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`:periodeLabel;navLbl.classList.remove('skel-pulse');}
     const navPrev=document.getElementById('dashPrevBulan');
     const navNext=document.getElementById('dashNextBulan');
     if(navPrev)navPrev.style.opacity=isManual?'0.3':'1';
@@ -127,8 +124,6 @@ async function loadDashboard(){
     setTimeout(()=>{
       renderChartKat(byKatArr);
       renderChartHarian(rows);
-      renderChartTren();
-      renderChartUser(rows);
     },100);
     renderBudget(byKatArr);
     updatePeriodUI();
@@ -155,27 +150,24 @@ function renderMemberActivity(rows){
   el.innerHTML=`<div class="activity-row">${IC.note} Hari ini: ${parts.join(' · ')}</div>`;
 }
 
-// ═══ CHART CAROUSEL (Komposisi <-> Harian <-> Tren <-> Perbandingan User, swipe) ═══
+// ═══ CHART CAROUSEL (Komposisi <-> Harian, swipe) ═══
 function initChartCarousel(){
   const car=document.getElementById('chartCarousel');
   if(!car||car.dataset.init)return; // idempotent, cuma pasang listener sekali
   car.dataset.init='1';
   const lblEl=document.getElementById('chartCarouselLbl');
-  const dots=[...document.querySelectorAll('#chartCarouselDots .ccd')];
-  const slides=[...car.querySelectorAll('.chart-slide')];
-  const labels=['Komposisi Pengeluaran','Pengeluaran Harian','Tren Bulanan','Sheril vs Ifaa'];
-  // IntersectionObserver jauh lebih reliable daripada hitung scrollLeft/clientWidth manual —
-  // scroll event kadang gak fire konsisten pas momentum-scroll iOS, jadi titik indikator nyangkut.
-  const io=new IntersectionObserver(entries=>{
-    entries.forEach(en=>{
-      if(!en.isIntersecting||en.intersectionRatio<0.6)return;
-      const i=slides.indexOf(en.target);
-      if(i<0)return;
+  const dots=document.querySelectorAll('#chartCarouselDots .ccd');
+  const labels=['Komposisi Pengeluaran','Pengeluaran Harian'];
+  let ticking=false;
+  car.addEventListener('scroll',()=>{
+    if(ticking)return;ticking=true;
+    requestAnimationFrame(()=>{
+      const i=Math.round(car.scrollLeft/car.clientWidth);
       if(lblEl&&labels[i]!==undefined)lblEl.textContent=labels[i];
       dots.forEach((d,di)=>d.classList.toggle('on',di===i));
+      ticking=false;
     });
-  },{root:car,threshold:[0.6]});
-  slides.forEach(s=>io.observe(s));
+  },{passive:true});
 }
 
 // ═══ CHART KOMPOSISI ═══
@@ -191,7 +183,7 @@ function renderChartKat(byCat){
     const legEl=document.getElementById('chartLegend');if(legEl)legEl.innerHTML='';
     return;
   }
-  wrap.innerHTML='<div style="display:flex;gap:14px;align-items:center"><div style="flex:1 1 55%;min-width:0"><canvas id="chartKat"></canvas></div><div id="chartKatPills" style="flex:1 1 38%;display:flex;flex-direction:column;gap:8px"></div></div>';
+  wrap.innerHTML='<canvas id="chartKat"></canvas>';
   // requestAnimationFrame supaya DOM sudah siap sebelum Chart.js init
   requestAnimationFrame(()=>{
   const canvas=document.getElementById('chartKat');if(!canvas)return;
@@ -205,10 +197,10 @@ function renderChartKat(byCat){
     const cx=(ca.left+ca.right)/2,cy=(ca.top+ca.bottom)/2;
     c.save();c.textAlign='center';c.textBaseline='middle';
     c.fillStyle=isOcean?'rgba(12,42,61,0.55)':'rgba(226,217,255,0.6)';
-    c.font=`500 10px 'DM Sans',sans-serif`;c.fillText('Total',cx,cy-12);
+    c.font=`500 11px 'DM Sans',sans-serif`;c.fillText('Total',cx,cy-14);
     c.fillStyle=isOcean?'rgba(12,42,61,0.9)':'rgba(255,255,255,0.95)';
-    c.font=`bold 15px 'Playfair Display',serif`;
-    c.fillText((total/1e6).toFixed(1)+'jt',cx,cy+9);
+    c.font=`bold 20px 'Playfair Display',serif`;
+    c.fillText((total/1e6).toFixed(1)+'jt',cx,cy+10);
     c.restore();
   }};
   chartKat=new Chart(ctx,{
@@ -219,16 +211,16 @@ function renderChartKat(byCat){
       borderWidth:1.5,borderColor:bdrCol,hoverOffset:6,spacing:2
     }]},
     options:{
-      responsive:true,cutout:'52%',aspectRatio:1,
+      responsive:true,cutout:'52%',
       animation:{animateRotate:true,duration:1000,easing:'easeOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}
     }
   });
   // Legend — top 5 kategori terbesar + sisanya digabung "lainnya" (biar nggak kepanjangan)
   const legEl=document.getElementById('chartLegend');
-  const sortedCat=[...byCat].sort((a,b)=>b.nominal-a.nominal);
   if(legEl){
     const TOPN=5;
+    const sortedCat=[...byCat].sort((a,b)=>b.nominal-a.nominal);
     const top=sortedCat.slice(0,TOPN);
     const rest=sortedCat.slice(TOPN);
     let items=top.map(k=>{
@@ -245,16 +237,6 @@ function renderChartKat(byCat){
     }
     legEl.innerHTML=items.join('');
   }
-  // ── Stat ringkas di SAMPING donut (bukan di bawah), biar tinggi slide ini
-  // konsisten sama 3 slide lain yang chart-nya lebih pendek dari donut ──
-  const teratas=sortedCat[0];
-  const pillsEl=document.getElementById('chartKatPills');
-  if(pillsEl){
-    pillsEl.innerHTML=`
-      <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Kategori Teratas</div><div class="bs-kas-pill-val" style="font-size:0.8rem">${teratas.kategori.length>12?teratas.kategori.slice(0,11)+'…':teratas.kategori}</div></div>
-      <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Total</div><div class="bs-kas-pill-val">Rp ${rpShort(total)}</div></div>
-      <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Jml Kategori</div><div class="bs-kas-pill-val">${byCat.length}</div></div>`;
-  }
   }); // end requestAnimationFrame
 }
 
@@ -269,13 +251,13 @@ function renderChartHarian(rows){
   const sorted=Object.keys(byDay).sort();
   if(!sorted.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data harian</p></div>`;return}
   wrap.innerHTML='<canvas id="chartHarian"></canvas>';
-  const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
-  const values=sorted.map(d=>byDay[d]);
-  const maxVal=Math.max(...values);
   requestAnimationFrame(()=>{
   const canvas=document.getElementById('chartHarian');if(!canvas)return;
   const ctx=canvas.getContext('2d');
   const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
+  const labels=sorted.map(d=>{const p=d.split('-');return`${p[2]}/${p[1]}`});
+  const values=sorted.map(d=>byDay[d]);
+  const maxVal=Math.max(...values);
   const gradient=ctx.createLinearGradient(0,0,0,230);
   gradient.addColorStop(0,'rgba(56,189,248,0.35)');
   gradient.addColorStop(0.5,'rgba(244,114,182,0.2)');
@@ -292,116 +274,15 @@ function renderChartHarian(rows){
       responsive:true,animation:{duration:1000,easing:'easeInOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`,title:t=>t[0].label},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#f472b6',borderColor:'rgba(244,114,182,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
       scales:{
-        y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        y:{ticks:{callback:v=>rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
         x:{ticks:{color:tc,font:{size:9},maxRotation:45},grid:{display:false},border:{display:false}}
       }
     }
   });
   }); // end requestAnimationFrame
-  // ── Stat ringkas di bawah chart, biar gak banyak ruang kosong ──
-  const avg=Math.round(values.reduce((a,b)=>a+b,0)/values.length);
-  const maxIdx=values.indexOf(maxVal);
-  const minVal=Math.min(...values);
-  const minIdx=values.indexOf(minVal);
-  const statsEl=document.createElement('div');
-  statsEl.className='bs-kas-pills';
-  statsEl.style.marginTop='12px';
-  statsEl.innerHTML=`
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² / Hari</div><div class="bs-kas-pill-val">Rp ${rpShort(avg)}</div></div>
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Tertinggi</div><div class="bs-kas-pill-val" style="color:var(--red)">${labels[maxIdx]}</div></div>
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Terendah</div><div class="bs-kas-pill-val" style="color:var(--grn)">${labels[minIdx]}</div></div>`;
-  wrap.appendChild(statsEl);
 }
 
-// ═══ CHART TREN BULANAN (6 bulan terakhir, Pengeluaran) ═══
-function renderChartTren(){
-  const wrap=document.getElementById('chartTrenWrap');if(!wrap)return;
-  if(chartTren){try{chartTren.destroy()}catch(e){}chartTren=null;}
-  wrap.innerHTML='';
-  // Bangun 6 bucket bulan terakhir (termasuk bulan aktif dashboard) dari allRows langsung,
-  // supaya gak tergantung format field r.bulan yang bisa ambigu lintas tahun.
-  const buckets=[];
-  for(let i=5;i>=0;i--){
-    const d=new Date(dashActiveYear,dashActiveBulan-i,1);
-    buckets.push({y:d.getFullYear(),m:d.getMonth(),key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,label:MOS[d.getMonth()].slice(0,3)});
-  }
-  const totals=buckets.map(b=>allRows.filter(r=>r.jenis==='Pengeluaran'&&r.tanggal&&r.tanggal.slice(0,7)===b.key).reduce((s,r)=>s+r.nominal,0));
-  if(!totals.some(v=>v>0)){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data tren</p></div>`;return}
-  wrap.innerHTML='<canvas id="chartTren"></canvas>';
-  requestAnimationFrame(()=>{
-  const canvas=document.getElementById('chartTren');if(!canvas)return;
-  const ctx=canvas.getContext('2d');
-  const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
-  const isActiveMonth=buckets.map(b=>b.y===dashActiveYear&&b.m===dashActiveBulan);
-  const barColors=isActiveMonth.map(on=>on?'#38bdf8':'rgba(129,140,248,0.35)');
-  chartTren=new Chart(ctx,{
-    type:'bar',
-    data:{labels:buckets.map(b=>b.label),datasets:[{label:'Pengeluaran',data:totals,backgroundColor:barColors,borderRadius:6,maxBarThickness:34}]},
-    options:{
-      responsive:true,animation:{duration:800,easing:'easeInOutQuart'},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#38bdf8',borderColor:'rgba(56,189,248,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
-      scales:{
-        y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
-        x:{ticks:{color:tc,font:{size:9}},grid:{display:false},border:{display:false}}
-      }
-    }
-  });
-  }); // end requestAnimationFrame
-  // ── Stat ringkas di bawah chart, biar gak banyak ruang kosong ──
-  const withData=buckets.map((b,i)=>({...b,v:totals[i]})).filter(b=>b.v>0);
-  const avg=Math.round(totals.reduce((a,b)=>a+b,0)/buckets.length);
-  const maxB=withData.reduce((a,b)=>b.v>a.v?b:a,withData[0]);
-  const minB=withData.reduce((a,b)=>b.v<a.v?b:a,withData[0]);
-  const statsEl=document.createElement('div');
-  statsEl.className='bs-kas-pills';
-  statsEl.style.marginTop='12px';
-  statsEl.innerHTML=`
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² / Bulan</div><div class="bs-kas-pill-val">Rp ${rpShort(avg)}</div></div>
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Tertinggi</div><div class="bs-kas-pill-val" style="color:var(--red)">${maxB.label}</div></div>
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Terendah</div><div class="bs-kas-pill-val" style="color:var(--grn)">${minB.label}</div></div>`;
-  wrap.appendChild(statsEl);
-}
-
-// ═══ CHART PERBANDINGAN USER (Sheril vs Ifaa, periode aktif) ═══
-function renderChartUser(rows){
-  const wrap=document.getElementById('chartUserWrap');if(!wrap)return;
-  if(chartUser){try{chartUser.destroy()}catch(e){}chartUser=null;}
-  wrap.innerHTML='';
-  const members=getHouseholdMembers();
-  if(!members.length){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.users}</div><p>Data anggota belum tersedia</p></div>`;return}
-  const byWho=groupBy(rows.filter(r=>r.jenis==='Pengeluaran'),'recorded_by');
-  const totals=members.map(m=>(byWho[m.username]||[]).reduce((s,r)=>s+r.nominal,0));
-  if(!totals.some(v=>v>0)){wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada pengeluaran periode ini</p></div>`;return}
-  wrap.innerHTML='<canvas id="chartUser"></canvas>';
-  requestAnimationFrame(()=>{
-  const canvas=document.getElementById('chartUser');if(!canvas)return;
-  const ctx=canvas.getContext('2d');
-  const tc=document.documentElement.getAttribute('data-theme')==='ocean'?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
-  chartUser=new Chart(ctx,{
-    type:'bar',
-    data:{labels:members.map(m=>m.username),datasets:[{label:'Pengeluaran',data:totals,backgroundColor:members.map(m=>m.color||'#38bdf8'),borderRadius:6,maxBarThickness:60}]},
-    options:{
-      indexAxis:'y',
-      responsive:true,animation:{duration:800,easing:'easeInOutQuart'},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${rp(c.raw)}`},backgroundColor:'rgba(15,12,41,0.85)',titleColor:'rgba(255,255,255,0.6)',bodyColor:'#f472b6',borderColor:'rgba(244,114,182,0.4)',borderWidth:1,padding:10,cornerRadius:8}},
-      scales:{
-        x:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
-        y:{ticks:{color:tc,font:{size:11,weight:'600'}},grid:{display:false},border:{display:false}}
-      }
-    }
-  });
-  }); // end requestAnimationFrame
-  // ── Stat ringkas: total gabungan + porsi masing-masing, biar gak banyak ruang kosong ──
-  const total=totals.reduce((a,b)=>a+b,0);
-  const pct=totals.map(v=>total>0?Math.round(v/total*100):0);
-  const statsEl=document.createElement('div');
-  statsEl.className='bs-kas-pills';
-  statsEl.style.marginTop='12px';
-  statsEl.innerHTML=members.map((m,i)=>
-    `<div class="bs-kas-pill"><div class="bs-kas-pill-lbl">${m.username}</div><div class="bs-kas-pill-val" style="color:${m.color||'var(--ac)'}">${pct[i]}%</div></div>`
-  ).join('')+`<div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Total</div><div class="bs-kas-pill-val">Rp ${rpShort(total)}</div></div>`;
-  wrap.appendChild(statsEl);
-}
+// ═══ BUDGET / KOMPOSISI ═══
 function renderBudget(byCat){
   const el=document.getElementById('budgetList');
   if(!el)return;
@@ -617,52 +498,24 @@ async function loadRekap(){
     const years=[...new Set(allRows.map(r=>r.tanggal?.slice(0,4)).filter(Boolean))].sort().reverse();
     if(!years.length){el.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data</p></div>`;return}
 
-    // Precompute kasTotal semua tahun dulu, supaya bisa dipakai buat badge YoY
-    // (tahun tepat 1 sebelumnya di array 'years' karena sudah urut descending)
-    const kasByYear={};
-    years.forEach(y=>{
-      const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
-      const masuk=yRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
-      const keluar=yRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
-      kasByYear[y]=masuk-keluar;
-    });
-
     let html='';
-    years.forEach((y,yi)=>{
+    years.forEach(y=>{
       const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
       const totalMasuk=yRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
       const totalKeluar=yRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
       const kasTotal=totalMasuk-totalKeluar;
 
-      const byBulanFull=MOS.map((m,i)=>{
+      const byBulan=MOS.map((m,i)=>{
         const mRows=yRows.filter(r=>r.bulan===m);
         const mk=mRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
         const kk=mRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
         return{bulan:m,masuk:mk,keluar:kk,kas:mk-kk,count:mRows.length};
-      });
-      const byBulan=byBulanFull.filter(m=>m.count>0);
-
-      // Rata-rata per bulan aktif (bulan yang ada transaksinya saja, biar gak bias ke bawah)
-      const nBulanAktif=byBulan.length||1;
-      const avgMasuk=totalMasuk/nBulanAktif;
-      const avgKeluar=totalKeluar/nBulanAktif;
-
-      // Badge YoY — bandingin ke tahun sebelumnya kalau ada (index tepat setelahnya karena desc)
-      const prevYear=years[yi+1];
-      let yoyBadge='';
-      if(prevYear&&kasByYear[prevYear]!==0){
-        const prevKas=kasByYear[prevYear];
-        const pctChange=Math.round(((kasTotal-prevKas)/Math.abs(prevKas))*100);
-        const naik=pctChange>=0;
-        yoyBadge=`<span style="display:inline-flex;align-items:center;gap:2px;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:50px;margin-left:8px;background:${naik?'var(--grn-bg)':'var(--red-bg)'};color:${naik?'var(--grn)':'var(--red)'}">${naik?'▲':'▼'} ${Math.abs(pctChange)}% vs ${prevYear}</span>`;
-      }
+      }).filter(m=>m.count>0);
 
       html+=`
         <div style="margin-bottom:20px">
           <!-- Header tahun -->
-          <div style="display:flex;align-items:center;margin-bottom:10px">
-            <span style="font-family:var(--ffd);font-size:1.1rem;font-weight:700;color:var(--tx)">${y}</span>${yoyBadge}
-          </div>
+          <div style="font-family:var(--ffd);font-size:1.1rem;font-weight:700;color:var(--tx);margin-bottom:10px">${y}</div>
 
           <!-- Total Pemasukan & Pengeluaran -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -677,21 +530,9 @@ async function loadRekap(){
           </div>
 
           <!-- Arus Kas Tahunan -->
-          <div class="hero-kas" style="text-align:center;margin-bottom:8px">
+          <div class="hero-kas" style="text-align:center;margin-bottom:12px">
             <div class="hk-lbl" style="text-align:center">Arus Kas Tahunan</div>
             <div class="hk-val" style="text-align:center;font-size:1.6rem">${kasTotal<0?'−':''}${rp(Math.abs(kasTotal))}</div>
-          </div>
-
-          <!-- Rata-rata per bulan aktif -->
-          <div class="bs-kas-pills" style="margin-bottom:14px">
-            <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² Masuk/Bulan</div><div class="bs-kas-pill-val" style="color:var(--grn)">${rp(Math.round(avgMasuk))}</div></div>
-            <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² Keluar/Bulan</div><div class="bs-kas-pill-val" style="color:var(--red)">${rp(Math.round(avgKeluar))}</div></div>
-          </div>
-
-          <!-- Mini tren 12 bulan -->
-          <div style="background:var(--glass);border:1px solid var(--bdr2);border-radius:var(--rsm);padding:12px;margin-bottom:14px">
-            <div style="font-size:0.6rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Tren Arus Kas ${y}</div>
-            <canvas id="rekapTren-${y}" height="130"></canvas>
           </div>
 
           <!-- Per Bulan -->
@@ -700,16 +541,16 @@ async function loadRekap(){
             <div style="background:var(--glass);border:1px solid var(--bdr2);border-radius:14px;padding:12px;margin-bottom:8px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
                 <span style="font-weight:700;font-size:0.9rem;color:var(--tx)">${m.bulan} ${y}</span>
-                <span style="font-family:var(--ffd);font-size:0.9rem;font-weight:800;color:${m.kas>=0?'var(--grn)':'var(--red)'}">${m.kas>=0?'+':'−'}Rp ${rpShort(Math.abs(m.kas))}</span>
+                <span style="font-family:var(--ffd);font-size:0.9rem;font-weight:800;color:${m.kas>=0?'var(--grn)':'var(--red)'}">${m.kas>=0?'+':'−'}${rpShort(Math.abs(m.kas))}</span>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                 <div style="background:var(--grn-bg);border-radius:10px;padding:8px;text-align:center">
                   <div style="font-size:0.55rem;font-weight:700;color:var(--grn);text-transform:uppercase;margin-bottom:3px">Pemasukan</div>
-                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--grn)">Rp ${rpShort(m.masuk)}</div>
+                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--grn)">${rpShort(m.masuk)}</div>
                 </div>
                 <div style="background:rgba(248,113,113,0.22);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:8px;text-align:center">
                   <div style="font-size:0.55rem;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:3px">Pengeluaran</div>
-                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--red)">Rp ${rpShort(m.keluar)}</div>
+                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--red)">${rpShort(m.keluar)}</div>
                 </div>
               </div>
             </div>
@@ -718,41 +559,6 @@ async function loadRekap(){
       `;
     });
     el.innerHTML=html;
-
-    // ── Init mini trend chart per tahun (setelah DOM siap) ──
-    requestAnimationFrame(()=>{
-      const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
-      const tc=isOcean?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
-      years.forEach(y=>{
-        const canvas=document.getElementById(`rekapTren-${y}`);
-        if(!canvas)return;
-        const existing=Chart.getChart(canvas);if(existing)existing.destroy();
-        const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
-        const byBulanFull=MOS.map(m=>{
-          const mRows=yRows.filter(r=>r.bulan===m);
-          const mk=mRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
-          const kk=mRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
-          return mk-kk;
-        });
-        const ctx=canvas.getContext('2d');
-        new Chart(ctx,{
-          type:'bar',
-          data:{labels:MOS.map(m=>m.slice(0,3)),datasets:[{
-            data:byBulanFull,
-            backgroundColor:byBulanFull.map(v=>v>=0?'rgba(52,211,153,0.7)':'rgba(248,113,113,0.7)'),
-            borderRadius:4,maxBarThickness:20
-          }]},
-          options:{
-            responsive:true,animation:{duration:600,easing:'easeOutQuart'},
-            plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw<0?'−':''}Rp ${rpShort(Math.abs(c.raw))}`}}},
-            scales:{
-              y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:8}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
-              x:{ticks:{color:tc,font:{size:8}},grid:{display:false},border:{display:false}}
-            }
-          }
-        });
-      });
-    });
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal rekap: '+e.message,'err')}
 }
 
