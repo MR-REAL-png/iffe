@@ -617,24 +617,52 @@ async function loadRekap(){
     const years=[...new Set(allRows.map(r=>r.tanggal?.slice(0,4)).filter(Boolean))].sort().reverse();
     if(!years.length){el.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data</p></div>`;return}
 
-    let html='';
+    // Precompute kasTotal semua tahun dulu, supaya bisa dipakai buat badge YoY
+    // (tahun tepat 1 sebelumnya di array 'years' karena sudah urut descending)
+    const kasByYear={};
     years.forEach(y=>{
+      const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
+      const masuk=yRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
+      const keluar=yRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
+      kasByYear[y]=masuk-keluar;
+    });
+
+    let html='';
+    years.forEach((y,yi)=>{
       const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
       const totalMasuk=yRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
       const totalKeluar=yRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
       const kasTotal=totalMasuk-totalKeluar;
 
-      const byBulan=MOS.map((m,i)=>{
+      const byBulanFull=MOS.map((m,i)=>{
         const mRows=yRows.filter(r=>r.bulan===m);
         const mk=mRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
         const kk=mRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
         return{bulan:m,masuk:mk,keluar:kk,kas:mk-kk,count:mRows.length};
-      }).filter(m=>m.count>0);
+      });
+      const byBulan=byBulanFull.filter(m=>m.count>0);
+
+      // Rata-rata per bulan aktif (bulan yang ada transaksinya saja, biar gak bias ke bawah)
+      const nBulanAktif=byBulan.length||1;
+      const avgMasuk=totalMasuk/nBulanAktif;
+      const avgKeluar=totalKeluar/nBulanAktif;
+
+      // Badge YoY — bandingin ke tahun sebelumnya kalau ada (index tepat setelahnya karena desc)
+      const prevYear=years[yi+1];
+      let yoyBadge='';
+      if(prevYear&&kasByYear[prevYear]!==0){
+        const prevKas=kasByYear[prevYear];
+        const pctChange=Math.round(((kasTotal-prevKas)/Math.abs(prevKas))*100);
+        const naik=pctChange>=0;
+        yoyBadge=`<span style="display:inline-flex;align-items:center;gap:2px;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:50px;margin-left:8px;background:${naik?'var(--grn-bg)':'var(--red-bg)'};color:${naik?'var(--grn)':'var(--red)'}">${naik?'▲':'▼'} ${Math.abs(pctChange)}% vs ${prevYear}</span>`;
+      }
 
       html+=`
         <div style="margin-bottom:20px">
           <!-- Header tahun -->
-          <div style="font-family:var(--ffd);font-size:1.1rem;font-weight:700;color:var(--tx);margin-bottom:10px">${y}</div>
+          <div style="display:flex;align-items:center;margin-bottom:10px">
+            <span style="font-family:var(--ffd);font-size:1.1rem;font-weight:700;color:var(--tx)">${y}</span>${yoyBadge}
+          </div>
 
           <!-- Total Pemasukan & Pengeluaran -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -649,9 +677,21 @@ async function loadRekap(){
           </div>
 
           <!-- Arus Kas Tahunan -->
-          <div class="hero-kas" style="text-align:center;margin-bottom:12px">
+          <div class="hero-kas" style="text-align:center;margin-bottom:8px">
             <div class="hk-lbl" style="text-align:center">Arus Kas Tahunan</div>
             <div class="hk-val" style="text-align:center;font-size:1.6rem">${kasTotal<0?'−':''}${rp(Math.abs(kasTotal))}</div>
+          </div>
+
+          <!-- Rata-rata per bulan aktif -->
+          <div class="bs-kas-pills" style="margin-bottom:14px">
+            <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² Masuk/Bulan</div><div class="bs-kas-pill-val" style="color:var(--grn)">${rp(Math.round(avgMasuk))}</div></div>
+            <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Rata² Keluar/Bulan</div><div class="bs-kas-pill-val" style="color:var(--red)">${rp(Math.round(avgKeluar))}</div></div>
+          </div>
+
+          <!-- Mini tren 12 bulan -->
+          <div style="background:var(--glass);border:1px solid var(--bdr2);border-radius:var(--rsm);padding:12px;margin-bottom:14px">
+            <div style="font-size:0.6rem;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Tren Arus Kas ${y}</div>
+            <canvas id="rekapTren-${y}" height="130"></canvas>
           </div>
 
           <!-- Per Bulan -->
@@ -660,16 +700,16 @@ async function loadRekap(){
             <div style="background:var(--glass);border:1px solid var(--bdr2);border-radius:14px;padding:12px;margin-bottom:8px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
                 <span style="font-weight:700;font-size:0.9rem;color:var(--tx)">${m.bulan} ${y}</span>
-                <span style="font-family:var(--ffd);font-size:0.9rem;font-weight:800;color:${m.kas>=0?'var(--grn)':'var(--red)'}">${m.kas>=0?'+':'−'}${rpShort(Math.abs(m.kas))}</span>
+                <span style="font-family:var(--ffd);font-size:0.9rem;font-weight:800;color:${m.kas>=0?'var(--grn)':'var(--red)'}">${m.kas>=0?'+':'−'}Rp ${rpShort(Math.abs(m.kas))}</span>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                 <div style="background:var(--grn-bg);border-radius:10px;padding:8px;text-align:center">
                   <div style="font-size:0.55rem;font-weight:700;color:var(--grn);text-transform:uppercase;margin-bottom:3px">Pemasukan</div>
-                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--grn)">${rpShort(m.masuk)}</div>
+                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--grn)">Rp ${rpShort(m.masuk)}</div>
                 </div>
                 <div style="background:rgba(248,113,113,0.22);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:8px;text-align:center">
                   <div style="font-size:0.55rem;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:3px">Pengeluaran</div>
-                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--red)">${rpShort(m.keluar)}</div>
+                  <div style="font-family:var(--ffd);font-size:0.88rem;font-weight:700;color:var(--red)">Rp ${rpShort(m.keluar)}</div>
                 </div>
               </div>
             </div>
@@ -678,6 +718,41 @@ async function loadRekap(){
       `;
     });
     el.innerHTML=html;
+
+    // ── Init mini trend chart per tahun (setelah DOM siap) ──
+    requestAnimationFrame(()=>{
+      const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
+      const tc=isOcean?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
+      years.forEach(y=>{
+        const canvas=document.getElementById(`rekapTren-${y}`);
+        if(!canvas)return;
+        const existing=Chart.getChart(canvas);if(existing)existing.destroy();
+        const yRows=allRows.filter(r=>r.tanggal?.startsWith(y));
+        const byBulanFull=MOS.map(m=>{
+          const mRows=yRows.filter(r=>r.bulan===m);
+          const mk=mRows.filter(r=>r.jenis==='Pemasukan').reduce((s,r)=>s+r.nominal,0);
+          const kk=mRows.filter(r=>r.jenis==='Pengeluaran').reduce((s,r)=>s+r.nominal,0);
+          return mk-kk;
+        });
+        const ctx=canvas.getContext('2d');
+        new Chart(ctx,{
+          type:'bar',
+          data:{labels:MOS.map(m=>m.slice(0,3)),datasets:[{
+            data:byBulanFull,
+            backgroundColor:byBulanFull.map(v=>v>=0?'rgba(52,211,153,0.7)':'rgba(248,113,113,0.7)'),
+            borderRadius:4,maxBarThickness:20
+          }]},
+          options:{
+            responsive:true,animation:{duration:600,easing:'easeOutQuart'},
+            plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw<0?'−':''}Rp ${rpShort(Math.abs(c.raw))}`}}},
+            scales:{
+              y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:8}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+              x:{ticks:{color:tc,font:{size:8}},grid:{display:false},border:{display:false}}
+            }
+          }
+        });
+      });
+    });
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal rekap: '+e.message,'err')}
 }
 
