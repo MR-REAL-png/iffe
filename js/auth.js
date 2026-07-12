@@ -32,6 +32,19 @@ function showPinOverlay() {
   }
 }
 
+// ═══ LOADING STATE (wordmark) — ditampilin sebentar setelah PIN/login sukses,
+// selama nunggu refreshMembers/pullSettings/loadDashboard, sebelum overlay ditutup ══
+function showPinLoadingState() {
+  const wrap = document.getElementById('pinWrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div class="pin-loading-wrap">
+      <img src="./shif-wordmark-outlined.png" alt="SHIF" class="pin-loading-wordmark">
+      <div class="pin-loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  `;
+}
+
 function hidePinOverlay() {
   const ov = document.getElementById('pinOverlay');
   if (ov) {
@@ -305,6 +318,7 @@ async function pinSubmit() {
       const json = await res.json();
       if (json.success) {
         setSession({ username: json.username, household_id: json.household_id, color: json.color });
+        showPinLoadingState();
         // Refresh members dari server
         await refreshMembers(json.household_id);
         hidePinOverlay();
@@ -332,6 +346,7 @@ async function pinSubmit() {
       const json = await res.json();
       if (json.success) {
         setSession({ username: json.username, household_id: json.household_id, color: json.color });
+        showPinLoadingState();
         await refreshMembers(json.household_id);
         hidePinOverlay();
         updateProfileUI();
@@ -407,6 +422,7 @@ async function pinSubmit() {
       if (json.success) {
         const color = USER_COLORS.default2;
         setSession({ username: json.username, household_id: json.household_id, color });
+        showPinLoadingState();
         await refreshMembers(json.household_id);
         hidePinOverlay();
         updateProfileUI();
@@ -441,6 +457,7 @@ function showInviteCode(code, username, household_id, color) {
 }
 
 async function afterRegister(username, household_id, color) {
+  showPinLoadingState();
   hidePinOverlay();
   updateProfileUI();
   await pullSettings();
