@@ -408,6 +408,8 @@ function openSettModal(type){
   const title=document.getElementById('settModalTitle');
   const body =document.getElementById('settModalBody');
   const ft   =document.querySelector('#ovSett .modal-ft');
+  const angTotalEl=document.getElementById('angFtTotal');
+  if(angTotalEl)angTotalEl.style.display='none'; // reset — cuma dimunculkan lagi kalau type==='anggaran'
 
   const hideFt=()=>{if(ft)ft.style.display='none'};
   const showFt=()=>{if(ft)ft.style.display='flex'};
@@ -418,7 +420,7 @@ function openSettModal(type){
     const now=new Date();
     anggaranModalYear=now.getFullYear();anggaranModalMonth=now.getMonth();
     renderAnggaranModal(body);
-    hideFt();
+    if(angTotalEl)angTotalEl.style.display='block';
   }
   else if(type==='kategori'){
     title.textContent='Kelola Kategori';
@@ -541,11 +543,22 @@ function renderAnggaranModal(body){
     ${allKats.map(k=>`
       <div class="ang-row">
         <label class="ang-lbl" style="display:flex;align-items:center">${katIconInline(k,15)}${k}</label>
-        <input type="text" class="ang-inp inp" data-kat="${k}" inputmode="numeric" oninput="fmtNom(this)" value="${budgets[k]?Number(budgets[k]).toLocaleString('id-ID'):''}">
+        <input type="text" class="ang-inp inp" data-kat="${k}" inputmode="numeric" oninput="fmtNom(this);updateAngTotal()" value="${budgets[k]?Number(budgets[k]).toLocaleString('id-ID'):''}">
       </div>
     `).join('')}
-    <button class="btn-ok" style="width:100%;margin-top:12px" onclick="saveAnggaran()">Simpan Anggaran</button>
   `;
+  updateAngTotal();
+}
+
+// ═══ TOTAL REALTIME DI FOOTER (jumlah semua input anggaran kategori) ═══
+function updateAngTotal(){
+  const el=document.getElementById('angFtTotal');
+  if(!el)return;
+  let total=0;
+  document.querySelectorAll('.ang-inp').forEach(inp=>{
+    total+=Number(inp.value.replace(/\./g,'').replace(/[^0-9]/g,''))||0;
+  });
+  el.innerHTML=`Total <b>${rp(total)}</b>`;
 }
 
 function changeAnggaranMonth(d){
@@ -569,7 +582,10 @@ function saveAnggaran(){
 }
 
 function saveSettModal(){
-  if(settModalType==='periode'){
+  if(settModalType==='anggaran'){
+    saveAnggaran();
+  }
+  else if(settModalType==='periode'){
     const isManual=document.getElementById('periodeManualToggle')?.classList.contains('on');
     if(isManual){
       const start=document.getElementById('periodeStart')?.value;
