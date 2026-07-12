@@ -34,7 +34,17 @@ function showPinOverlay() {
 
 function hidePinOverlay() {
   const ov = document.getElementById('pinOverlay');
-  if (ov) { ov.classList.add('hidden'); ov.classList.remove('visible'); setTimeout(() => { ov.style.display = 'none'; }, 400); }
+  if (ov) {
+    ov.classList.add('hidden'); ov.classList.remove('visible');
+    setTimeout(() => {
+      ov.style.display = 'none';
+      // Fix Android: setelah overlay fixed inset:0 dihapus, body kadang "lupa"
+      // ngitung ulang area yang bisa di-scroll sampai ada reflow lain (misal buka
+      // drawer). Paksa reflow + trigger resize di sini biar scroll langsung normal.
+      void document.body.offsetHeight;
+      window.dispatchEvent(new Event('resize'));
+    }, 400);
+  }
 }
 
 // ═══ SCREEN: USER PICKER ═══
