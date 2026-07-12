@@ -205,6 +205,31 @@
   text-decoration: underline; padding: 8px;
 }
 
+/* ── LOADING STATE (wordmark, tampil sebentar setelah PIN sukses) ── */
+.pin-loading-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 22px; padding: 40px 0;
+}
+.pin-loading-wordmark {
+  height: 40px; width: auto; object-fit: contain;
+  animation: pinLoadingPulse 1.4s ease-in-out infinite;
+}
+@keyframes pinLoadingPulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.97); }
+  50%      { opacity: 1;    transform: scale(1.03); }
+}
+.pin-loading-dots { display: flex; gap: 6px; }
+.pin-loading-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ac); animation: pinLoadingDot 1.2s ease-in-out infinite;
+}
+.pin-loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+.pin-loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pinLoadingDot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40%           { opacity: 1;    transform: translateY(-4px); }
+}
+
 /* ══════════════════════════════════
    ATM CAROUSEL
 ══════════════════════════════════ */
