@@ -191,7 +191,7 @@ function renderChartKat(byCat){
     const legEl=document.getElementById('chartLegend');if(legEl)legEl.innerHTML='';
     return;
   }
-  wrap.innerHTML='<canvas id="chartKat"></canvas>';
+  wrap.innerHTML='<div style="display:flex;gap:14px;align-items:center"><div style="flex:1 1 55%;min-width:0"><canvas id="chartKat"></canvas></div><div id="chartKatPills" style="flex:1 1 38%;display:flex;flex-direction:column;gap:8px"></div></div>';
   // requestAnimationFrame supaya DOM sudah siap sebelum Chart.js init
   requestAnimationFrame(()=>{
   const canvas=document.getElementById('chartKat');if(!canvas)return;
@@ -205,10 +205,10 @@ function renderChartKat(byCat){
     const cx=(ca.left+ca.right)/2,cy=(ca.top+ca.bottom)/2;
     c.save();c.textAlign='center';c.textBaseline='middle';
     c.fillStyle=isOcean?'rgba(12,42,61,0.55)':'rgba(226,217,255,0.6)';
-    c.font=`500 11px 'DM Sans',sans-serif`;c.fillText('Total',cx,cy-14);
+    c.font=`500 10px 'DM Sans',sans-serif`;c.fillText('Total',cx,cy-12);
     c.fillStyle=isOcean?'rgba(12,42,61,0.9)':'rgba(255,255,255,0.95)';
-    c.font=`bold 20px 'Playfair Display',serif`;
-    c.fillText((total/1e6).toFixed(1)+'jt',cx,cy+10);
+    c.font=`bold 15px 'Playfair Display',serif`;
+    c.fillText((total/1e6).toFixed(1)+'jt',cx,cy+9);
     c.restore();
   }};
   chartKat=new Chart(ctx,{
@@ -219,7 +219,7 @@ function renderChartKat(byCat){
       borderWidth:1.5,borderColor:bdrCol,hoverOffset:6,spacing:2
     }]},
     options:{
-      responsive:true,cutout:'52%',aspectRatio:1.55,
+      responsive:true,cutout:'52%',aspectRatio:1,
       animation:{animateRotate:true,duration:1000,easing:'easeOutQuart'},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${rp(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}
     }
@@ -245,16 +245,16 @@ function renderChartKat(byCat){
     }
     legEl.innerHTML=items.join('');
   }
-  // ── Stat ringkas, biar tinggi slide ini konsisten sama 3 slide lainnya ──
+  // ── Stat ringkas di SAMPING donut (bukan di bawah), biar tinggi slide ini
+  // konsisten sama 3 slide lain yang chart-nya lebih pendek dari donut ──
   const teratas=sortedCat[0];
-  const statsEl=document.createElement('div');
-  statsEl.className='bs-kas-pills';
-  statsEl.style.marginTop='12px';
-  statsEl.innerHTML=`
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Kategori Teratas</div><div class="bs-kas-pill-val">${teratas.kategori.length>10?teratas.kategori.slice(0,9)+'…':teratas.kategori}</div></div>
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Total</div><div class="bs-kas-pill-val">Rp ${rpShort(total)}</div></div>
-    <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Jml Kategori</div><div class="bs-kas-pill-val">${byCat.length}</div></div>`;
-  wrap.appendChild(statsEl);
+  const pillsEl=document.getElementById('chartKatPills');
+  if(pillsEl){
+    pillsEl.innerHTML=`
+      <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Kategori Teratas</div><div class="bs-kas-pill-val" style="font-size:0.8rem">${teratas.kategori.length>12?teratas.kategori.slice(0,11)+'…':teratas.kategori}</div></div>
+      <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Total</div><div class="bs-kas-pill-val">Rp ${rpShort(total)}</div></div>
+      <div class="bs-kas-pill"><div class="bs-kas-pill-lbl">Jml Kategori</div><div class="bs-kas-pill-val">${byCat.length}</div></div>`;
+  }
   }); // end requestAnimationFrame
 }
 
