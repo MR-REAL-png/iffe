@@ -88,10 +88,11 @@ async function loadDashboard(){
       ?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`
       :`${MOS[dashActiveBulan]} ${dashActiveYear}`;
     document.getElementById('hk-periode-lbl').textContent=periodeLabel;
+    document.getElementById('hk-periode-lbl').classList.remove('skel-pulse');
 
     // Update navigasi bulan
     const navLbl=document.getElementById('dashBulanLabel');
-    if(navLbl)navLbl.textContent=isManual?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`:periodeLabel;
+    if(navLbl){navLbl.textContent=isManual?`${fmtDateShort(sd)} – ${fmtDateShort(ed)}`:periodeLabel;navLbl.classList.remove('skel-pulse');}
     const navPrev=document.getElementById('dashPrevBulan');
     const navNext=document.getElementById('dashNextBulan');
     if(navPrev)navPrev.style.opacity=isManual?'0.3':'1';
