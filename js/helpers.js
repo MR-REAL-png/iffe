@@ -129,11 +129,24 @@ function updatePeriodUI(){
 
 // Navigasi bulan (mode otomatis)
 function resetCharts(){
-  // Destroy instance Chart.js saja — JANGAN hapus innerHTML container,
-  // karena canvas #chartKat/#chartHarian dipakai lagi oleh renderChartKat/renderChartHarian
-  // (mereka sudah punya logic sendiri untuk reset & bikin ulang canvas-nya).
+  // Destroy semua instance Chart.js yang aktif — JANGAN hapus innerHTML container di sini
+  // (itu di-handle terpisah di bawah), karena canvas dipakai lagi oleh render function masing-masing.
   if(typeof chartKat!=='undefined'&&chartKat){try{chartKat.destroy()}catch(e){}chartKat=null;}
   if(typeof chartHarian!=='undefined'&&chartHarian){try{chartHarian.destroy()}catch(e){}chartHarian=null;}
+  if(typeof chartTren!=='undefined'&&chartTren){try{chartTren.destroy()}catch(e){}chartTren=null;}
+  if(typeof chartUser!=='undefined'&&chartUser){try{chartUser.destroy()}catch(e){}chartUser=null;}
+
+  // Kosongin isi tiap slide chart (canvas + pill stat) dan ganti loading spinner sementara.
+  // Ini bikin transisi pindah bulan kelihatan jelas — chart & pills hilang bareng,
+  // lalu muncul lagi bareng (dengan animasi cardIn) begitu render selesai,
+  // bukan cuma "kedip sekilas" karena kontennya nyangkut dari bulan sebelumnya.
+  const loadingHtml='<div class="ldrow" style="justify-content:center;padding:28px 0"><div class="spin"></div>Memuat...</div>';
+  ['chartKatWrap','chartHarianWrap','chartTrenWrap','chartUserWrap'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=loadingHtml;
+  });
+  const legEl=document.getElementById('chartLegend');
+  if(legEl)legEl.innerHTML='';
 }
 
 function prevBulan(){
