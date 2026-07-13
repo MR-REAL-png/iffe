@@ -165,15 +165,41 @@ function initChartCarousel(){
   const dots=[...document.querySelectorAll('#chartCarouselDots .ccd')];
   const slides=[...car.querySelectorAll('.chart-slide')];
   const labels=['Komposisi Pengeluaran','Pengeluaran Harian','Tren Bulanan','Sheril vs Ifaa'];
+  // Getter (bukan snapshot) chart instance per index slide — soalnya instance-nya
+  // di-destroy & dibikin ulang tiap kali data direfresh (ganti bulan dll), jadi
+  // kalau ambil reference-nya sekali di awal bisa jadi stale/null.
+  const chartGetters=[()=>chartKat,()=>chartHarian,()=>chartTren,()=>chartUser];
+  let activeIdx=-1; // slide yang lagi aktif, biar animasi cuma trigger pas benar² pindah slide
+
+  // Replay animasi chart (canvas) + elemen non-canvas (pill/legend/stat) saat slide masuk viewport
+  function replaySlideAnim(i){
+    const chart=chartGetters[i]?chartGetters[i]():null;
+    // reset() balikin chart ke state kosong, update() re-animate dia dari kosong ke data
+    // lengkap — cara paling gampang buat "replay" animasi bawaan Chart.js tanpa rebuild chart.
+    if(chart){try{chart.reset();chart.update();}catch(e){}}
+    const slideEl=slides[i];if(!slideEl)return;
+    // Elemen non-canvas (pill stat, legend) animasinya nempel permanen di CSS class-nya
+    // (animation: cardIn ... di base.css), jadi gak otomatis replay walau elemennya udah
+    // pernah ke-render. Trik restart-nya: matiin animation → paksa reflow → nyalain lagi.
+    const animEls=slideEl.querySelectorAll('.bs-kas-pill,.bs-kas-pills,.chart-legend,#chartLegend');
+    animEls.forEach(el=>{
+      el.style.animation='none';
+      void el.offsetWidth; // force reflow
+      el.style.animation='';
+    });
+  }
+
   // IntersectionObserver jauh lebih reliable daripada hitung scrollLeft/clientWidth manual —
   // scroll event kadang gak fire konsisten pas momentum-scroll iOS, jadi titik indikator nyangkut.
   const io=new IntersectionObserver(entries=>{
     entries.forEach(en=>{
       if(!en.isIntersecting||en.intersectionRatio<0.6)return;
       const i=slides.indexOf(en.target);
-      if(i<0)return;
+      if(i<0||i===activeIdx)return; // udah aktif, skip biar gak re-trigger tiap micro-scroll
+      activeIdx=i;
       if(lblEl&&labels[i]!==undefined)lblEl.textContent=labels[i];
       dots.forEach((d,di)=>d.classList.toggle('on',di===i));
+      replaySlideAnim(i);
     });
   },{root:car,threshold:[0.6]});
   slides.forEach(s=>io.observe(s));
