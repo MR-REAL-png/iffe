@@ -168,3 +168,73 @@
 .bmon-over { background: linear-gradient(90deg, var(--red), #f97316); }
 .bmon-amts { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--tx3); }
 .bmon-amts .over { color: var(--red); font-weight: 700; }
+
+/* ══════════════════════════════════════════
+   REKAP PERKATEGORI
+══════════════════════════════════════════ */
+.pk-jenis-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+.pk-jenis-toggle .toggle-view-btn { flex: 1; padding: 9px 8px; font-size: 0.72rem; border-radius: 12px; }
+
+.pk-period-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.pk-period-row .toggle-view-btn { flex: 1; padding: 7px 6px; }
+
+.pk-daterange {
+  display: none; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 12px;
+}
+.pk-daterange.on { display: grid; }
+.pk-daterange .inp { font-size: 0.75rem; padding: 8px 10px; }
+
+.pk-total-hero {
+  background: linear-gradient(135deg, #0a2a4a, #0d3d6b, #1a1040);
+  border-radius: var(--rsm); padding: 16px; color: #fff;
+  margin-bottom: 14px; text-align: center; position: relative; overflow: hidden;
+}
+.pk-total-hero::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(56,189,248,0.3), transparent 70%);
+}
+.pk-total-lbl {
+  font-size: 0.55rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.1em; opacity: 0.7; margin-bottom: 4px;
+}
+.pk-total-val { font-family: var(--ffd); font-size: 1.7rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.pk-total-sub { font-size: 0.65rem; opacity: 0.75; }
+
+#pkList { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.pk-item {
+  background: var(--glass); border: 1px solid var(--bdr2);
+  border-radius: var(--rsm); padding: 10px 12px; cursor: pointer;
+  animation: cardIn .3s var(--ease) both;
+}
+.pk-item:active { opacity: 0.85; }
+.pk-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pk-rank {
+  width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0;
+  background: rgba(56,189,248,0.12); color: var(--ac);
+  font-size: 0.62rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.pk-name { font-size: 0.8rem; font-weight: 700; color: var(--tx); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.pk-pct  { font-size: 0.7rem; font-weight: 800; color: var(--ac); flex-shrink: 0; }
+.pk-bar  { height: 5px; background: var(--bdr); border-radius: 99px; overflow: hidden; margin-bottom: 4px; }
+.pk-fill { height: 100%; border-radius: 99px; transition: width 1s var(--ease); }
+.pk-amts { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--tx3); }
+
+.pk-tren-wrap {
+  background: var(--glass); border: 1px solid var(--bdr2);
+  border-radius: var(--rsm); padding: 12px; margin-top: 16px;
+}
+
+/* ── DETAIL POPUP (bottom sheet Rekap Perkategori) ── */
+.pk-detail-hero { text-align: center; margin-bottom: 12px; }
+.pk-detail-val { font-size: 1.3rem; font-weight: 700; color: var(--ac); }
+.pk-detail-sub { font-size: 0.75rem; color: var(--tx3); }
+.pk-detail-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.pk-detail-stat {
+  background: var(--glass); border: 1px solid var(--bdr2);
+  border-radius: var(--rsm); padding: 8px 6px; text-align: center;
+}
+.pk-detail-stat-lbl { font-size: 0.52rem; font-weight: 700; color: var(--tx3); text-transform: uppercase; margin-bottom: 2px; }
+.pk-detail-stat-val { font-size: 0.78rem; font-weight: 800; font-family: var(--ffd); color: var(--tx); }
