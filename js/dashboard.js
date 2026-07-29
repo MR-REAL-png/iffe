@@ -25,6 +25,7 @@ function goPage(p){
   }
   else if(p==='dompet')loadDompet();
   else if(p==='rekap')loadRekap();
+  else if(p==='perkategori')loadPerkategori();
   else if(p==='metode')loadMetode();
   else if(p==='kalender')renderKalender();
   else if(p==='notif')loadNotif();
@@ -39,6 +40,7 @@ function doRefresh(){
   else if(id==='data')loadData();
   else if(id==='dompet')loadDompet();
   else if(id==='rekap')loadRekap();
+  else if(id==='perkategori')loadPerkategori();
   else if(id==='metode')loadMetode();
   else if(id==='notif')loadNotif();
   else if(id==='tabungan')loadTabungan();
@@ -781,6 +783,245 @@ async function loadRekap(){
       });
     });
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal rekap: '+e.message,'err')}
+}
+
+// ═══ REKAP PERKATEGORI ═══
+let pkJenis='Pengeluaran', pkPeriod='bulan', pkCustomFrom=null, pkCustomTo=null, chartPkTren=null;
+
+function pkSetJenis(j){
+  pkJenis=j;
+  document.getElementById('pkJenisBtn-Pengeluaran')?.classList.toggle('on',j==='Pengeluaran');
+  document.getElementById('pkJenisBtn-Pemasukan')?.classList.toggle('on',j==='Pemasukan');
+  pkRender();
+}
+
+function pkSetPeriod(p){
+  pkPeriod=p;
+  ['bulan','tahun','semua','custom'].forEach(k=>document.getElementById('pkPeriodBtn-'+k)?.classList.toggle('on',k===p));
+  const dr=document.getElementById('pkDateRange');
+  if(dr)dr.classList.toggle('on',p==='custom');
+  if(p==='custom'){
+    // Kalau custom dipilih tapi tanggal belum diisi, tunggu input dulu (jangan render dengan range kosong)
+    if(!pkCustomFrom||!pkCustomTo)return;
+  }
+  pkRender();
+}
+
+function pkApplyCustomRange(){
+  const from=document.getElementById('pkDateFrom')?.value;
+  const to=document.getElementById('pkDateTo')?.value;
+  if(!from||!to)return;
+  pkCustomFrom=from;pkCustomTo=to;
+  pkPeriod='custom';
+  document.getElementById('pkDateRange')?.classList.add('on');
+  ['bulan','tahun','semua','custom'].forEach(k=>document.getElementById('pkPeriodBtn-'+k)?.classList.toggle('on',k==='custom'));
+  pkRender();
+}
+
+function pkGetRange(){
+  const now=new Date();
+  if(pkPeriod==='bulan'){
+    const start=new Date(now.getFullYear(),now.getMonth(),1);
+    const end=new Date(now.getFullYear(),now.getMonth()+1,0);
+    end.setHours(23,59,59,999);
+    return{start,end,label:`${MOS[now.getMonth()]} ${now.getFullYear()}`};
+  }
+  if(pkPeriod==='tahun'){
+    const start=new Date(now.getFullYear(),0,1);
+    const end=new Date(now.getFullYear(),11,31);
+    end.setHours(23,59,59,999);
+    return{start,end,label:`Tahun ${now.getFullYear()}`};
+  }
+  if(pkPeriod==='custom'&&pkCustomFrom&&pkCustomTo){
+    const start=new Date(pkCustomFrom);start.setHours(0,0,0,0);
+    const end=new Date(pkCustomTo);end.setHours(23,59,59,999);
+    return{start,end,label:`${formatTgl(pkCustomFrom)} – ${formatTgl(pkCustomTo)}`};
+  }
+  // semua
+  const dates=allRows.map(r=>r.tanggal).filter(Boolean).sort();
+  const start=dates.length?new Date(dates[0]):new Date(now.getFullYear(),0,1);
+  const end=new Date();end.setHours(23,59,59,999);
+  return{start,end,label:'Semua Waktu'};
+}
+
+async function loadPerkategori(){
+  const listEl=document.getElementById('pkList');
+  if(listEl)listEl.innerHTML='<div class="ldrow"><div class="spin"></div>Memuat...</div>';
+  try{
+    if(!allRows.length)allRows=await fetchAllData();
+    pkRender();
+  }catch(e){
+    if(listEl)listEl.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;
+    toast('Gagal rekap perkategori: '+e.message,'err');
+  }
+}
+
+function pkRender(){
+  const listEl=document.getElementById('pkList');
+  const totalLblEl=document.getElementById('pkTotalLbl');
+  const totalValEl=document.getElementById('pkTotalVal');
+  const totalSubEl=document.getElementById('pkTotalSub');
+  if(!listEl)return;
+  const{start,end,label}=pkGetRange();
+  const rows=allRows.filter(r=>{
+    if(r.jenis!==pkJenis)return false;
+    const d=new Date(r.tanggal);
+    return d>=start&&d<=end;
+  });
+  const total=rows.reduce((s,r)=>s+r.nominal,0);
+  if(totalLblEl)totalLblEl.textContent=`Total ${pkJenis}`;
+  if(totalValEl)totalValEl.textContent=rp(total);
+  if(totalSubEl)totalSubEl.textContent=label;
+
+  const byCatMap={};
+  rows.forEach(r=>{
+    const k=r.kategori||'Lainnya';
+    byCatMap[k]=(byCatMap[k]||0)+r.nominal;
+  });
+  const byCat=Object.entries(byCatMap).map(([kategori,nominal])=>({kategori,nominal})).sort((a,b)=>b.nominal-a.nominal);
+
+  if(!byCat.length){
+    listEl.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada ${pkJenis.toLowerCase()} di periode ini</p></div>`;
+  }else{
+    listEl.innerHTML=byCat.map((k,i)=>{
+      const pct=total>0?Math.round(k.nominal/total*100):0;
+      const cnt=rows.filter(r=>(r.kategori||'Lainnya')===k.kategori).length;
+      const col=CHART_COLORS[i%CHART_COLORS.length];
+      return`<div class="pk-item" style="animation-delay:${i*0.04}s" onclick="openPkKatDetail('${k.kategori.replace(/'/g,"\\'")}')">
+        <div class="pk-top">
+          <div class="pk-rank">${i+1}</div>
+          <div class="pk-name">${katIconInline(k.kategori,14)}${k.kategori}</div>
+          <div class="pk-pct">${pct}%</div>
+        </div>
+        <div class="pk-bar"><div class="pk-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="pk-amts"><span>${rp(k.nominal)}</span><span>${cnt} transaksi</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  renderPkTrenChart(byCat.slice(0,5), rows, start, end);
+}
+
+function renderPkTrenChart(top5, rows, start, end){
+  const canvas=document.getElementById('pkTrenChart');
+  if(!canvas)return;
+  if(chartPkTren){try{chartPkTren.destroy()}catch(e){}chartPkTren=null;}
+  if(!top5.length){
+    const wrap=document.getElementById('pkTrenWrap');
+    if(wrap)wrap.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada data tren</p></div>`;
+    return;
+  }
+  const wrap=document.getElementById('pkTrenWrap');
+  if(wrap&&!document.getElementById('pkTrenChart'))wrap.innerHTML='<canvas id="pkTrenChart" height="180"></canvas>';
+  const c=document.getElementById('pkTrenChart');if(!c)return;
+
+  // Bangun daftar label bulan (YYYY-MM) dari start s/d end
+  const monthKeys=[];
+  const cur=new Date(start.getFullYear(),start.getMonth(),1);
+  const last=new Date(end.getFullYear(),end.getMonth(),1);
+  while(cur<=last){
+    monthKeys.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`);
+    cur.setMonth(cur.getMonth()+1);
+  }
+  const labels=monthKeys.map(mk=>{
+    const[y,m]=mk.split('-');
+    return`${MOS[Number(m)-1].slice(0,3)} '${y.slice(2)}`;
+  });
+
+  const isOcean=document.documentElement.getAttribute('data-theme')==='ocean';
+  const tc=isOcean?'rgba(12,42,61,0.55)':'rgba(255,255,255,0.45)';
+
+  const datasets=top5.map((k,i)=>{
+    const col=CHART_COLORS[i%CHART_COLORS.length];
+    const data=monthKeys.map(mk=>{
+      const[y,m]=mk.split('-');
+      return rows.filter(r=>r.kategori===k.kategori&&r.tanggal?.startsWith(`${y}-${m}`)).reduce((s,r)=>s+r.nominal,0);
+    });
+    return{
+      label:k.kategori,data,
+      borderColor:col,backgroundColor:col+'22',
+      tension:.35,fill:false,pointRadius:2,pointHoverRadius:4,borderWidth:2
+    };
+  });
+
+  const ctx=c.getContext('2d');
+  chartPkTren=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,animation:{duration:600,easing:'easeOutQuart'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'bottom',labels:{color:tc,font:{size:9},boxWidth:8,boxHeight:8,usePointStyle:true}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${rp(c.raw)}`}}
+      },
+      scales:{
+        y:{ticks:{callback:v=>'Rp '+rpShort(v),color:tc,font:{size:8}},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}},
+        x:{ticks:{color:tc,font:{size:8}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+}
+
+function openPkKatDetail(kat){
+  const{start,end}=pkGetRange();
+  const rows=allRows.filter(r=>{
+    if(r.jenis!==pkJenis||(r.kategori||'Lainnya')!==kat)return false;
+    const d=new Date(r.tanggal);
+    return d>=start&&d<=end;
+  }).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+
+  const total=rows.reduce((s,r)=>s+r.nominal,0);
+  const cnt=rows.length;
+  const avg=cnt?Math.round(total/cnt):0;
+  const activeDays=new Set(rows.map(r=>r.tanggal)).size;
+
+  // Kelompokkan per tanggal
+  const byDate={};
+  rows.forEach(r=>{(byDate[r.tanggal]=byDate[r.tanggal]||[]).push(r)});
+  const dates=Object.keys(byDate).sort().reverse();
+
+  const members=typeof getHouseholdMembers==='function'?getHouseholdMembers():[];
+  const colorMap={};members.forEach(m=>colorMap[m.username]=m.color);
+  const isOceanTheme=document.documentElement.getAttribute('data-theme')==='ocean';
+  const cls=pkJenis==='Pengeluaran'?'spd':'inc';
+  const arr=pkJenis==='Pengeluaran'?'↑':'↓';
+
+  const historyHtml=dates.map(tgl=>{
+    const dayRows=byDate[tgl];
+    const dayTotal=dayRows.reduce((s,r)=>s+r.nominal,0);
+    const cards=dayRows.map(r=>{
+      const recColor=colorMap[r.recorded_by]||'var(--tx3)';
+      const recBg=isOceanTheme?recColor+'22':recColor+'99';
+      const recText=isOceanTheme?recColor:'#ffffff';
+      const recBadge=r.recorded_by?`<span class="rec-by-badge" style="background:${recBg};color:${recText}">${r.recorded_by.charAt(0).toUpperCase()}</span>`:'';
+      return`<div class="dc ${cls}" style="margin-bottom:6px" onclick="event.stopPropagation();openStrukDetail(${r.rowIndex})">
+        <div class="dc-row1">
+          <div class="dc-left">${recBadge}${r.detail?`<span style="font-size:0.72rem;color:var(--tx3)">${r.detail}</span>`:''}</div>
+          <div class="dc-right"><span class="dc-nom ${cls}">${arr} ${rp(r.nominal)}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+    return`<div class="date-group">
+      <div class="dg-header"><div class="dg-dot"></div><span class="dg-date">${IC.cal} ${formatTgl(tgl)}</span><span class="dg-kas ${cls==='spd'?'r':'g'}">${arr} ${rp(dayTotal)}</span></div>
+      <div class="dg-cards">${cards}</div>
+    </div>`;
+  }).join('');
+
+  const html=`
+    <div class="pk-detail-hero">
+      <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin:0 auto 6px;color:var(--ac)">${typeof getKatIconSVG==='function'?getKatIconSVG(kat):''}</div>
+      <div class="pk-detail-val">${rp(total)}</div>
+      <div class="pk-detail-sub">${cnt} transaksi</div>
+    </div>
+    <div class="pk-detail-stats">
+      <div class="pk-detail-stat"><div class="pk-detail-stat-lbl">Rata²/Transaksi</div><div class="pk-detail-stat-val">${rpShort(avg)}</div></div>
+      <div class="pk-detail-stat"><div class="pk-detail-stat-lbl">Hari Aktif</div><div class="pk-detail-stat-val">${activeDays}</div></div>
+      <div class="pk-detail-stat"><div class="pk-detail-stat-lbl">Jml Transaksi</div><div class="pk-detail-stat-val">${cnt}</div></div>
+    </div>
+    ${historyHtml||`<div class="empty" style="padding:16px 0"><div class="ei">${IC.chart}</div><p>Belum ada riwayat</p></div>`}
+  `;
+  openBs(kat,html);
 }
 
 // ═══ METODE ═══
