@@ -1183,6 +1183,24 @@ async function loadTabungan(){
     const total=list.reduce((s,t)=>s+Number(t.target),0);
     const terkumpul=list.reduce((s,t)=>s+Number(t.terkumpul),0);
     const pct=total>0?Math.round(terkumpul/total*100):0;
+
+    // Breakdown saldo tabungan per rekening (all-time): transaksi Pengeluaran
+    // kategori "Tabungan" = uang yang "masuk" ke tabungan dari sudut pandang rekening sumber
+    if(!allRows.length)allRows=await fetchAllData();
+    const tabByBank={};
+    allRows.forEach(r=>{
+      if(r.jenis==='Pengeluaran'&&r.kategori==='Tabungan'&&r.pembayaran){
+        tabByBank[r.pembayaran]=(tabByBank[r.pembayaran]||0)+r.nominal;
+      }
+    });
+    const tabBanks=Object.keys(tabByBank).sort((a,b)=>tabByBank[b]-tabByBank[a]);
+    const tabBankSection=tabBanks.length?`
+      <div class="sec-lbl" style="margin-top:20px">Sumber Dana Tabungan</div>
+      <div class="atm-carousel" id="tabAtmCarousel" style="margin-bottom:8px">
+        ${tabBanks.map((b,i)=>renderATMCard(b,tabByBank[b],i===0)).join('')}
+      </div>
+    `:'';
+
     el.innerHTML=`
       <div class="tab-summary">
         <div class="ts-val">${rp(terkumpul)}</div>
@@ -1204,6 +1222,7 @@ async function loadTabungan(){
           </div>
         </div>`;
       }).join('')}
+      ${tabBankSection}
     `;
     setTimeout(()=>{el.querySelectorAll('.bud-fill').forEach(e=>e.style.width=e.dataset.w+'%')},100);
   }catch(e){el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;toast('Gagal tabungan: '+e.message,'err')}
