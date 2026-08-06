@@ -73,7 +73,24 @@ async function loadDompet(){
   try{
     if(!allRows.length)allRows=await fetchAllData();
     const BUKAN_BANK=['transfer','qris'];
-    const banks=[...new Set(allRows.map(r=>r.pembayaran).filter(b=>b&&!BUKAN_BANK.includes(b.trim().toLowerCase())))].sort();
+
+    // Fetch transfers dulu (dibutuhkan buat gabungan sumber rekening di bawah)
+    const transfers=await fetchTransfers();
+
+    // Pastikan dbOpts.banks (rekening terdaftar via Kelola Rekening) sudah ke-load
+    if(!dbOpts.banks||!dbOpts.banks.length)await fetchDBOptions();
+
+    // Rekening dianggap "ada" & dapat kartu kalau muncul di salah satu dari 3 sumber:
+    // 1) pernah dipakai transaksi, 2) pernah dipakai transfer (dari/ke), 3) sudah didaftarkan
+    // di Kelola Rekening walau belum pernah dipakai sama sekali (saldo default Rp0)
+    const bankSet=new Set([
+      ...allRows.map(r=>r.pembayaran),
+      ...transfers.map(t=>t.dari),
+      ...transfers.map(t=>t.ke),
+      ...(dbOpts.banks||[]),
+    ]);
+    const banks=[...bankSet].filter(b=>b&&!BUKAN_BANK.includes(b.trim().toLowerCase())).sort();
+
     const saldoMap={};
     banks.forEach(b=>saldoMap[b]=0);
     allRows.forEach(r=>{
@@ -82,15 +99,14 @@ async function loadDompet(){
       else if(r.jenis==='Pengeluaran')saldoMap[r.pembayaran]=(saldoMap[r.pembayaran]||0)-r.nominal;
     });
 
-    // Fetch transfers
-    const transfers=await fetchTransfers();
+    // Transfers sudah di-fetch di atas — tinggal terapkan ke saldoMap
     transfers.forEach(t=>{
       if(saldoMap.hasOwnProperty(t.dari))saldoMap[t.dari]-=Number(t.nominal);
       if(saldoMap.hasOwnProperty(t.ke))saldoMap[t.ke]+=Number(t.nominal);
     });
 
     if(!banks.length){
-      el.innerHTML=`<div class="empty-state"><div class="empty-ico"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg></div><div class="empty-title">Belum ada rekening</div><div class="empty-sub">Tambahkan transaksi dengan memilih rekening bank</div></div>`;
+      el.innerHTML=`<div class="empty-state"><div class="empty-ico">💳</div><div class="empty-title">Belum ada rekening</div><div class="empty-sub">Tambahkan transaksi dengan memilih rekening bank</div></div>`;
       return;
     }
 
@@ -136,8 +152,8 @@ async function loadDompet(){
         <button onclick="openTransferModal()" class="btn-ok" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
           ${icTransfer} Transfer
         </button>
-        <button onclick="openPiutangList()" class="btn-cx" style="flex:1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg>Piutang</button>
-        <button onclick="openHutangList()" class="btn-cx" style="flex:1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>Hutang</button>
+        <button onclick="openPiutangList()" class="btn-cx" style="flex:1">📋 Piutang</button>
+        <button onclick="openHutangList()" class="btn-cx" style="flex:1">🧾 Hutang</button>
       </div>
       <div class="sec-lbl" id="mutasiLabel">Mutasi — ${banks[0]}</div>
       <div id="transferList">${renderMutasi(banks[0])}</div>
@@ -145,7 +161,7 @@ async function loadDompet(){
 
     initATMCarousel(banks,renderMutasi);
   }catch(e){
-    el.innerHTML=`<div class="empty-state"><div class="empty-ico"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg></div><div class="empty-title">Gagal memuat dompet</div></div>`;
+    el.innerHTML=`<div class="empty-state"><div class="empty-ico">⚠️</div><div class="empty-title">Gagal memuat dompet</div></div>`;
     console.error(e);
   }
 }
@@ -315,19 +331,6 @@ async function deleteTransfer(id){
 }
 
 // ═══ PIUTANG ═══
-// ═══ BADGE JATUH TEMPO (dipakai piutang & hutang) ═══
-function jatuhTempoBadge(jt){
-  if(!jt)return'';
-  const today=new Date();today.setHours(0,0,0,0);
-  const due=new Date(jt);due.setHours(0,0,0,0);
-  const diffDays=Math.round((due-today)/86400000);
-  let bg,col,txt;
-  if(diffDays<0){bg='var(--red-bg)';col='var(--red)';txt=`Terlambat ${Math.abs(diffDays)} hari`;}
-  else if(diffDays<=3){bg='rgba(251,191,36,0.15)';col='#fbbf24';txt=diffDays===0?'Jatuh tempo hari ini':`H-${diffDays}`;}
-  else{bg='var(--glass)';col='var(--tx3)';txt=`Tempo ${jt}`;}
-  return`<span style="display:inline-flex;align-items:center;font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:50px;background:${bg};color:${col};margin-top:4px">${txt}</span>`;
-}
-
 async function openPiutangList(){
   openBs('Piutang','<div class="ldrow"><div class="spin"></div>Memuat...</div>');
   try{
@@ -338,14 +341,14 @@ async function openPiutangList(){
     const lunas=(json.data||[]).filter(p=>p.lunas);
     const total=list.reduce((s,p)=>s+Number(p.nominal),0);
     const html=`
-      <div style="margin-bottom:14px">
-        <div style="font-size:0.75rem;color:var(--tx3);margin-bottom:8px">Total belum lunas: <b style="color:var(--ac)">${rp(total)}</b></div>
-        <button class="btn-ok" style="width:100%;padding:10px;font-size:0.8rem" onclick="openAddPiutang()">+ Tambah Piutang</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:0.75rem;color:var(--tx3)">Total belum lunas: <b style="color:var(--ac)">${rp(total)}</b></div>
+        <button class="btn-ok" style="padding:8px 14px;font-size:0.75rem" onclick="openAddPiutang()">+ Tambah</button>
       </div>
       ${!list.length?`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem"><div style="margin-bottom:4px">${IC.ok}</div>Tidak ada piutang aktif</div>`:''}
-      ${list.map(p=>`<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="openPiutangDetail(${p.id},'${String(p.nama).replace(/'/g,"\\'")}',${p.nominal},'${p.tanggal||''}','${String(p.catatan||'').replace(/'/g,"\\'")}','${p.jatuh_tempo||''}')">
+      ${list.map(p=>`<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="openPiutangDetail(${p.id},'${String(p.nama).replace(/'/g,"\\'")}',${p.nominal},'${p.tanggal||''}','${String(p.catatan||'').replace(/'/g,"\\'")}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><div style="font-weight:600;font-size:0.88rem">${p.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${p.tanggal||''}${p.catatan?' · '+p.catatan:''}</div>${jatuhTempoBadge(p.jatuh_tempo)}</div>
+          <div><div style="font-weight:600;font-size:0.88rem">${p.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${p.tanggal||''}${p.catatan?' · '+p.catatan:''}</div></div>
           <div style="font-weight:700;color:var(--red)">${rp(p.nominal)}</div>
         </div>
         <div style="display:flex;gap:6px;margin-top:8px">
@@ -371,7 +374,6 @@ function openAddPiutang(){
     <div class="inp-row"><label class="inp-lbl">Nama</label><input type="text" id="piutNama" class="inp" placeholder="Nama orang/toko..."></div>
     <div class="inp-row"><label class="inp-lbl">Nominal</label><input type="text" id="piutNom" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
     <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="piutTgl" class="inp" value="${getLocalDate()}"></div>
-    <div class="inp-row"><label class="inp-lbl">Jatuh Tempo (opsional)</label><input type="date" id="piutJT" class="inp"></div>
     <div class="inp-row"><label class="inp-lbl">Catatan</label><input type="text" id="piutCat" class="inp" placeholder="Opsional..."></div>
     <div class="inp-row"><label class="inp-lbl">Sumber Dana (opsional)</label><select id="piutSumber" class="inp"></select>
       <p style="font-size:0.68rem;color:var(--tx3);margin-top:4px">Kalau dipilih, nominal ini otomatis tercatat sebagai pengeluaran kategori "Piutang" dari rekening ini.</p>
@@ -386,7 +388,6 @@ async function submitAddPiutang(){
   const nama=document.getElementById('piutNama')?.value.trim();
   const nom =getNomVal('piutNom');
   const tgl =document.getElementById('piutTgl')?.value;
-  const jt  =document.getElementById('piutJT')?.value||null;
   const cat =document.getElementById('piutCat')?.value.trim();
   const sumber=document.getElementById('piutSumber')?.value;
   if(!nama||!nom){toast('Lengkapi data piutang','err');return}
@@ -397,7 +398,7 @@ async function submitAddPiutang(){
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-piutang`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({household_id:hid,nama,nominal:nom,tanggal:tgl,catatan:cat,jatuh_tempo:jt})
+      body:JSON.stringify({household_id:hid,nama,nominal:nom,tanggal:tgl,catatan:cat})
     });
     const json=await res.json().catch(()=>({success:false,error:'Response tidak valid'}));
     if(!res.ok||!json.success){toast('Gagal simpan piutang: '+(json.error||`HTTP ${res.status}`),'err');return}
@@ -478,7 +479,7 @@ async function hapusPiutang(id){
 }
 
 // ═══ DETAIL PIUTANG + RIWAYAT CICILAN ═══
-async function openPiutangDetail(id,nama,nominal,tanggal,catatan,jatuhTempo){
+async function openPiutangDetail(id,nama,nominal,tanggal,catatan){
   openBs('Piutang',`<div class="ldrow"><div class="spin"></div>Memuat riwayat...</div>`);
   try{
     const hid=getHouseholdId();
@@ -491,7 +492,6 @@ async function openPiutangDetail(id,nama,nominal,tanggal,catatan,jatuhTempo){
         <div style="font-size:1rem;font-weight:700">${nama}</div>
         <div style="font-size:1.3rem;font-weight:700;color:var(--red);margin-top:4px">${rp(nominal)}</div>
         <div style="font-size:0.68rem;color:var(--tx3);margin-top:2px">${tanggal||''}${catatan?' · '+catatan:''}</div>
-        <div>${jatuhTempoBadge(jatuhTempo)}</div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:12px">
         <button class="btn-sm-sec" style="flex:1" onclick="openTambahPiutang(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal},'${tanggal||''}','${String(catatan||'').replace(/'/g,"\\'")}')">+ Tambah Nominal</button>
@@ -634,14 +634,14 @@ async function openHutangList(){
     const lunas=(json.data||[]).filter(h=>h.lunas);
     const total=list.reduce((s,h)=>s+Number(h.nominal),0);
     const html=`
-      <div style="margin-bottom:14px">
-        <div style="font-size:0.75rem;color:var(--tx3);margin-bottom:8px">Total belum lunas: <b style="color:var(--red)">${rp(total)}</b></div>
-        <button class="btn-ok" style="width:100%;padding:10px;font-size:0.8rem" onclick="openAddHutang()">+ Tambah Hutang</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:0.75rem;color:var(--tx3)">Total belum lunas: <b style="color:var(--red)">${rp(total)}</b></div>
+        <button class="btn-ok" style="padding:8px 14px;font-size:0.75rem" onclick="openAddHutang()">+ Tambah</button>
       </div>
       ${!list.length?`<div style="text-align:center;color:var(--tx3);padding:16px;font-size:0.8rem"><div style="margin-bottom:4px">${IC.ok}</div>Tidak ada hutang aktif</div>`:''}
-      ${list.map(h=>`<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="openHutangDetail(${h.id},'${String(h.nama).replace(/'/g,"\\'")}',${h.nominal},'${h.tanggal||''}','${String(h.catatan||'').replace(/'/g,"\\'")}','${h.jatuh_tempo||''}')">
+      ${list.map(h=>`<div class="bmon-item" style="margin-bottom:8px;cursor:pointer" onclick="openHutangDetail(${h.id},'${String(h.nama).replace(/'/g,"\\'")}',${h.nominal},'${h.tanggal||''}','${String(h.catatan||'').replace(/'/g,"\\'")}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><div style="font-weight:600;font-size:0.88rem">${h.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${h.tanggal||''}${h.catatan?' · '+h.catatan:''}</div>${jatuhTempoBadge(h.jatuh_tempo)}</div>
+          <div><div style="font-weight:600;font-size:0.88rem">${h.nama}</div><div style="font-size:0.7rem;color:var(--tx3)">${h.tanggal||''}${h.catatan?' · '+h.catatan:''}</div></div>
           <div style="font-weight:700;color:var(--red)">${rp(h.nominal)}</div>
         </div>
         <div style="display:flex;gap:6px;margin-top:8px">
@@ -667,7 +667,6 @@ function openAddHutang(){
     <div class="inp-row"><label class="inp-lbl">Nama</label><input type="text" id="hutNama" class="inp" placeholder="Nama orang/toko..."></div>
     <div class="inp-row"><label class="inp-lbl">Nominal</label><input type="text" id="hutNom" class="inp" inputmode="numeric" oninput="fmtNom(this)" placeholder="0"></div>
     <div class="inp-row"><label class="inp-lbl">Tanggal</label><input type="date" id="hutTgl" class="inp" value="${getLocalDate()}"></div>
-    <div class="inp-row"><label class="inp-lbl">Jatuh Tempo (opsional)</label><input type="date" id="hutJT" class="inp"></div>
     <div class="inp-row"><label class="inp-lbl">Catatan</label><input type="text" id="hutCat" class="inp" placeholder="Opsional..."></div>
     <div class="inp-row"><label class="inp-lbl">Masuk ke rekening (opsional)</label><select id="hutTujuan" class="inp"></select>
       <p style="font-size:0.68rem;color:var(--tx3);margin-top:4px">Kalau dipilih, nominal ini otomatis tercatat sebagai pemasukan kategori "Hutang" ke rekening ini.</p>
@@ -682,7 +681,6 @@ async function submitAddHutang(){
   const nama=document.getElementById('hutNama')?.value.trim();
   const nom =getNomVal('hutNom');
   const tgl =document.getElementById('hutTgl')?.value;
-  const jt  =document.getElementById('hutJT')?.value||null;
   const cat =document.getElementById('hutCat')?.value.trim();
   const tujuan=document.getElementById('hutTujuan')?.value;
   if(!nama||!nom){toast('Lengkapi data hutang','err');return}
@@ -693,7 +691,7 @@ async function submitAddHutang(){
     const hid=getHouseholdId();
     const res=await fetch(`${API_URL}/api/sheets?action=append-hutang`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({household_id:hid,nama,nominal:nom,tanggal:tgl,catatan:cat,jatuh_tempo:jt})
+      body:JSON.stringify({household_id:hid,nama,nominal:nom,tanggal:tgl,catatan:cat})
     });
     const json=await res.json().catch(()=>({success:false,error:'Response tidak valid'}));
     if(!res.ok||!json.success){toast('Gagal simpan hutang: '+(json.error||`HTTP ${res.status}`),'err');return}
@@ -771,7 +769,7 @@ async function hapusHutang(id){
   }catch(e){toast('Gagal hapus: '+e.message,'err')}
 }
 
-async function openHutangDetail(id,nama,nominal,tanggal,catatan,jatuhTempo){
+async function openHutangDetail(id,nama,nominal,tanggal,catatan){
   openBs(`Detail: ${nama}`,'<div class="ldrow"><div class="spin"></div>Memuat...</div>');
   try{
     const hid=getHouseholdId();
@@ -784,7 +782,6 @@ async function openHutangDetail(id,nama,nominal,tanggal,catatan,jatuhTempo){
         <div style="font-size:1.1rem;font-weight:700">${nama}</div>
         <div style="font-size:1.4rem;font-weight:700;color:var(--red);margin-top:4px">${rp(nominal)}</div>
         ${catatan?`<div style="font-size:0.7rem;color:var(--tx3);margin-top:2px">${catatan}</div>`:''}
-        <div>${jatuhTempoBadge(jatuhTempo)}</div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button class="btn-ok" style="flex:1;padding:9px" onclick="openTambahHutang(${id},'${String(nama).replace(/'/g,"\\'")}',${nominal},'${tanggal||''}','${String(catatan||'').replace(/'/g,"\\'")}')">+ Tambah</button>
