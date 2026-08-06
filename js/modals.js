@@ -456,15 +456,24 @@ function openSettModal(type){
     const BUKAN_BANK=['cash','transfer','qris'];
     const allNames=[...new Set([...allRows.map(r=>r.pembayaran).filter(b=>b&&!BUKAN_BANK.includes(b.toLowerCase())),...customNames])].sort();
     selectedNewBankColor='#38bdf8';
+    selectedNewBankLogo=null;
     body.innerHTML=`
       <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center">
         <button type="button" id="newBankColorBtn" onclick="openBankColorPicker('new')" style="width:44px;height:44px;flex-shrink:0;border-radius:12px;background:${selectedNewBankColor};border:1px solid var(--bdr2)"></button>
+        <label style="width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background:var(--glass);color:var(--tx3)">
+          <span id="newBankLogoPreview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">${IC.upload}</span>
+          <input type="file" accept="image/*" style="display:none" onchange="readBankLogoFile(this,'new')">
+        </label>
         <input type="text" id="newBankInput" class="inp" placeholder="Tambah rekening baru..." style="flex:1">
         <button class="btn-ok" style="padding:10px 14px" onclick="addCustomBank()">+</button>
       </div>
       <div id="bankList">${allNames.map(name=>{
         const color=getBankDisplayColor(name);
-        const dot=color?`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:8px;flex-shrink:0"></span>`:`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--tx3);opacity:0.3;margin-right:8px;flex-shrink:0"></span>`;
+        const logo=typeof getBankLogo==='function'?getBankLogo(name):null;
+        const dot=logo
+          ?`<span style="display:inline-flex;width:16px;height:16px;border-radius:4px;overflow:hidden;margin-right:8px;flex-shrink:0;background:var(--glass)"><img src="${logo}" style="width:100%;height:100%;object-fit:contain"></span>`
+          :color?`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:8px;flex-shrink:0"></span>`
+          :`<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--tx3);opacity:0.3;margin-right:8px;flex-shrink:0"></span>`;
         return`<div class="sett-tag-item" onclick="openBankColorPicker('edit','${name.replace(/'/g,"\\'")}')" style="cursor:pointer">
           <span style="display:flex;align-items:center">${dot}${name}</span>
           <button onclick="event.stopPropagation();removeBank('${name.replace(/'/g,"\\'")}')">×</button>
@@ -719,6 +728,7 @@ function removeKat(name){
 // ═══ KELOLA REKENING ═══
 const BANK_COLOR_PALETTE=['#38bdf8','#818cf8','#a78bfa','#f472b6','#fb923c','#fbbf24','#4ade80','#34d399','#2dd4bf','#60a5fa','#f87171','#e879f9','#a3e635','#facc15','#94a3b8','#f43f5e'];
 let selectedNewBankColor='#38bdf8';
+let selectedNewBankLogo=null;
 let _bankColorPickerMode='';
 let _bankColorPickerTarget='';
 
@@ -730,7 +740,22 @@ function openBankColorPicker(mode,name){
   if(!panel||!bd)return;
   const curColor=(mode==='edit'?(getBankDisplayColor(name)||''):(selectedNewBankColor||'#38bdf8')).toLowerCase();
   const resetBtn=mode==='edit'?`<button type="button" onclick="resetBankColorPopup()" title="Pakai warna default" style="width:32px;height:32px;border-radius:50%;background:var(--glass);border:2px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:0.65rem">✕</button>`:'';
-  panel.innerHTML=resetBtn+BANK_COLOR_PALETTE.map(c=>`<button type="button" onclick="chooseBankColorPopup('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${c.toLowerCase()===curColor?'#fff':'transparent'};box-shadow:0 0 0 1px var(--bdr2)"></button>`).join('');
+  const colorGrid=resetBtn+BANK_COLOR_PALETTE.map(c=>`<button type="button" onclick="chooseBankColorPopup('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};border:2px solid ${c.toLowerCase()===curColor?'#fff':'transparent'};box-shadow:0 0 0 1px var(--bdr2)"></button>`).join('');
+
+  let logoRow='';
+  if(mode==='edit'){
+    const curLogo=typeof getBankLogo==='function'?getBankLogo(name):null;
+    logoRow=`<div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--bdr2)">
+      <label style="width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px dashed var(--bdr2);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background:var(--glass);color:var(--tx3)">
+        ${curLogo?`<img src="${curLogo}" style="width:100%;height:100%;object-fit:contain">`:IC.upload}
+        <input type="file" accept="image/*" style="display:none" onchange="readBankLogoFile(this,'edit')">
+      </label>
+      <span style="font-size:0.68rem;color:var(--tx3);flex:1">Logo custom (maks 1MB)</span>
+      ${curLogo?`<button type="button" onclick="removeBankLogo()" style="font-size:0.65rem;color:var(--red);background:none;border:none;padding:4px 8px">Hapus</button>`:''}
+    </div>`;
+  }
+
+  panel.innerHTML=logoRow+colorGrid;
   panel.style.display='grid';
   panel.classList.add('open');
   bd.classList.add('open');
@@ -784,12 +809,56 @@ function addCustomBank(){
   if(!v)return;
   const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
   if(!banks.some(b=>b.name===v)){
-    banks.push({name:v,color});
+    banks.push({name:v,color,logo:selectedNewBankLogo||null});
     localStorage.setItem('mm_custom_banks',JSON.stringify(banks));
   }
   rebuildBankColorMap();
+  selectedNewBankLogo=null;
   fetchDBOptions();openSettModal('rekening');
   toast('Rekening ditambahkan ✓','ok');pushSettings();
+}
+
+// Baca file logo hasil upload user, validasi ukuran & tipe, convert ke base64 data URI.
+// mode 'new' → disimpan sementara di selectedNewBankLogo, ikut ditulis saat addCustomBank().
+// mode 'edit' → langsung ditulis ke entry mm_custom_banks yang bersangkutan & di-push ke household.
+function readBankLogoFile(input,mode){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('File harus berupa gambar','err');input.value='';return;}
+  if(file.size>1024*1024){toast('Ukuran logo maksimal 1MB','err');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const dataUrl=reader.result;
+    if(mode==='new'){
+      selectedNewBankLogo=dataUrl;
+      const prev=document.getElementById('newBankLogoPreview');
+      if(prev)prev.innerHTML=`<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain">`;
+    }else if(mode==='edit'){
+      const name=_bankColorPickerTarget;
+      const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+      const existing=banks.find(b=>b.name===name);
+      if(existing)existing.logo=dataUrl;
+      else banks.push({name,color:getBankDisplayColor(name)||'#38bdf8',logo:dataUrl});
+      localStorage.setItem('mm_custom_banks',JSON.stringify(banks));
+      rebuildBankColorMap();
+      closeBankColorPicker();
+      fetchDBOptions();openSettModal('rekening');
+      toast('Logo diperbarui ✓','ok');pushSettings();
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeBankLogo(){
+  if(_bankColorPickerMode!=='edit')return;
+  const name=_bankColorPickerTarget;
+  const banks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
+  const existing=banks.find(b=>b.name===name);
+  if(existing){existing.logo=null;localStorage.setItem('mm_custom_banks',JSON.stringify(banks));}
+  rebuildBankColorMap();
+  closeBankColorPicker();
+  fetchDBOptions();openSettModal('rekening');
+  toast('Logo dihapus ✓','ok');pushSettings();
 }
 
 function removeBank(name){
