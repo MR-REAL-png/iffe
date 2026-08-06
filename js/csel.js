@@ -200,16 +200,26 @@ function katIconInline(name,size){
 // WARNA BANK CUSTOM
 // ═══════════════════════════════════════════════════
 let bankColorMap={};
+let bankLogoMap={};
 function normalizeBankList(raw){
-  return (raw||[]).map(x=>typeof x==='string'?{name:x,color:null}:{name:x.name,color:x.color||null});
+  return (raw||[]).map(x=>typeof x==='string'?{name:x,color:null,logo:null}:{name:x.name,color:x.color||null,logo:x.logo||null});
 }
 function rebuildBankColorMap(){
   bankColorMap={};
+  bankLogoMap={};
   const customBanks=normalizeBankList(JSON.parse(localStorage.getItem('mm_custom_banks')||'[]'));
-  customBanks.forEach(b=>{if(b.color)bankColorMap[b.name.toLowerCase()]=b.color;});
+  customBanks.forEach(b=>{
+    if(b.color)bankColorMap[b.name.toLowerCase()]=b.color;
+    if(b.logo)bankLogoMap[b.name.toLowerCase()]=b.logo;
+  });
 }
 function getBankColor(name){
   return bankColorMap[(name||'').toLowerCase()]||null;
+}
+// Logo custom (base64 data URI) yang di-upload user lewat Kelola Rekening — menang di atas
+// warna custom & preset BANK_THEMES saat render kartu ATM (lihat getBankTheme() di dompet.js)
+function getBankLogo(name){
+  return bankLogoMap[(name||'').toLowerCase()]||null;
 }
 // ═══════════════════════════════════════════════════
 // WARNA PILL (badge kecil di list transaksi/struk) — TERPISAH dari BANK_THEMES
