@@ -15,11 +15,14 @@ const BANK_THEMES={
 };
 
 function getBankTheme(name){
-  // Warna custom yang dipilih user (color picker di Settings > Rekening) selalu diprioritaskan
+  // Logo custom & warna custom (Kelola Rekening) selalu diprioritaskan di atas preset BANK_THEMES.
+  // Urutan menang: logo custom > warna custom > preset bawaan.
+  const customLogo=typeof getBankLogo==='function'?getBankLogo(name):null;
   const customColor=typeof getBankColor==='function'?getBankColor(name):null;
-  if(customColor){
-    const light=typeof lightenColor==='function'?lightenColor(customColor,22):customColor;
-    return{grad:`linear-gradient(135deg,${customColor},${light})`,motif:'dots',logo:null};
+  if(customColor||customLogo){
+    const baseColor=customColor||'#38bdf8';
+    const light=typeof lightenColor==='function'?lightenColor(baseColor,22):baseColor;
+    return{grad:`linear-gradient(135deg,${baseColor},${light})`,motif:'dots',logo:customLogo||null};
   }
   const key=Object.keys(BANK_THEMES).find(k=>name&&name.toLowerCase().includes(k.toLowerCase()));
   return BANK_THEMES[key]||BANK_THEMES.default;
@@ -39,9 +42,11 @@ function getBankMotifSVG(motif){
 
 function renderBankLogo(bank,theme){
   if(theme.logo){
-    const url=`${BANK_LOGO_BASE}${theme.logo}`;
+    const isCustom=theme.logo.startsWith('data:');
+    const url=isCustom?theme.logo:`${BANK_LOGO_BASE}${theme.logo}`;
     const fb=bank.slice(0,2).toUpperCase();
-    return`<img src="${url}" style="height:26px;max-width:72px;object-fit:contain;filter:brightness(0) invert(1);display:block" onerror="this.outerHTML='<span style=\\'font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.12em\\'>${fb}</span>'">`;
+    const filterCss=isCustom?'':'filter:brightness(0) invert(1);';
+    return`<img src="${url}" style="height:26px;max-width:72px;object-fit:contain;${filterCss}display:block" onerror="this.outerHTML='<span style=\\'font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.12em\\'>${fb}</span>'">`;
   }
   return`<span style="font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:0.12em">${bank.slice(0,2).toUpperCase()}</span>`;
 }
