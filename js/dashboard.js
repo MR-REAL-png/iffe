@@ -26,6 +26,7 @@ function goPage(p){
   else if(p==='dompet')loadDompet();
   else if(p==='rekap')loadRekap();
   else if(p==='perkategori')loadPerkategori();
+  else if(p==='aktivitas')loadAktivitas();
   else if(p==='metode')loadMetode();
   else if(p==='kalender')renderKalender();
   else if(p==='notif')loadNotif();
@@ -41,6 +42,7 @@ function doRefresh(){
   else if(id==='dompet')loadDompet();
   else if(id==='rekap')loadRekap();
   else if(id==='perkategori')loadPerkategori();
+  else if(id==='aktivitas')loadAktivitas();
   else if(id==='metode')loadMetode();
   else if(id==='notif')loadNotif();
   else if(id==='tabungan')loadTabungan();
@@ -1022,6 +1024,66 @@ function openPkKatDetail(kat){
     ${historyHtml||`<div class="empty" style="padding:16px 0"><div class="ei">${IC.chart}</div><p>Belum ada riwayat</p></div>`}
   `;
   openBs(kat,html);
+}
+
+// ═══ RIWAYAT AKTIVITAS ═══
+const AKT_LABEL={transaksi:'Transaksi',tabungan:'Tabungan',piutang:'Piutang',hutang:'Hutang',transfer:'Transfer'};
+// Field yang nggak relevan ditampilin di diff (internal/housekeeping)
+const AKT_SKIP_FIELDS=['id','household_id','created_at','recorded_by'];
+
+function aktFormatVal(key,val){
+  if(val===null||val===undefined||val==='')return '—';
+  if(key==='nominal'||key==='target'||key==='terkumpul')return rp(val);
+  if(key==='tanggal'||key==='jatuh_tempo')return formatTgl(val);
+  if(key==='lunas')return val?'Lunas':'Belum lunas';
+  return String(val);
+}
+
+function aktDiffHtml(before,after){
+  if(!before)return'';
+  const keys=[...new Set([...Object.keys(before||{}),...Object.keys(after||{})])].filter(k=>!AKT_SKIP_FIELDS.includes(k));
+  const changed=keys.filter(k=>after&&String(before[k])!==String(after[k]));
+  if(!changed.length)return'';
+  return changed.map(k=>`<div class="act-diff"><span class="old">${aktFormatVal(k,before[k])}</span><span class="arrow">→</span><span class="new">${aktFormatVal(k,after[k])}</span></div>`).join('');
+}
+
+async function loadAktivitas(){
+  const el=document.getElementById('aktivitasList');
+  if(!el)return;
+  el.innerHTML='<div class="ldrow"><div class="spin"></div>Memuat...</div>';
+  try{
+    const hid=getHouseholdId();
+    const res=await fetch(`${API_URL}/api/sheets?action=get-activity-log&household_id=${hid}`);
+    const json=await res.json();
+    if(!json.success)throw new Error(json.error||'Gagal ambil riwayat aktivitas');
+    const logs=json.data||[];
+    if(!logs.length){
+      el.innerHTML=`<div class="empty"><div class="ei">${IC.chart}</div><p>Belum ada riwayat perubahan</p></div>`;
+      return;
+    }
+    const members=typeof getHouseholdMembers==='function'?getHouseholdMembers():[];
+    const colorMap={};members.forEach(m=>colorMap[m.username]=m.color);
+    // Ikon trash — cuma dipakai di sini (sekali pakai, inline tanpa variabel per konvensi)
+    const icTrash='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>';
+    el.innerHTML=logs.map((l,i)=>{
+      const isDel=l.action==='delete';
+      const actorColor=colorMap[l.actor]||'var(--tx3)';
+      const time=l.created_at?new Date(l.created_at).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      const entLbl=AKT_LABEL[l.entity_type]||l.entity_type;
+      const verb=isDel?'menghapus':'mengubah';
+      return`<div class="act-item" style="animation-delay:${i*0.03}s">
+        <div class="act-top">
+          <div class="act-ico ${isDel?'del':'upd'}">${isDel?icTrash:IC.edit}</div>
+          <div class="act-desc"><b style="color:${actorColor}">${l.actor||'?'}</b> ${verb} ${entLbl}${l.label?` "${l.label}"`:''}</div>
+          <div class="act-time">${time}</div>
+        </div>
+        ${isDel?'':aktDiffHtml(l.before,l.after)}
+      </div>`;
+    }).join('');
+  }catch(e){
+    el.innerHTML=`<div class="empty"><div class="ei">${IC.warn}</div><p>Gagal memuat</p></div>`;
+    toast('Gagal load riwayat: '+e.message,'err');
+  }
 }
 
 // ═══ METODE ═══
