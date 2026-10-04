@@ -238,3 +238,27 @@
 }
 .pk-detail-stat-lbl { font-size: 0.52rem; font-weight: 700; color: var(--tx3); text-transform: uppercase; margin-bottom: 2px; }
 .pk-detail-stat-val { font-size: 0.78rem; font-weight: 800; font-family: var(--ffd); color: var(--tx); }
+
+/* ══════════════════════════════════════════
+   RIWAYAT AKTIVITAS
+══════════════════════════════════════════ */
+#aktivitasList { display: flex; flex-direction: column; gap: 6px; }
+.act-item {
+  background: var(--glass); border: 1px solid var(--bdr2);
+  border-radius: var(--rsm); padding: 10px 12px;
+  animation: cardIn .3s var(--ease) both;
+}
+.act-top { display: flex; align-items: center; gap: 8px; }
+.act-ico {
+  width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.act-ico.upd { background: rgba(56,189,248,0.12); color: var(--ac); }
+.act-ico.del { background: var(--red-bg); color: var(--red); }
+.act-desc { font-size: 0.75rem; color: var(--tx2); flex: 1; min-width: 0; }
+.act-desc b { font-weight: 700; }
+.act-time { font-size: 0.6rem; color: var(--tx3); flex-shrink: 0; white-space: nowrap; }
+.act-diff { font-size: 0.68rem; margin-top: 4px; padding-left: 34px; }
+.act-diff .arrow { color: var(--tx3); margin: 0 4px; }
+.act-diff .old { text-decoration: line-through; color: var(--tx3); }
+.act-diff .new { color: var(--tx); font-weight: 600; }
