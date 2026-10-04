@@ -30,6 +30,25 @@ function cors(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 }
 
+// ═══ ACTIVITY LOG ═══
+// Dipanggil SETELAH mutasi (update/delete) berhasil, tapi oldRow harus sudah di-fetch
+// SEBELUM mutasi dijalankan (lihat tiap handler) — supaya "before" benar-benar state lama,
+// bukan ikut berubah. Di-await di handler (bukan fire-and-forget) karena di serverless
+// function, proses yang nggak di-await bisa kepotong begitu res.json() dikirim.
+// Dibungkus try/catch sendiri supaya kalau logging gagal, itu TIDAK menggagalkan mutasi
+// utama yang sudah sukses — logging ini "best effort", bukan bagian kritis transaksi.
+async function logChange(oldRow, { household_id, actor, action, entity_type, entity_id, newFields }) {
+  try {
+    const label = oldRow?.kategori || oldRow?.nama || oldRow?.dari || '';
+    await sb('/activity_log', 'POST', {
+      household_id, actor: actor || '', action, entity_type,
+      entity_id: String(entity_id), label,
+      before: oldRow,
+      after: action === 'delete' ? null : { ...(oldRow || {}), ...newFields }
+    });
+  } catch (e) { console.error('logActivity failed:', e); }
+}
+
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -46,6 +65,17 @@ export default async function handler(req, res) {
     if (action === 'keepalive') {
       await sb('/households?select=id&limit=1');
       return res.json({ success: true, ping: true, time: new Date().toISOString() });
+    }
+
+    // ═══════════════════════════════════════
+    // ACTIVITY LOG — GET (buat halaman Riwayat Aktivitas)
+    // ═══════════════════════════════════════
+    if (action === 'get-activity-log' && req.method === 'GET') {
+      const { household_id } = req.query;
+      if (!household_id) return res.json({ success: false, error: 'household_id wajib' });
+      const result = await sb(`/activity_log?household_id=eq.${household_id}&order=created_at.desc&limit=200`);
+      if (!result.ok) return res.json({ success: false, error: 'Gagal ambil riwayat aktivitas' });
+      return res.json({ success: true, data: result.data || [] });
     }
 
     // ═══════════════════════════════════════
@@ -182,12 +212,14 @@ export default async function handler(req, res) {
     // TRANSAKSI — UPDATE
     // ═══════════════════════════════════════
     if (action === 'update' && req.method === 'PUT') {
-      const { id, household_id, ...fields } = req.body;
+      const { id, household_id, actor, ...fields } = req.body;
       if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
 
+      const old = await sb(`/transaksi?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/transaksi?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
       if (!result.ok) return res.json({ success: false, error: 'Gagal update transaksi' });
 
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'update', entity_type: 'transaksi', entity_id: id, newFields: fields });
       return res.json({ success: true });
     }
 
@@ -195,12 +227,14 @@ export default async function handler(req, res) {
     // TRANSAKSI — DELETE
     // ═══════════════════════════════════════
     if (action === 'delete' && req.method === 'DELETE') {
-      const { id, household_id } = req.query;
+      const { id, household_id, actor } = req.query;
       if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
 
+      const old = await sb(`/transaksi?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/transaksi?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
       if (!result.ok) return res.json({ success: false, error: 'Gagal hapus transaksi' });
 
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'delete', entity_type: 'transaksi', entity_id: id });
       return res.json({ success: true });
     }
 
@@ -273,9 +307,11 @@ export default async function handler(req, res) {
     // TABUNGAN — UPDATE
     // ═══════════════════════════════════════
     if (action === 'update-tabungan' && req.method === 'PUT') {
-      const { id, household_id, ...fields } = req.body;
+      const { id, household_id, actor, ...fields } = req.body;
+      const old = await sb(`/tabungan?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/tabungan?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
       if (!result.ok) return res.json({ success: false, error: 'Gagal update tabungan' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'update', entity_type: 'tabungan', entity_id: id, newFields: fields });
       return res.json({ success: true });
     }
 
@@ -283,9 +319,11 @@ export default async function handler(req, res) {
     // TABUNGAN — DELETE
     // ═══════════════════════════════════════
     if (action === 'delete-tabungan' && req.method === 'DELETE') {
-      const { id, household_id } = req.query;
+      const { id, household_id, actor } = req.query;
+      const old = await sb(`/tabungan?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/tabungan?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
       if (!result.ok) return res.json({ success: false, error: 'Gagal hapus tabungan' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'delete', entity_type: 'tabungan', entity_id: id });
       return res.json({ success: true });
     }
 
@@ -411,9 +449,11 @@ export default async function handler(req, res) {
     // PIUTANG — UPDATE (termasuk tandai lunas)
     // ═══════════════════════════════════════
     if (action === 'update-piutang' && req.method === 'PUT') {
-      const { id, household_id, ...fields } = req.body;
+      const { id, household_id, actor, ...fields } = req.body;
+      const old = await sb(`/piutang?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/piutang?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
       if (!result.ok) return res.json({ success: false, error: 'Gagal update piutang' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'update', entity_type: 'piutang', entity_id: id, newFields: fields });
       return res.json({ success: true });
     }
 
@@ -421,9 +461,11 @@ export default async function handler(req, res) {
     // PIUTANG — DELETE
     // ═══════════════════════════════════════
     if (action === 'delete-piutang' && req.method === 'DELETE') {
-      const { id, household_id } = req.query;
+      const { id, household_id, actor } = req.query;
+      const old = await sb(`/piutang?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/piutang?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
       if (!result.ok) return res.json({ success: false, error: 'Gagal hapus piutang' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'delete', entity_type: 'piutang', entity_id: id });
       return res.json({ success: true });
     }
 
@@ -539,9 +581,11 @@ export default async function handler(req, res) {
     // HUTANG — UPDATE (termasuk tandai lunas)
     // ═══════════════════════════════════════
     if (action === 'update-hutang' && req.method === 'PUT') {
-      const { id, household_id, ...fields } = req.body;
+      const { id, household_id, actor, ...fields } = req.body;
+      const old = await sb(`/hutang?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/hutang?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
       if (!result.ok) return res.json({ success: false, error: 'Gagal update hutang' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'update', entity_type: 'hutang', entity_id: id, newFields: fields });
       return res.json({ success: true });
     }
 
@@ -549,9 +593,11 @@ export default async function handler(req, res) {
     // HUTANG — DELETE
     // ═══════════════════════════════════════
     if (action === 'delete-hutang' && req.method === 'DELETE') {
-      const { id, household_id } = req.query;
+      const { id, household_id, actor } = req.query;
+      const old = await sb(`/hutang?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/hutang?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
       if (!result.ok) return res.json({ success: false, error: 'Gagal hapus hutang' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'delete', entity_type: 'hutang', entity_id: id });
       return res.json({ success: true });
     }
 
@@ -668,10 +714,12 @@ export default async function handler(req, res) {
     // TRANSFERS — UPDATE
     // ═══════════════════════════════════════
     if (action === 'update-transfer' && req.method === 'PUT') {
-      const { id, household_id, ...fields } = req.body;
+      const { id, household_id, actor, ...fields } = req.body;
       if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
+      const old = await sb(`/transfers?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/transfers?id=eq.${id}&household_id=eq.${household_id}`, 'PATCH', fields);
       if (!result.ok) return res.json({ success: false, error: 'Gagal update transfer' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'update', entity_type: 'transfer', entity_id: id, newFields: fields });
       return res.json({ success: true });
     }
 
@@ -679,10 +727,12 @@ export default async function handler(req, res) {
     // TRANSFERS — DELETE
     // ═══════════════════════════════════════
     if (action === 'delete-transfer' && req.method === 'DELETE') {
-      const { id, household_id } = req.query;
+      const { id, household_id, actor } = req.query;
       if (!id || !household_id) return res.json({ success: false, error: 'id dan household_id wajib' });
+      const old = await sb(`/transfers?id=eq.${id}&household_id=eq.${household_id}`);
       const result = await sb(`/transfers?id=eq.${id}&household_id=eq.${household_id}`, 'DELETE');
       if (!result.ok) return res.json({ success: false, error: 'Gagal hapus transfer' });
+      await logChange(old.data?.[0] || null, { household_id, actor, action: 'delete', entity_type: 'transfer', entity_id: id });
       return res.json({ success: true });
     }
 
