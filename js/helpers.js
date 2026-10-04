@@ -327,12 +327,15 @@ async function apiPost(action,body){
   return await res.json();
 }
 async function apiPut(action,body){
-  const res=await fetch(`${API_URL}/api/sheets?action=${action}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  // actor disisipkan otomatis di sini (bukan di tiap pemanggil) supaya SEMUA update
+  // (transaksi/tabungan/piutang/hutang/transfer) konsisten kebawa info "siapa yang ubah"
+  // buat activity log di backend, tanpa perlu ubah satu-satu titik pemanggilnya.
+  const res=await fetch(`${API_URL}/api/sheets?action=${action}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({actor:getUserUID(),...body})});
   if(!res.ok){const e=await res.json();throw new Error(e.error||'Gagal update')}
   return await res.json();
 }
 async function apiDelete(action,params){
-  const qs=new URLSearchParams(params).toString();
+  const qs=new URLSearchParams({actor:getUserUID()||'',...params}).toString();
   const res=await fetch(`${API_URL}/api/sheets?action=${action}&${qs}`,{method:'DELETE'});
   if(!res.ok){const e=await res.json();throw new Error(e.error||'Gagal hapus')}
   return await res.json();
